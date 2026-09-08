@@ -1,0 +1,24 @@
+.noteContainer {
+  position: fixed;
+  z-index: 10000;
+  width: 150px;
+  height: 100px;
+}
+
+.textArea {
+  width: 100%;
+  height: 100%;
+  resize: none;
+  border: 1px solid #999;
+  border-radius: 4px;
+  padding: 4px 6px;
+  font-size: var(--fontSizeCells, 0.8rem);
+  font-family: inherit;
+  background: #fff;
+  color: #000;
+  outline: none;
+}
+
+.textArea:focus {
+  border-color: var(--yellow, #ffff33);
+}
