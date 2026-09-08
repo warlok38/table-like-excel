@@ -81,12 +81,12 @@ Acceptance criteria:
 
 ## Phase 4: Cell Selection
 
-- [ ] Implement single-cell selection on click.
-- [ ] Implement drag range selection with mouse down, enter, and mouse up.
-- [ ] Implement `Ctrl + click` toggle selection for multiple cells.
-- [ ] Ensure selection uses stable cell keys rather than display text or array index alone.
-- [ ] Add visible styles for active cell and selected range.
-- [ ] Add a distinct selected-but-locked visual state for cells that cannot be changed.
+- [x] Implement single-cell selection on click.
+- [x] Implement drag range selection with mouse down, enter, and mouse up.
+- [x] Implement `Ctrl + click` toggle selection for multiple cells.
+- [x] Ensure selection uses stable cell keys rather than display text or array index alone.
+- [x] Add visible styles for active cell and selected range.
+- [x] Add a distinct selected-but-locked visual state for cells that cannot be changed.
 
 Acceptance criteria:
 

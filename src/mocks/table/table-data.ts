@@ -37,11 +37,15 @@ const makeCell = (
     comments_id: options.commentsId ?? null,
     parameter_id: null,
     catalogs_id: null,
-    editable: options.editable ?? false
+    editable: options.editable ?? isEditableMockField(options.field)
   },
   formatted_value: formattedValue,
   data_status: options.dataStatus ?? null
 })
+
+function isEditableMockField(field: CellTable['data']['field'] | undefined): boolean {
+  return Boolean(field)
+}
 
 export const tableDataMock: CellTable[][] = [
   [

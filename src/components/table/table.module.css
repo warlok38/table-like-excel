@@ -2,6 +2,10 @@
   width: 100%;
 }
 
+.tableContainer[data-is-selecting='true'] {
+  cursor: cell;
+}
+
 .tableContainer .table {
   border-collapse: separate;
   border-spacing: 0;
@@ -24,6 +28,7 @@
 }
 
 .tableContainer .td {
+  position: relative;
   padding: 0.15rem;
   min-width: 2.4rem;
   height: 1.15rem;
@@ -31,6 +36,42 @@
   border: 1px solid black;
   border-right: none;
   border-bottom: none;
+  cursor: cell;
+  user-select: none;
+}
+
+.tableContainer .td::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  pointer-events: none;
+}
+
+.tableContainer .selectedCell::after {
+  background-color: rgba(49, 130, 206, 0.18);
+  outline: 1px solid rgba(37, 99, 235, 0.62);
+  outline-offset: -1px;
+}
+
+.tableContainer .activeCell::after {
+  outline: 2px solid #1d4ed8;
+  outline-offset: -2px;
+}
+
+.tableContainer .lockedCell {
+  cursor: not-allowed;
+}
+
+.tableContainer .selectedLockedCell::after {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(100, 116, 139, 0.2) 0,
+    rgba(100, 116, 139, 0.2) 4px,
+    rgba(255, 255, 255, 0.15) 4px,
+    rgba(255, 255, 255, 0.15) 8px
+  );
+  outline: 1px dashed rgba(71, 85, 105, 0.9);
+  outline-offset: -1px;
 }
 
 .tableContainer .td:has(input),
