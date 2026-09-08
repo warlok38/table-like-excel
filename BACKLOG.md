@@ -137,7 +137,7 @@ Acceptance criteria:
 
 - [x] Run `npm.cmd run build`.
 - [x] Run `npm.cmd run lint` if the Next lint command is available in this setup.
-- [ ] Start `npm.cmd run dev` and manually verify click, drag, `Ctrl + click`, background changes, and context menu notes.
+- [x] Start `npm.cmd run dev` and manually verify click, drag, `Ctrl + click`, background changes, and context menu notes.
 
 Acceptance criteria:
 

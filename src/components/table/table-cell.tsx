@@ -1,6 +1,15 @@
 'use client'
 
-import { memo, useCallback, useMemo, useRef } from 'react'
+import {
+  memo,
+  useCallback,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+  type RefObject
+} from 'react'
+import { createPortal } from 'react-dom'
 import cn from 'classnames'
 
 import type { CellTable } from '@/types'
@@ -21,10 +30,40 @@ type TableCellProps = {
   isLocked: boolean
   onSelect: (cellKey: string, options: { append: boolean }) => void
   onExtendSelection: (cellKey: string) => void
-  onOpenNote: (cellKey: string) => void
   onCloseNote: () => void
   onNoteChange: (cellKey: string, value: string) => void
   onContextMenu: (cellKey: string, position: { x: number; y: number }) => void
+}
+
+type NoteTooltipProps = {
+  value: string
+  anchorRef: RefObject<HTMLElement>
+}
+
+function NoteTooltip({ value, anchorRef }: NoteTooltipProps) {
+  const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
+
+  useLayoutEffect(() => {
+    const anchor = anchorRef.current
+    if (!anchor) {
+      return
+    }
+
+    const rect = anchor.getBoundingClientRect()
+    setPosition({
+      top: rect.top,
+      left: rect.right + 2
+    })
+  }, [anchorRef])
+
+  if (!position) return null
+
+  return createPortal(
+    <div className={styles.noteTooltip} style={{ top: position.top, left: position.left }}>
+      {value}
+    </div>,
+    document.body
+  )
 }
 
 function TableCell({
@@ -40,13 +79,13 @@ function TableCell({
   isLocked,
   onSelect,
   onExtendSelection,
-  onOpenNote,
   onCloseNote,
   onNoteChange,
   onContextMenu
 }: TableCellProps) {
   const tdRef = useRef<HTMLTableCellElement>(null)
   const hasNote = Boolean(noteValue?.trim())
+  const [isNoteTooltipOpen, setIsNoteTooltipOpen] = useState(false)
 
   const style = useMemo(() => getCellStyle(cell, manualBackground), [cell, manualBackground])
   const handleMouseDown = useCallback(
@@ -56,18 +95,18 @@ function TableCell({
     },
     [cellKey, onSelect]
   )
-  const handleMouseEnter = useCallback(
-    () => onExtendSelection(cellKey),
-    [cellKey, onExtendSelection]
-  )
-  const handleClick = useCallback(() => {
-    if (hasNote) {
-      onOpenNote(cellKey)
+  const handleMouseEnter = useCallback(() => {
+    onExtendSelection(cellKey)
+
+    if (hasNote && !isNoteOpen) {
+      setIsNoteTooltipOpen(true)
     }
-  }, [cellKey, hasNote, onOpenNote])
+  }, [cellKey, hasNote, isNoteOpen, onExtendSelection])
+  const handleMouseLeave = useCallback(() => setIsNoteTooltipOpen(false), [])
   const handleContextMenu = useCallback(
     (event: React.MouseEvent<HTMLTableCellElement>) => {
       event.preventDefault()
+      setIsNoteTooltipOpen(false)
       onSelect(cellKey, { append: false })
       onContextMenu(cellKey, { x: event.clientX, y: event.clientY })
     },
@@ -97,7 +136,7 @@ function TableCell({
       aria-selected={isSelected}
       onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}
-      onClick={handleClick}
+      onMouseLeave={handleMouseLeave}
       onContextMenu={handleContextMenu}
     >
       <div
@@ -115,6 +154,9 @@ function TableCell({
           onChange={handleNoteChange}
           readOnly={isLocked}
         />
+      )}
+      {hasNote && isNoteTooltipOpen && !isNoteOpen && (
+        <NoteTooltip value={noteValue ?? ''} anchorRef={tdRef} />
       )}
     </td>
   )

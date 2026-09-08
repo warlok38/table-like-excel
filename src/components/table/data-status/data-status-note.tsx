@@ -21,6 +21,7 @@ export function DataStatusNote({
 }: DataStatusNoteProps) {
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
   const noteRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useLayoutEffect(() => {
     const updatePosition = () => {
@@ -40,6 +41,20 @@ export function DataStatusNote({
       window.removeEventListener('scroll', updatePosition, true)
     }
   }, [anchorRef])
+
+  useLayoutEffect(() => {
+    if (readOnly || !position) {
+      return
+    }
+
+    const textarea = textareaRef.current
+    if (!textarea) {
+      return
+    }
+
+    textarea.focus()
+    textarea.setSelectionRange(textarea.value.length, textarea.value.length)
+  }, [position, readOnly])
 
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {
@@ -67,6 +82,7 @@ export function DataStatusNote({
       onMouseDown={(e) => e.stopPropagation()}
     >
       <textarea
+        ref={textareaRef}
         className={styles.textArea}
         rows={3}
         value={value}

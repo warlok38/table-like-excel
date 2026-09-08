@@ -135,7 +135,6 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
           manualBackgrounds={manualBackgrounds}
           openNoteKey={openNoteKey}
           getNoteValue={getNoteValue}
-          onOpenNote={openNoteEditor}
           onCloseNote={closeNoteEditor}
           onNoteChange={changeNote}
           onContextMenu={openContextMenu}
@@ -147,7 +146,8 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
           y={contextMenu.y}
           hasNote={Boolean(getNoteValue(contextMenu.cellKey, contextMenuEntry.cell)?.trim())}
           isLocked={isCellLocked(contextMenuEntry.cell)}
-          onAddOrEditNote={() => openNoteEditor(contextMenu.cellKey)}
+          onAddNote={() => openNoteEditor(contextMenu.cellKey)}
+          onEditNote={() => openNoteEditor(contextMenu.cellKey)}
           onDeleteNote={() => deleteNote(contextMenu.cellKey)}
           onClose={closeContextMenu}
         />
@@ -162,7 +162,6 @@ function TableBody({
   manualBackgrounds,
   openNoteKey,
   getNoteValue,
-  onOpenNote,
   onCloseNote,
   onNoteChange,
   onContextMenu
@@ -172,7 +171,6 @@ function TableBody({
   manualBackgrounds: Record<string, string>
   openNoteKey: string | null
   getNoteValue: (cellKey: string, cell: CellTable) => string | null
-  onOpenNote: (cellKey: string) => void
   onCloseNote: () => void
   onNoteChange: (cellKey: string, value: string) => void
   onContextMenu: (cellKey: string, position: { x: number; y: number }) => void
@@ -200,7 +198,6 @@ function TableBody({
                   isLocked={isCellLocked(cell)}
                   onSelect={selection.selectCell}
                   onExtendSelection={selection.extendRangeToCell}
-                  onOpenNote={onOpenNote}
                   onCloseNote={onCloseNote}
                   onNoteChange={onNoteChange}
                   onContextMenu={onContextMenu}
