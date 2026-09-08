@@ -53,7 +53,7 @@ export type BackgroundDataStatusItem = {
 
 export type AvailableBackgroundColor = {
   alias: string
-  value: string
+  value: string | null
   tech_id: string
 }
 

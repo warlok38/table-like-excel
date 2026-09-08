@@ -1,9 +1,12 @@
 import type { CSSProperties } from 'react'
 import type { CellTable } from '@/types'
 
-export function getCellStyle(cell: CellTable): CSSProperties {
+export function getCellStyle(
+  cell: CellTable,
+  manualBackground: string | null = null
+): CSSProperties {
   const dataStatusBackground = getDataStatusBackground(cell)
-  const background = dataStatusBackground ?? cell.data.color ?? '#ffffff'
+  const background = manualBackground ?? dataStatusBackground ?? cell.data.color ?? '#ffffff'
 
   if (background.includes('gradient')) {
     return {

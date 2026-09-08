@@ -1,6 +1,6 @@
 'use client'
 
-import { memo, useCallback, useMemo, useRef, useState } from 'react'
+import { memo, useCallback, useMemo, useRef } from 'react'
 import cn from 'classnames'
 
 import type { CellTable } from '@/types'
@@ -13,11 +13,18 @@ type TableCellProps = {
   cellKey: string
   rowIndex: number
   cellIndex: number
+  manualBackground: string | null
+  noteValue: string | null
+  isNoteOpen: boolean
   isActive: boolean
   isSelected: boolean
   isLocked: boolean
   onSelect: (cellKey: string, options: { append: boolean }) => void
   onExtendSelection: (cellKey: string) => void
+  onOpenNote: (cellKey: string) => void
+  onCloseNote: () => void
+  onNoteChange: (cellKey: string, value: string) => void
+  onContextMenu: (cellKey: string, position: { x: number; y: number }) => void
 }
 
 function TableCell({
@@ -25,18 +32,23 @@ function TableCell({
   cellKey,
   rowIndex,
   cellIndex,
+  manualBackground,
+  noteValue,
+  isNoteOpen,
   isActive,
   isSelected,
   isLocked,
   onSelect,
-  onExtendSelection
+  onExtendSelection,
+  onOpenNote,
+  onCloseNote,
+  onNoteChange,
+  onContextMenu
 }: TableCellProps) {
   const tdRef = useRef<HTMLTableCellElement>(null)
-  const [isNoteOpen, setIsNoteOpen] = useState(false)
-  const hasNote = Boolean(cell.data_status?.note?.value)
+  const hasNote = Boolean(noteValue?.trim())
 
-  const style = useMemo(() => getCellStyle(cell), [cell])
-  const closeNote = useCallback(() => setIsNoteOpen(false), [])
+  const style = useMemo(() => getCellStyle(cell, manualBackground), [cell, manualBackground])
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLTableCellElement>) => {
       event.preventDefault()
@@ -48,6 +60,23 @@ function TableCell({
     () => onExtendSelection(cellKey),
     [cellKey, onExtendSelection]
   )
+  const handleClick = useCallback(() => {
+    if (hasNote) {
+      onOpenNote(cellKey)
+    }
+  }, [cellKey, hasNote, onOpenNote])
+  const handleContextMenu = useCallback(
+    (event: React.MouseEvent<HTMLTableCellElement>) => {
+      event.preventDefault()
+      onSelect(cellKey, { append: false })
+      onContextMenu(cellKey, { x: event.clientX, y: event.clientY })
+    },
+    [cellKey, onContextMenu, onSelect]
+  )
+  const handleNoteChange = useCallback(
+    (value: string) => onNoteChange(cellKey, value),
+    [cellKey, onNoteChange]
+  )
 
   return (
     <td
@@ -57,7 +86,8 @@ function TableCell({
         [styles.selectedCell]: isSelected,
         [styles.activeCell]: isActive,
         [styles.lockedCell]: isLocked,
-        [styles.selectedLockedCell]: isSelected && isLocked
+        [styles.selectedLockedCell]: isSelected && isLocked,
+        [styles.noteCell]: hasNote
       })}
       colSpan={cell.data.colspan}
       rowSpan={cell.data.rowspan}
@@ -67,7 +97,8 @@ function TableCell({
       aria-selected={isSelected}
       onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}
-      onClick={hasNote ? () => setIsNoteOpen((value) => !value) : undefined}
+      onClick={handleClick}
+      onContextMenu={handleContextMenu}
     >
       <div
         className={cn(styles.constCell, {
@@ -76,11 +107,13 @@ function TableCell({
       >
         {formatCellValue(cell.formatted_value)}
       </div>
-      {hasNote && isNoteOpen && (
+      {isNoteOpen && (
         <DataStatusNote
-          note={cell.data_status?.note?.value ?? null}
+          value={noteValue ?? ''}
           anchorRef={tdRef}
-          onClose={closeNote}
+          onClose={onCloseNote}
+          onChange={handleNoteChange}
+          readOnly={isLocked}
         />
       )}
     </td>

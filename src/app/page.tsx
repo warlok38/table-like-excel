@@ -6,7 +6,7 @@ export default function Home() {
     <main>
       <h1>Table Like Excel</h1>
       <p>Доступно цветов заливки: {availableBackgroundColorsMock.length}</p>
-      <Table data={tableDataMock} />
+      <Table data={tableDataMock} availableBackgroundColors={availableBackgroundColorsMock} />
     </main>
   )
 }

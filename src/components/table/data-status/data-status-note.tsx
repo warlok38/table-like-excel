@@ -5,13 +5,20 @@ import { createPortal } from 'react-dom'
 import styles from './data-status-note.module.css'
 
 export type DataStatusNoteProps = {
-  note: string | null
+  value: string
   anchorRef: RefObject<HTMLElement>
   onClose: () => void
+  onChange: (value: string) => void
+  readOnly?: boolean
 }
 
-export function DataStatusNote({ note, anchorRef, onClose }: DataStatusNoteProps) {
-  const [value, setValue] = useState(note ?? '')
+export function DataStatusNote({
+  value,
+  anchorRef,
+  onClose,
+  onChange,
+  readOnly = false
+}: DataStatusNoteProps) {
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
   const noteRef = useRef<HTMLDivElement>(null)
 
@@ -47,7 +54,7 @@ export function DataStatusNote({ note, anchorRef, onClose }: DataStatusNoteProps
   }, [anchorRef, onClose])
 
   const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setValue(e.target.value)
+    onChange(e.target.value)
   }
 
   if (!position) return null
@@ -59,7 +66,14 @@ export function DataStatusNote({ note, anchorRef, onClose }: DataStatusNoteProps
       style={{ top: position.top, left: position.left }}
       onMouseDown={(e) => e.stopPropagation()}
     >
-      <textarea className={styles.textArea} rows={3} value={value} onChange={handleChange} />
+      <textarea
+        className={styles.textArea}
+        rows={3}
+        value={value}
+        onChange={handleChange}
+        readOnly={readOnly}
+        aria-label="Текст примечания"
+      />
     </div>,
     document.body
   )

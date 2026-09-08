@@ -3,7 +3,7 @@ import type { AvailableBackgroundColor } from '@/types'
 export const availableBackgroundColorsMock: AvailableBackgroundColor[] = [
   {
     alias: 'Без заливки',
-    value: '#ffffff',
+    value: null,
     tech_id: '4e8b0f4a-26fd-44ce-9f92-2ea7c65a6fb1'
   },
   {

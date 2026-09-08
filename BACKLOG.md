@@ -98,16 +98,17 @@ Acceptance criteria:
 
 ## Phase 5: Background Color Actions
 
-- [ ] Show background controls only when at least one cell is selected.
-- [ ] Render allowed colors from mock backend data.
-- [ ] Apply chosen background to selected cells that allow background changes.
-- [ ] Keep updates in local component state for now.
-- [ ] Preserve incoming `DataStatus` background priority rules explicitly, or document that manual background overrides it.
+- [x] Show background controls only when at least one cell is selected.
+- [x] Render allowed colors from mock backend data.
+- [x] Apply chosen background to selected cells that allow background changes.
+- [x] Keep updates in local component state for now.
+- [x] Preserve incoming `DataStatus` background priority rules explicitly, or document that manual background overrides it.
 
 Recommended rule:
 
-- Manual background color should override the cell's base `data.color`.
-- `DataStatus.background` should remain visible if no manual override exists.
+- Manual background color should override both backend color sources while it is stored locally.
+- `DataStatus.background` should override the cell's base `data.color` when there is no manual background.
+- `Без заливки` should be represented as `null` and should remove the local manual background.
 - Locked selected cells should be skipped when applying a background color.
 - The toolbar should communicate how many selected cells can receive the action, for example `Выбрано 9, доступно для заливки 6`.
 
@@ -119,12 +120,12 @@ Acceptance criteria:
 
 ## Phase 6: Notes And Context Menu
 
-- [ ] Add right-click context menu on cells.
-- [ ] Show `Добавить примечание` when the cell has no note.
-- [ ] Show `Удалить примечание` when the cell has a note.
-- [ ] Add a controlled note editor for adding or changing note text.
-- [ ] Store note changes in local component state.
-- [ ] Show a small visual marker for cells with notes.
+- [x] Add right-click context menu on cells.
+- [x] Show `Добавить примечание` when the cell has no note.
+- [x] Show `Удалить примечание` when the cell has a note.
+- [x] Add a controlled note editor for adding or changing note text.
+- [x] Store note changes in local component state.
+- [x] Show a small visual marker for cells with notes.
 
 Acceptance criteria:
 
@@ -134,8 +135,8 @@ Acceptance criteria:
 
 ## Phase 7: Verification And Cleanup
 
-- [ ] Run `npm.cmd run build`.
-- [ ] Run `npm.cmd run lint` if the Next lint command is available in this setup.
+- [x] Run `npm.cmd run build`.
+- [x] Run `npm.cmd run lint` if the Next lint command is available in this setup.
 - [ ] Start `npm.cmd run dev` and manually verify click, drag, `Ctrl + click`, background changes, and context menu notes.
 
 Acceptance criteria:
