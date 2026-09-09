@@ -145,11 +145,123 @@ Acceptance criteria:
 - The table works in the browser for all requested interactions.
 - Remaining limitations are documented in this file or in the final implementation notes.
 
-## Later Enhancements
+## Next Phases
 
-- Restore editable cell values with a local editing model instead of old Redux state.
-- Add explicit `Сохранить` / `Отмена` controls for pending local table changes before sending them to an API.
-- Add keyboard navigation with arrows, `Shift + arrows`, copy/paste, and delete-to-clear.
-- Persist table edits through an API adapter.
-- Add undo/redo for background and note changes.
-- Add virtualization if real backend tables are large enough to need it.
+These phases describe the next implementation direction after the first standalone table pass.
+
+## Phase 8: Cell Editor Model
+
+Scope agreed on 2026-09-09: this phase delivers contracts, permissions, mocks, and integration with existing actions. Opening editors and editing values belong entirely to Phase 9.
+
+Implementation documents for GPT-5.5:
+
+- [Design and agreed rules](docs/superpowers/specs/2026-09-09-phase8-cell-editor-model-design.md).
+- [Step-by-step implementation plan](docs/superpowers/plans/2026-09-09-phase8-cell-editor-model.md).
+
+- [x] Extend the local cell contract with explicit `text`, `textarea`, `number`, `select`, `date`, and `readonly` editor metadata.
+- [x] Add required raw `value` separately from `formatted_value`; keep static rendering based on `formatted_value`.
+- [x] Add optional per-action permissions for value, background, and note changes; preserve `editable: false` as the overriding prohibition on all mutations.
+- [x] Compute capabilities through one helper; editor absence or `readonly` prevents value editing but does not itself prohibit background or note changes.
+- [x] Use background capability for palette availability, counts, and mutation guards; use note capability for menu/editor availability and all note mutation guards.
+- [x] Keep action-only cells selectable with ordinary selection styling; use locked styling only when all three actions are prohibited.
+- [x] Add explicit mock metadata and a separate demo table covering editor types, raw/display values, and permission combinations.
+
+Implementation note, 2026-09-09:
+
+- Phase 8 contract, mocks, permission integration, build, lint, and manual browser checklist are complete.
+- Value editor opening, value input, keyboard editing, pending values, save/cancel, API, navigation, and virtualization remain in later phases.
+
+Acceptance criteria:
+
+- No value editor is mounted or opened; normal selection and existing background/note behavior remain available.
+- Editor choice and permissions are not inferred from `field`, `comments_id`, or cell contents.
+- Missing/null editor does not lock cells with permitted actions; missing permissions preserve existing background/note defaults.
+- Fully locked cells remain selectable and existing notes remain readable.
+- Build, lint, and the plan's manual browser checklist pass; no automated tests are added.
+
+## Phase 9: Cell Value Editing
+
+- [ ] Use the explicit raw values, editor metadata, and capabilities introduced in Phase 8.
+- [ ] Restore editable cell values with a local editing model instead of old Redux state.
+- [ ] Render the active editor only while a cell is in edit mode.
+- [ ] Apply the edited value to local pending state on `Enter`, then close edit mode while keeping the same cell active and selected.
+- [ ] Cancel the current edit on `Esc` without changing pending state.
+- [ ] Preserve or replace the old changed-value visual marker. The imported input styles used a yellow bottom border for changed values, so pending value changes should remain visibly marked in the new table UI.
+
+Interaction rules (implementation belongs to this phase):
+
+- Single click selects a cell without opening a value editor.
+- Double click opens edit mode only when `canEditValue` permits it.
+- `Enter` opens edit mode from a selected value-editable cell.
+- Decide the exact typing-to-replace behavior for text-like editors during Phase 9 planning.
+- Select and date controls do not open on normal cell click; a dedicated dropdown/calendar affordance opens the picker, with keyboard opening through `Enter`.
+- Render editor controls from explicit metadata, separately from cell selection state.
+- Resolve blur behavior, multi-selection editing, textarea newlines, and value validation in the Phase 9 plan before implementation.
+
+Acceptance criteria:
+
+- Editing one cell does not clear selection state.
+- Edited values are visible in the cell after edit mode closes.
+- Pending edited cells have a clear changed state before save.
+- Non-editable cells ignore double click, text input, and `Enter` editing commands.
+
+## Phase 10: Pending Changes, Save, And Cancel
+
+- [ ] Move value, background, and note changes into one explicit pending changes model.
+- [ ] Add `Сохранить` and `Отмена` controls for local pending changes.
+- [ ] Show when the table has unsaved changes.
+- [ ] Make `Сохранить` send one changeset through the table data adapter.
+- [ ] Make `Отмена` discard all pending changes and restore the last loaded backend or mock state.
+- [ ] Keep changed-cell styling derived from pending changes, not from local input component state.
+
+Acceptance criteria:
+
+- Background, note, and value changes are all counted as pending changes.
+- Saving clears the pending state only after the adapter reports success.
+- Cancel returns the visible table to the last loaded data.
+- The toolbar communicates disabled, saving, success, and failure states clearly enough for manual verification.
+
+## Phase 11: Keyboard Navigation
+
+- [ ] Rework keyboard navigation around table cell selection instead of the old input-to-input focus behavior.
+- [ ] Use a virtual coordinate map that understands `rowSpan` and `colSpan`.
+- [ ] Move the active selected cell with arrow keys across the visual grid.
+- [ ] Extend selection with `Shift + Arrow`.
+- [ ] Skip duplicate coordinates that point to the same merged cell so navigation feels like Excel merged-cell movement.
+- [ ] Keep readonly cells reachable by keyboard selection, but show locked selection styling when the cell cannot be edited, colored, or annotated.
+- [ ] Make `Delete` clear values only for selected cells that are value-editable.
+
+Acceptance criteria:
+
+- Arrow navigation moves cell selection, not DOM focus between always-mounted inputs.
+- Merged cells behave as one selectable cell during keyboard navigation.
+- `Shift + Arrow` expands the range from the original anchor cell.
+- Readonly cells remain navigable and visibly distinct.
+- Action-only cells without value editors can still be selected normally.
+
+## Phase 12: API Adapter
+
+- [ ] Introduce a table data adapter boundary so UI code does not care whether data comes from mocks or the backend.
+- [ ] Keep the current mocks as the first adapter implementation.
+- [ ] Add adapter methods for loading table data, loading available background colors, and saving a pending changeset.
+- [ ] Represent saves as explicit operations, such as value changes, background changes, and note changes.
+- [ ] Keep backend identifiers static and passed through from data. Do not add runtime id generators for `techId`, `tech_id`, or replacement ids.
+
+Acceptance criteria:
+
+- Switching from mock data to backend data does not require rewriting selection, editing, or toolbar components.
+- The save adapter receives only changed cells/actions, not a full rewritten table.
+- API errors keep pending changes available for retry.
+
+## Phase 13: Virtualization Research
+
+- [ ] Move virtualization to the end of the roadmap until editing, selection, keyboard navigation, and save semantics are stable.
+- [ ] Research whether native `<table>` rendering can support the required row virtualization with sticky headers, merged cells, context menus, and selection overlays.
+- [ ] Compare native table virtualization with a CSS grid or positioned-cell layout if real backend tables are large enough to require it.
+- [ ] Decide whether virtualization is needed based on realistic table sizes and measured browser performance.
+
+Acceptance criteria:
+
+- There is a written decision before implementation starts.
+- The decision covers `rowSpan`, `colSpan`, sticky rows or headers, keyboard navigation, and selection rendering.
+- If virtualization is deferred, the backlog records the table size/performance assumptions behind that decision.
