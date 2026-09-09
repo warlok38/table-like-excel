@@ -6,6 +6,7 @@ type DemoCellOptions = {
   permissions?: CellPermissions | null
   formattedValue?: CellValue
   dataStatus?: DataStatus | null
+  colspan?: number
 }
 
 const noteStatus = (value: string): DataStatus => ({
@@ -44,7 +45,29 @@ const valueCell = (
     row,
     col: 2,
     rowspan: 1,
-    colspan: 1,
+    colspan: options.colspan ?? 1,
+    ...('editable' in options ? { editable: options.editable } : {}),
+    ...('editor' in options ? { editor: options.editor } : {}),
+    ...('permissions' in options ? { permissions: options.permissions } : {})
+  },
+  data_status: options.dataStatus ?? null
+})
+
+const mergedValueCell = (
+  id: string,
+  row: number,
+  value: CellValue,
+  options: DemoCellOptions = {}
+): CellTable => ({
+  label: null,
+  value,
+  formatted_value: options.formattedValue === undefined ? value : options.formattedValue,
+  data: {
+    id,
+    row,
+    col: 1,
+    rowspan: 1,
+    colspan: 2,
     ...('editable' in options ? { editable: options.editable } : {}),
     ...('editor' in options ? { editor: options.editor } : {}),
     ...('permissions' in options ? { permissions: options.permissions } : {})
@@ -167,6 +190,77 @@ export const editorModelDataMock: CellTable[][] = [
     valueCell('phase8-readonly-locked-value', 16, 'Закрыто', {
       editor: { type: 'readonly' },
       permissions: { background: false, note: false }
+    })
+  ],
+  [
+    labelCell('phase9-number-minmax-label', 17, 'Число 10-100'),
+    valueCell('phase9-number-minmax-value', 17, 50, {
+      editor: { type: 'number', min: 10, max: 100, step: 0.1 }
+    })
+  ],
+  [
+    labelCell('phase9-number-free-label', 18, 'Число без границ'),
+    valueCell('phase9-number-free-value', 18, 12.3456, {
+      editor: { type: 'number', step: 0.1 }
+    })
+  ],
+  [
+    labelCell('phase9-text-max-label', 19, 'Текст maxLength=5'),
+    valueCell('phase9-text-max-value', 19, 'abc', {
+      editor: { type: 'text', maxLength: 5 }
+    })
+  ],
+  [
+    labelCell('phase9-empty-text-label', 20, 'Пустой текст'),
+    valueCell('phase9-empty-text-value', 20, null, {
+      formattedValue: null,
+      editor: { type: 'text', maxLength: 100 }
+    })
+  ],
+  [
+    labelCell('phase9-empty-textarea-label', 21, 'Пустой textarea'),
+    valueCell('phase9-empty-textarea-value', 21, null, {
+      formattedValue: null,
+      editor: { type: 'textarea', maxLength: 1000 }
+    })
+  ],
+  [
+    labelCell('phase9-empty-select-label', 22, 'Пустой select'),
+    valueCell('phase9-empty-select-value', 22, null, {
+      formattedValue: null,
+      editor: {
+        type: 'select',
+        options: [
+          { value: 'planned', label: 'Запланировано' },
+          { value: 'done', label: 'Готово' },
+          { value: 'blocked', label: 'Заблокировано' }
+        ]
+      }
+    })
+  ],
+  [
+    labelCell('phase9-empty-date-label', 23, 'Пустая дата'),
+    valueCell('phase9-empty-date-value', 23, null, {
+      formattedValue: null,
+      editor: {
+        type: 'date',
+        min: '2024-02-01',
+        max: '2026-12-31',
+        displayFormat: 'DD.MM.YYYY'
+      }
+    })
+  ],
+  [
+    labelCell('phase9-select-empty-options-label', 24, 'Select без вариантов'),
+    valueCell('phase9-select-empty-options-value', 24, null, {
+      formattedValue: null,
+      editor: { type: 'select', options: [] }
+    })
+  ],
+  [
+    mergedValueCell('phase9-merged-editable-value', 25, 'Редактируемая объединённая ячейка', {
+      editor: { type: 'text', maxLength: 120 },
+      dataStatus: noteStatus('Проверка маркера на объединённой ячейке')
     })
   ]
 ]

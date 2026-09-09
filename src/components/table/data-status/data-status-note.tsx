@@ -7,6 +7,7 @@ import styles from './data-status-note.module.css'
 export type DataStatusNoteProps = {
   value: string
   anchorRef: RefObject<HTMLElement>
+  tableOwnerId: string
   onClose: () => void
   onChange: (value: string) => void
   readOnly?: boolean
@@ -15,6 +16,7 @@ export type DataStatusNoteProps = {
 export function DataStatusNote({
   value,
   anchorRef,
+  tableOwnerId,
   onClose,
   onChange,
   readOnly = false
@@ -60,6 +62,7 @@ export function DataStatusNote({
     function handleMouseDown(e: MouseEvent) {
       const target = e.target as Node
       if (anchorRef.current?.contains(target)) return
+      if (noteRef.current?.contains(target)) return
       onClose()
     }
     document.addEventListener('mousedown', handleMouseDown)
@@ -79,6 +82,7 @@ export function DataStatusNote({
       ref={noteRef}
       className={styles.noteContainer}
       style={{ top: position.top, left: position.left }}
+      data-table-owner={tableOwnerId}
       onMouseDown={(e) => e.stopPropagation()}
     >
       <textarea

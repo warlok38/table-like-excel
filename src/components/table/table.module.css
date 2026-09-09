@@ -1,5 +1,6 @@
 .tableContainer {
   width: 100%;
+  outline: none;
 }
 
 .toolbarSlot {
@@ -202,6 +203,41 @@
   padding: 0;
 }
 
+.valuePickerButton {
+  position: absolute;
+  right: 0.1rem;
+  bottom: 0.1rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: 1px solid rgba(15, 23, 42, 0.35);
+  background: rgba(255, 255, 255, 0.82);
+  color: #111827;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.valuePickerButton:hover,
+.valuePickerButton:focus-visible {
+  border-color: #1d4ed8;
+  outline: 1px solid #1d4ed8;
+}
+
+.valueChangedMarker {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  left: 2px;
+  z-index: 1;
+  height: 3px;
+  background: #facc15;
+  pointer-events: none;
+}
+
 .loading {
   font-size: 0.7rem;
   font-weight: 600;
@@ -225,4 +261,8 @@
 
 .nowrap {
   white-space: nowrap;
+}
+
+.preWrap {
+  white-space: pre-wrap;
 }

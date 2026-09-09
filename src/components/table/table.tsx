@@ -1,11 +1,14 @@
 'use client'
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo, useRef, useState, useId } from 'react'
 
 import type { AvailableBackgroundColor, CellTable } from '@/types'
-import { getCellCapabilities, makeCellKey, makeCellSelectionEntries } from './helpers'
+import { getCellCapabilities, makeCellSelectionEntries } from './helpers'
+import type { EditStart } from './editing/types'
+import { useTableEditing } from './hooks/use-table-editing'
+import { useTableInteractions } from './hooks/use-table-interactions'
 import { useTableSelection } from './hooks/use-table-selection'
-import { MemoTableCell } from './table-cell'
+import { TableBody } from './table-body'
 import { TableContextMenu } from './table-context-menu'
 import { TableToolbar } from './table-toolbar'
 import styles from './table.module.css'
@@ -19,8 +22,11 @@ type TableProps = {
 }
 
 export function Table({ data, availableBackgroundColors = [] }: TableProps) {
+  const ownerId = useId()
+  const rootRef = useRef<HTMLDivElement>(null)
   const selection = useTableSelection(data)
   const selectionEntries = useMemo(() => makeCellSelectionEntries(data), [data])
+  const editing = useTableEditing(selectionEntries)
   const [manualBackgrounds, setManualBackgrounds] = useState<Record<string, string>>({})
   const [manualNotes, setManualNotes] = useState<Record<string, string | null>>({})
   const [openNoteKey, setOpenNoteKey] = useState<string | null>(null)
@@ -47,6 +53,7 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
 
   const applyBackground = useCallback(
     (background: string | null) => {
+      editing.commitEditing()
       setManualBackgrounds((currentBackgrounds) => {
         const nextBackgrounds = { ...currentBackgrounds }
 
@@ -63,7 +70,7 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
         return nextBackgrounds
       })
     },
-    [selectedEntries]
+    [editing, selectedEntries]
   )
   const getNoteValue = useCallback(
     (cellKey: string, cell: CellTable) => {
@@ -105,6 +112,7 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
   )
   const openNoteEditor = useCallback(
     (cellKey: string) => {
+      editing.commitEditing()
       const entry = selectionEntries.find((selectionEntry) => selectionEntry.key === cellKey)
 
       if (!entry || !getCellCapabilities(entry.cell).canEditNote) {
@@ -124,17 +132,99 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
       setOpenNoteKey(cellKey)
       setContextMenu(null)
     },
-    [selectionEntries]
+    [editing, selectionEntries]
   )
   const closeNoteEditor = useCallback(() => setOpenNoteKey(null), [])
-  const openContextMenu = useCallback((cellKey: string, position: { x: number; y: number }) => {
-    setOpenNoteKey(null)
-    setContextMenu({ cellKey, ...position })
-  }, [])
+  const openContextMenu = useCallback(
+    (cellKey: string, position: { x: number; y: number }) => {
+      editing.commitEditing()
+      setOpenNoteKey(null)
+      setContextMenu({ cellKey, ...position })
+    },
+    [editing]
+  )
   const closeContextMenu = useCallback(() => setContextMenu(null), [])
+  const focusRoot = useCallback(() => {
+    requestAnimationFrame(() => rootRef.current?.focus({ preventScroll: true }))
+  }, [])
+  const commitEditorWithFocus = useCallback(() => {
+    editing.commitEditing()
+    focusRoot()
+  }, [editing, focusRoot])
+  const cancelEditorWithFocus = useCallback(() => {
+    editing.cancelEditing()
+    focusRoot()
+  }, [editing, focusRoot])
+  const openEditor = useCallback(
+    (cellKey: string, start: EditStart) => {
+      const didStart = editing.startEditing(cellKey, start)
+
+      if (didStart) {
+        selection.selectOnly(cellKey)
+        setOpenNoteKey(null)
+        setContextMenu(null)
+      }
+    },
+    [editing, selection]
+  )
+  const leaveTable = useCallback(() => {
+    selection.clearSelection()
+    setOpenNoteKey(null)
+    setContextMenu(null)
+  }, [selection])
+  const handleRootKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (event.target !== rootRef.current) return
+
+      const activeKey = selection.activeCellKey
+      if (!activeKey || !selection.selectedCellKeys.has(activeKey)) return
+
+      const activeEntry = selectionEntries.find((entry) => entry.key === activeKey)
+      if (!activeEntry) return
+
+      if (event.key === 'Enter') {
+        event.preventDefault()
+        openEditor(activeKey, { kind: 'current' })
+        return
+      }
+
+      if (event.key.length !== 1 || event.ctrlKey || event.metaKey || event.altKey) {
+        return
+      }
+
+      const editor = activeEntry.cell.data.editor
+      if (
+        !editor ||
+        editor.type === 'readonly' ||
+        editor.type === 'select' ||
+        editor.type === 'date'
+      ) {
+        return
+      }
+
+      event.preventDefault()
+      openEditor(activeKey, { kind: 'replace', text: event.key })
+    },
+    [openEditor, selection.activeCellKey, selection.selectedCellKeys, selectionEntries]
+  )
+
+  useTableInteractions({
+    ownerId,
+    rootRef,
+    hasEditor: Boolean(editing.session),
+    onLeaveEditor: editing.commitEditing,
+    onLeaveTable: leaveTable
+  })
 
   return (
-    <div className={styles.tableContainer} data-is-selecting={selection.isDragging}>
+    <div
+      ref={rootRef}
+      className={styles.tableContainer}
+      data-is-selecting={selection.isDragging}
+      data-table-owner={ownerId}
+      tabIndex={0}
+      onKeyDown={handleRootKeyDown}
+    >
       <div className={styles.toolbarSlot}>
         <TableToolbar
           colors={availableBackgroundColors}
@@ -148,8 +238,17 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
           data={data}
           selection={selection}
           manualBackgrounds={manualBackgrounds}
+          pendingValues={editing.pendingValues}
+          session={editing.session}
+          tableOwnerId={ownerId}
           openNoteKey={openNoteKey}
           getNoteValue={getNoteValue}
+          onOpenEditor={openEditor}
+          onDraftChange={editing.updateDraft}
+          onChooseValue={editing.chooseValue}
+          onCommitEditor={commitEditorWithFocus}
+          onCancelEditor={cancelEditorWithFocus}
+          onFocusTable={focusRoot}
           onCloseNote={closeNoteEditor}
           onNoteChange={changeNote}
           onContextMenu={openContextMenu}
@@ -168,62 +267,5 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
         />
       )}
     </div>
-  )
-}
-
-function TableBody({
-  data,
-  selection,
-  manualBackgrounds,
-  openNoteKey,
-  getNoteValue,
-  onCloseNote,
-  onNoteChange,
-  onContextMenu
-}: {
-  data: CellTable[][]
-  selection: ReturnType<typeof useTableSelection>
-  manualBackgrounds: Record<string, string>
-  openNoteKey: string | null
-  getNoteValue: (cellKey: string, cell: CellTable) => string | null
-  onCloseNote: () => void
-  onNoteChange: (cellKey: string, value: string) => void
-  onContextMenu: (cellKey: string, position: { x: number; y: number }) => void
-}) {
-  return (
-    <table className={styles.table}>
-      <tbody className={styles.tbody}>
-        {data.map((row, rowIndex) => (
-          <tr key={`row-${rowIndex + 1}`} className={styles.tr}>
-            {row.map((cell, cellIndex) => {
-              const cellKey = makeCellKey(cell, rowIndex, cellIndex)
-              const capabilities = getCellCapabilities(cell)
-
-              return (
-                <MemoTableCell
-                  key={cellKey}
-                  cell={cell}
-                  cellKey={cellKey}
-                  rowIndex={rowIndex}
-                  cellIndex={cellIndex}
-                  manualBackground={manualBackgrounds[cellKey] ?? null}
-                  noteValue={getNoteValue(cellKey, cell)}
-                  isNoteOpen={openNoteKey === cellKey}
-                  isActive={selection.activeCellKey === cellKey}
-                  isSelected={selection.selectedCellKeys.has(cellKey)}
-                  isLocked={capabilities.isLocked}
-                  canEditNote={capabilities.canEditNote}
-                  onSelect={selection.selectCell}
-                  onExtendSelection={selection.extendRangeToCell}
-                  onCloseNote={onCloseNote}
-                  onNoteChange={onNoteChange}
-                  onContextMenu={onContextMenu}
-                />
-              )
-            })}
-          </tr>
-        ))}
-      </tbody>
-    </table>
   )
 }

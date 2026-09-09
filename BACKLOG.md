@@ -181,26 +181,49 @@ Acceptance criteria:
 
 ## Phase 9: Cell Value Editing
 
-- [ ] Use the explicit raw values, editor metadata, and capabilities introduced in Phase 8.
-- [ ] Restore editable cell values with a local editing model instead of old Redux state.
-- [ ] Render the active editor only while a cell is in edit mode.
-- [ ] Apply the edited value to local pending state on `Enter`, then close edit mode while keeping the same cell active and selected.
-- [ ] Cancel the current edit on `Esc` without changing pending state.
-- [ ] Preserve or replace the old changed-value visual marker. The imported input styles used a yellow bottom border for changed values, so pending value changes should remain visibly marked in the new table UI.
+Scope and interaction rules agreed on 2026-09-09. Implementation documents for GPT-5.5:
+
+- [Design and agreed rules](docs/superpowers/specs/2026-09-09-phase9-cell-value-editing-design.md).
+- [Step-by-step implementation plan](docs/superpowers/plans/2026-09-09-phase9-cell-value-editing.md).
+
+- [x] Use the explicit raw values, editor metadata, and capabilities introduced in Phase 8.
+- [x] Restore editable cell values with a local editing model instead of old Redux state.
+- [x] Render the active editor only while a cell is in edit mode.
+- [x] Apply the edited value to local pending state on `Enter`, then close edit mode while keeping the same cell active and selected.
+- [x] Apply the edited value locally when clicking outside the value editor, close the editor, and retain the changed-value marker until the value matches the loaded value or a future save succeeds.
+- [x] On `Esc`, restore the exact pending value/absence of an override from before the editor opened, then close it. This includes rolling back immediately applied select/date choices, while preserving changes made before the current session.
+- [x] Clear selection, active cell, range anchor, and drag state when clicking outside the table interaction area. Apply an open value edit locally before clearing selection. The table toolbar, context menu, note editor, and value-editor popups belong to the table interaction area, including portaled content.
+- [x] Preserve or replace the old changed-value visual marker. The imported input styles used a yellow bottom border for changed values, so pending value changes should remain visibly marked in the new table UI.
+
+Implementation note, 2026-09-09:
+
+- Phase 9 local value editing is implemented with table-local pending values, active-only editors, select/date panels, date calendar arithmetic, owner-scoped outside handling, and a yellow pending-value marker.
+- `npm.cmd run build` and `npm.cmd run lint` pass. `git diff --check` is part of final verification for this phase.
+- Manual browser smoke checks were run on `http://localhost:3001`: single click selection without editing; printable key replacement after selection; double-click text editing; trim-on-commit; Enter commit with focus returning to the table; outside click commit plus selection clear; number min clamp only on commit; dot-to-comma normalization; invalid numeric characters rejected; select choice applies immediately and stays open; select Esc restores snapshot; date calendar opens, clear applies immediately and stays open; Enter closes date panel; context menu and note portal remain usable.
+- The full long-form checklist remains a manual regression aid for future phases. Automated tests were not added by project rule.
 
 Interaction rules (implementation belongs to this phase):
 
 - Single click selects a cell without opening a value editor.
-- Double click opens edit mode only when `canEditValue` permits it.
-- `Enter` opens edit mode from a selected value-editable cell.
-- Decide the exact typing-to-replace behavior for text-like editors during Phase 9 planning.
+- Double click or `Enter` opens the current effective raw value only when `canEditValue` permits it. Text caret starts at the end without selecting text.
+- Typing a printable character into a selected text/textarea/number cell starts replacement input. Number replacement starts only with a valid numeric character; modifiers for shortcuts do not start editing.
+- Starting an editor reduces selection to the single edited cell, including when Enter or typing starts from a multi-selection. Other previously selected cells are unchanged; Escape does not restore the old range.
 - Select and date controls do not open on normal cell click; a dedicated dropdown/calendar affordance opens the picker, with keyboard opening through `Enter`.
+- Selecting an option or date immediately applies the value locally and updates the changed-value marker, but keeps the select/calendar open for further choices.
+- Enter or clicking outside a select/date editor closes it retaining its latest choice; Escape restores the value from before opening that editor.
+- Select and date editors provide a clear action that sets the value to null. Dates outside configured min/max are unavailable; Phase 9 date editing uses a calendar without manual date text entry.
 - Render editor controls from explicit metadata, separately from cell selection state.
-- Resolve blur behavior, multi-selection editing, textarea newlines, and value validation in the Phase 9 plan before implementation.
+- Numeric editor input uses a comma as the displayed decimal separator and accepts a dot by normalizing it to a comma. Stored values remain JavaScript numbers or null. Letters and invalid symbol placement must not be accepted, including through paste.
+- Empty numeric input and incomplete numeric drafts with no digits, such as `-`, `,`, or `-,`, become null when the edit is applied; they do not block leaving the editor.
+- On Enter or leaving the numeric editor, clamp a finite numeric value to the configured min/max. Apply the same rule to typed and pasted input. Do not clamp while typing; absent boundaries impose no limit, and null remains null.
+- Do not round manually entered or pasted numbers to step. Step only controls increment/decrement buttons if such controls are provided.
+- Text and textarea apply trim on commit; an empty result becomes null. Internal spaces and line breaks are retained, while leading/trailing whitespace is removed. Existing note text semantics are unchanged.
+- Text maxLength limits typing and paste. In textarea, Shift+Enter inserts a newline and Enter applies the value.
+- Enter/Escape return focus to the table; outside pointer interactions keep their natural focus destination. Arrow navigation between cells remains Phase 11.
 
 Acceptance criteria:
 
-- Editing one cell does not clear selection state.
+- Opening an editor selects only the edited cell; applying it with Enter keeps that cell selected. Clicking outside the table interaction area clears selection after applying the current edit locally.
 - Edited values are visible in the cell after edit mode closes.
 - Pending edited cells have a clear changed state before save.
 - Non-editable cells ignore double click, text input, and `Enter` editing commands.

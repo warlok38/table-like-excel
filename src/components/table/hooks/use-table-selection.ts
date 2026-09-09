@@ -14,6 +14,8 @@ export type TableSelectionState = {
   selectedCellKeys: Set<string>
   isDragging: boolean
   selectCell: (cellKey: string, options: SelectCellOptions) => void
+  selectOnly: (cellKey: string) => void
+  clearSelection: () => void
   extendRangeToCell: (cellKey: string) => void
 }
 
@@ -48,6 +50,20 @@ export function useTableSelection(data: CellTable[][]): TableSelectionState {
     setSelectedCellKeys(new Set([cellKey]))
   }, [])
 
+  const selectOnly = useCallback((cellKey: string) => {
+    setActiveCellKey(cellKey)
+    setRangeAnchorKey(cellKey)
+    setSelectedCellKeys(new Set([cellKey]))
+    setIsDragging(false)
+  }, [])
+
+  const clearSelection = useCallback(() => {
+    setActiveCellKey(null)
+    setRangeAnchorKey(null)
+    setSelectedCellKeys(new Set())
+    setIsDragging(false)
+  }, [])
+
   const extendRangeToCell = useCallback(
     (cellKey: string) => {
       if (!isDragging || !rangeAnchorKey) {
@@ -77,6 +93,8 @@ export function useTableSelection(data: CellTable[][]): TableSelectionState {
     selectedCellKeys,
     isDragging,
     selectCell,
+    selectOnly,
+    clearSelection,
     extendRangeToCell
   }
 }
