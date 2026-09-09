@@ -257,13 +257,24 @@ Acceptance criteria:
 
 ## Phase 11: Keyboard Navigation
 
-- [ ] Rework keyboard navigation around table cell selection instead of the old input-to-input focus behavior.
-- [ ] Use a virtual coordinate map that understands `rowSpan` and `colSpan`.
-- [ ] Move the active selected cell with arrow keys across the visual grid.
-- [ ] Extend selection with `Shift + Arrow`.
-- [ ] Skip duplicate coordinates that point to the same merged cell so navigation feels like Excel merged-cell movement.
-- [ ] Keep readonly cells reachable by keyboard selection, but show locked selection styling when the cell cannot be edited, colored, or annotated.
-- [ ] Make `Delete` clear values only for selected cells that are value-editable.
+- [x] Rework keyboard navigation around table cell selection instead of the old input-to-input focus behavior.
+- [x] Use a virtual coordinate map that understands `rowSpan` and `colSpan`.
+- [x] Move the active selected cell with arrow keys across the visual grid.
+- [x] Extend selection with `Shift + Arrow`.
+- [x] Skip duplicate coordinates that point to the same merged cell so navigation feels like Excel merged-cell movement.
+- [x] Keep readonly cells reachable by keyboard selection, but show locked selection styling when the cell cannot be edited, colored, or annotated.
+- [x] Make `Delete` clear values only for selected cells that are value-editable.
+
+Implementation documents:
+
+- [Design and agreed rules](docs/superpowers/specs/2026-09-09-phase11-keyboard-navigation-design.md).
+- [Step-by-step implementation plan](docs/superpowers/plans/2026-09-09-phase11-keyboard-navigation.md).
+
+Implementation note, 2026-09-09:
+
+- Phase 11 is implemented with a stable-key virtual coordinate map for `rowSpan`/`colSpan`, keyboard movement helpers in table selection state, Arrow and `Shift + Arrow` handling on the table root, and `Delete` clearing selected value-editable cells to `null`.
+- `npm.cmd run build` and `npm.cmd run lint` pass. `git diff --check` is part of final verification for this phase.
+- Manual browser smoke checks were run on `http://localhost:3001`: ArrowRight and ArrowDown move a single selected active cell; `Shift + ArrowRight` and `Shift + ArrowDown` expand a stable-anchor range; merged header navigation skips duplicate colspan coordinates; merged `Shift + ArrowDown` selects the spanned header and underlying month cells; action-only and readonly-with-actions cells remain normally selectable; fully locked cells remain reachable with locked selected styling; `Delete` clears an editable text value to a pending `null`; `Delete` on an action-only cell does not create pending changes; printable replacement, double-click text editing, select Enter opening, and date Enter opening still work.
 
 Acceptance criteria:
 

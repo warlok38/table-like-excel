@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useRef, useState, useId } from 'react'
 
 import type { AvailableBackgroundColor, CellTable } from '@/types'
-import { getCellCapabilities, makeCellSelectionEntries } from './helpers'
+import { getCellCapabilities, makeCellSelectionEntries, type KeyboardDirection } from './helpers'
 import type { TableSaveChangeset } from './data-adapter/types'
 import type { EditStart } from './editing/types'
 import { useTableEditing } from './hooks/use-table-editing'
@@ -42,6 +42,14 @@ function toSaveChangeset(changes: PendingChanges): TableSaveChangeset {
     })),
     notes: Object.entries(changes.notes).map(([cellKey, note]) => ({ cellKey, note }))
   }
+}
+
+function getKeyboardDirection(key: string): KeyboardDirection | null {
+  if (key === 'ArrowUp') return 'up'
+  if (key === 'ArrowDown') return 'down'
+  if (key === 'ArrowLeft') return 'left'
+  if (key === 'ArrowRight') return 'right'
+  return null
 }
 
 export function Table({ data, availableBackgroundColors = [], onSaveChanges }: TableProps) {
@@ -246,6 +254,41 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
       const activeEntry = selectionEntries.find((entry) => entry.key === activeKey)
       if (!activeEntry) return
 
+      const direction = getKeyboardDirection(event.key)
+      if (direction) {
+        event.preventDefault()
+        editing.commitEditing()
+        setOpenNoteKey(null)
+        setContextMenu(null)
+
+        if (event.shiftKey) {
+          selection.extendActiveRange(direction)
+        } else {
+          selection.moveActiveCell(direction)
+        }
+
+        return
+      }
+
+      if (event.key === 'Delete') {
+        event.preventDefault()
+        editing.commitEditing()
+        setOpenNoteKey(null)
+        setContextMenu(null)
+        updatePendingChanges((current) => {
+          let nextChanges = current
+
+          selectedEntries.forEach((entry) => {
+            if (getCellCapabilities(entry.cell).canEditValue) {
+              nextChanges = setPendingValueChange(nextChanges, entry.key, entry.cell, null)
+            }
+          })
+
+          return nextChanges
+        })
+        return
+      }
+
       if (event.key === 'Enter') {
         event.preventDefault()
         openEditor(activeKey, { kind: 'current' })
@@ -269,7 +312,7 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
       event.preventDefault()
       openEditor(activeKey, { kind: 'replace', text: event.key })
     },
-    [openEditor, selection.activeCellKey, selection.selectedCellKeys, selectionEntries]
+    [editing, openEditor, selectedEntries, selection, selectionEntries, updatePendingChanges]
   )
 
   useTableInteractions({

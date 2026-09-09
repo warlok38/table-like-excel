@@ -191,8 +191,7 @@ function TableCell({
         [styles.lockedCell]: isLocked,
         [styles.selectedLockedCell]: isSelected && isLocked,
         [styles.noteCell]: hasNote,
-        [styles.pendingCell]: isCellChanged,
-        [styles.valueChangedCell]: isValueChanged
+        [styles.pendingCell]: isCellChanged
       })}
       colSpan={cell.data.colspan}
       rowSpan={cell.data.rowspan}

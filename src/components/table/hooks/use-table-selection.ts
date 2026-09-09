@@ -3,7 +3,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 
 import type { CellTable } from '@/types'
-import { getCellKeysInRange, makeCellSelectionEntries } from '../helpers'
+import {
+  getCellKeysInVirtualRange,
+  getNextCellKey,
+  makeVirtualTableMap,
+  type KeyboardDirection
+} from '../helpers'
 
 type SelectCellOptions = {
   append: boolean
@@ -17,10 +22,12 @@ export type TableSelectionState = {
   selectOnly: (cellKey: string) => void
   clearSelection: () => void
   extendRangeToCell: (cellKey: string) => void
+  moveActiveCell: (direction: KeyboardDirection) => void
+  extendActiveRange: (direction: KeyboardDirection) => void
 }
 
 export function useTableSelection(data: CellTable[][]): TableSelectionState {
-  const entries = useMemo(() => makeCellSelectionEntries(data), [data])
+  const virtualMap = useMemo(() => makeVirtualTableMap(data), [data])
   const [activeCellKey, setActiveCellKey] = useState<string | null>(null)
   const [selectedCellKeys, setSelectedCellKeys] = useState<Set<string>>(() => new Set())
   const [rangeAnchorKey, setRangeAnchorKey] = useState<string | null>(null)
@@ -70,11 +77,42 @@ export function useTableSelection(data: CellTable[][]): TableSelectionState {
         return
       }
 
-      const rangeKeys = getCellKeysInRange(entries, rangeAnchorKey, cellKey)
+      const rangeKeys = getCellKeysInVirtualRange(virtualMap, rangeAnchorKey, cellKey)
       setActiveCellKey(cellKey)
       setSelectedCellKeys(new Set(rangeKeys))
     },
-    [entries, isDragging, rangeAnchorKey]
+    [isDragging, rangeAnchorKey, virtualMap]
+  )
+
+  const moveActiveCell = useCallback(
+    (direction: KeyboardDirection) => {
+      if (!activeCellKey) return
+
+      const nextKey = getNextCellKey(virtualMap, activeCellKey, direction)
+      if (nextKey === activeCellKey) return
+
+      setActiveCellKey(nextKey)
+      setRangeAnchorKey(nextKey)
+      setSelectedCellKeys(new Set([nextKey]))
+      setIsDragging(false)
+    },
+    [activeCellKey, virtualMap]
+  )
+
+  const extendActiveRange = useCallback(
+    (direction: KeyboardDirection) => {
+      if (!activeCellKey) return
+
+      const nextKey = getNextCellKey(virtualMap, activeCellKey, direction)
+      const anchorKey = rangeAnchorKey ?? activeCellKey
+      const rangeKeys = getCellKeysInVirtualRange(virtualMap, anchorKey, nextKey)
+
+      setActiveCellKey(nextKey)
+      setRangeAnchorKey(anchorKey)
+      setSelectedCellKeys(new Set(rangeKeys))
+      setIsDragging(false)
+    },
+    [activeCellKey, rangeAnchorKey, virtualMap]
   )
 
   useEffect(() => {
@@ -95,6 +133,8 @@ export function useTableSelection(data: CellTable[][]): TableSelectionState {
     selectCell,
     selectOnly,
     clearSelection,
-    extendRangeToCell
+    extendRangeToCell,
+    moveActiveCell,
+    extendActiveRange
   }
 }
