@@ -26,13 +26,14 @@ type TableCellProps = {
   cellIndex: number
   displayValue: string
   currentValue: CellValue
-  manualBackground: string | null
+  manualBackground: string | null | undefined
   noteValue: string | null
   isNoteOpen: boolean
   isActive: boolean
   isSelected: boolean
   isLocked: boolean
   isValueChanged: boolean
+  isCellChanged: boolean
   canEditValue: boolean
   canEditNote: boolean
   session: EditingSession | null
@@ -95,6 +96,7 @@ function TableCell({
   isSelected,
   isLocked,
   isValueChanged,
+  isCellChanged,
   canEditValue,
   canEditNote,
   session,
@@ -189,6 +191,7 @@ function TableCell({
         [styles.lockedCell]: isLocked,
         [styles.selectedLockedCell]: isSelected && isLocked,
         [styles.noteCell]: hasNote,
+        [styles.pendingCell]: isCellChanged,
         [styles.valueChangedCell]: isValueChanged
       })}
       colSpan={cell.data.colspan}
@@ -197,6 +200,7 @@ function TableCell({
       data-row={rowIndex}
       data-col={cellIndex}
       data-value-changed={isValueChanged || undefined}
+      data-pending-changed={isCellChanged || undefined}
       aria-selected={isSelected}
       onMouseDown={handleMouseDown}
       onMouseEnter={handleMouseEnter}

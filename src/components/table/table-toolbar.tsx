@@ -1,46 +1,98 @@
 'use client'
 
 import type { AvailableBackgroundColor } from '@/types'
+import type { PendingChangeSummary } from './pending/types'
 import styles from './table.module.css'
 
 type TableToolbarProps = {
   colors: AvailableBackgroundColor[]
   selectedCount: number
   backgroundEditableSelectedCount: number
+  pendingSummary: PendingChangeSummary
+  canSaveDraft: boolean
+  saveStatus: 'idle' | 'saving' | 'success' | 'failure'
+  saveMessage: string | null
   onBackgroundChange: (background: string | null) => void
+  onSave: () => void
+  onCancel: () => void
 }
 
 export function TableToolbar({
   colors,
   selectedCount,
   backgroundEditableSelectedCount,
-  onBackgroundChange
+  pendingSummary,
+  canSaveDraft,
+  saveStatus,
+  saveMessage,
+  onBackgroundChange,
+  onSave,
+  onCancel
 }: TableToolbarProps) {
-  if (selectedCount === 0) {
+  const hasPendingChanges = pendingSummary.operations > 0
+
+  if (selectedCount === 0 && !hasPendingChanges && !canSaveDraft && saveStatus === 'idle') {
     return null
   }
 
-  const isDisabled = backgroundEditableSelectedCount === 0
+  const isSaving = saveStatus === 'saving'
+  const isBackgroundDisabled = backgroundEditableSelectedCount === 0 || isSaving
+  const arePendingActionsDisabled = (!hasPendingChanges && !canSaveDraft) || isSaving
 
   return (
     <div className={styles.toolbar} aria-label="Действия с выбранными ячейками">
-      <span className={styles.toolbarSummary}>
-        Выбрано {selectedCount}, доступно для заливки {backgroundEditableSelectedCount}
-      </span>
-      <div className={styles.backgroundPalette} aria-label="Цвет заливки">
-        {colors.map((color) => (
-          <button
-            key={color.tech_id}
-            type="button"
-            className={color.value ? styles.backgroundButton : styles.emptyBackgroundButton}
-            style={color.value ? { backgroundColor: color.value } : undefined}
-            title={color.alias}
-            aria-label={`Заливка: ${color.alias}`}
-            disabled={isDisabled}
-            onClick={() => onBackgroundChange(color.value)}
-          />
-        ))}
+      {selectedCount > 0 && (
+        <>
+          <span className={styles.toolbarSummary}>
+            Выбрано {selectedCount}, доступно для заливки {backgroundEditableSelectedCount}
+          </span>
+          <div className={styles.backgroundPalette} aria-label="Цвет заливки">
+            {colors.map((color) => (
+              <button
+                key={color.tech_id}
+                type="button"
+                className={color.value ? styles.backgroundButton : styles.emptyBackgroundButton}
+                style={color.value ? { backgroundColor: color.value } : undefined}
+                title={color.alias}
+                aria-label={`Заливка: ${color.alias}`}
+                disabled={isBackgroundDisabled}
+                onClick={() => onBackgroundChange(color.value)}
+              />
+            ))}
+          </div>
+        </>
+      )}
+      {hasPendingChanges && (
+        <span className={styles.pendingSummary}>
+          Не сохранено: {pendingSummary.changedCells} яч., {pendingSummary.operations} изм.
+        </span>
+      )}
+      <div className={styles.saveActions} aria-label="Сохранение изменений">
+        <button
+          type="button"
+          className={styles.saveButton}
+          disabled={arePendingActionsDisabled}
+          onClick={onSave}
+        >
+          {isSaving ? 'Сохранение...' : 'Сохранить'}
+        </button>
+        <button
+          type="button"
+          className={styles.cancelButton}
+          disabled={arePendingActionsDisabled}
+          onClick={onCancel}
+        >
+          Отмена
+        </button>
       </div>
+      {saveMessage && (
+        <span
+          className={saveStatus === 'failure' ? styles.saveFailure : styles.saveSuccess}
+          role="status"
+        >
+          {saveMessage}
+        </span>
+      )}
     </div>
   )
 }

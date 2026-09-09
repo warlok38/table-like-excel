@@ -3,10 +3,13 @@ import type { CellTable } from '@/types'
 
 export function getCellStyle(
   cell: CellTable,
-  manualBackground: string | null = null
+  manualBackground: string | null | undefined = undefined
 ): CSSProperties {
   const dataStatusBackground = getDataStatusBackground(cell)
-  const background = manualBackground ?? dataStatusBackground ?? cell.data.color ?? '#ffffff'
+  const background =
+    manualBackground !== undefined
+      ? (manualBackground ?? '#ffffff')
+      : (dataStatusBackground ?? cell.data.color ?? '#ffffff')
 
   if (background.includes('gradient')) {
     return {

@@ -15,18 +15,30 @@ import {
 import type { EditStart, EditingSession, PendingValues } from '../editing/types'
 
 type EditingState = {
-  pendingValues: PendingValues
   session: EditingSession | null
 }
 
 const emptyState: EditingState = {
-  pendingValues: {},
   session: null
 }
 
-export function useTableEditing(entries: CellSelectionEntry[]) {
+type UseTableEditingOptions = {
+  entries: CellSelectionEntry[]
+  pendingValues: PendingValues
+  onPendingValueChange: (cellKey: string, value: CellValue) => void
+}
+
+export function useTableEditing({
+  entries,
+  pendingValues,
+  onPendingValueChange
+}: UseTableEditingOptions) {
   const stateRef = useRef<EditingState>(emptyState)
   const [state, setState] = useState<EditingState>(emptyState)
+  const pendingValuesRef = useRef(pendingValues)
+  pendingValuesRef.current = pendingValues
+  const onPendingValueChangeRef = useRef(onPendingValueChange)
+  onPendingValueChangeRef.current = onPendingValueChange
 
   const entriesByKey = useMemo(
     () => new Map(entries.map((entry) => [entry.key, entry] as const)),
@@ -41,45 +53,23 @@ export function useTableEditing(entries: CellSelectionEntry[]) {
     setState(next)
   }, [])
 
-  const writePendingValue = useCallback(
-    (pendingValues: PendingValues, cellKey: string, value: CellValue): PendingValues => {
-      const entry = entriesByKeyRef.current.get(cellKey)
-      if (!entry) return pendingValues
+  const commitSession = useCallback((current: EditingState): EditingState => {
+    const session = current.session
+    if (!session) return current
 
-      const next = { ...pendingValues }
-      if (value === entry.cell.value) {
-        delete next[cellKey]
-      } else {
-        next[cellKey] = value
-      }
+    const entry = entriesByKeyRef.current.get(session.cellKey)
+    if (!entry || !getCellCapabilities(entry.cell).canEditValue) {
+      return { ...current, session: null }
+    }
 
-      return next
-    },
-    []
-  )
+    if (session.editor.type === 'select' || session.editor.type === 'date') {
+      return { ...current, session: null }
+    }
 
-  const commitSession = useCallback(
-    (current: EditingState): EditingState => {
-      const session = current.session
-      if (!session) return current
-
-      const entry = entriesByKeyRef.current.get(session.cellKey)
-      if (!entry || !getCellCapabilities(entry.cell).canEditValue) {
-        return { ...current, session: null }
-      }
-
-      if (session.editor.type === 'select' || session.editor.type === 'date') {
-        return { ...current, session: null }
-      }
-
-      const value = normalizeCommittedValue(session.draft, session.editor)
-      return {
-        pendingValues: writePendingValue(current.pendingValues, session.cellKey, value),
-        session: null
-      }
-    },
-    [writePendingValue]
-  )
+    const value = normalizeCommittedValue(session.draft, session.editor)
+    onPendingValueChangeRef.current(session.cellKey, value)
+    return { session: null }
+  }, [])
 
   const startEditing = useCallback(
     (cellKey: string, start: EditStart) => {
@@ -106,7 +96,7 @@ export function useTableEditing(entries: CellSelectionEntry[]) {
           start.kind === 'replace'
             ? start.text
             : getInitialDraft(
-                getEffectiveValue(cellKey, entry.cell, committed.pendingValues),
+                getEffectiveValue(cellKey, entry.cell, pendingValuesRef.current),
                 editor
               )
 
@@ -118,18 +108,17 @@ export function useTableEditing(entries: CellSelectionEntry[]) {
           draft = normalized
         }
 
-        const hasPending = Object.prototype.hasOwnProperty.call(committed.pendingValues, cellKey)
+        const hasPending = Object.prototype.hasOwnProperty.call(pendingValuesRef.current, cellKey)
 
         didStart = true
         return {
-          pendingValues: committed.pendingValues,
           session: {
             cellKey,
             editor,
             draft,
             initialPending: {
               exists: hasPending,
-              value: hasPending ? committed.pendingValues[cellKey] : null
+              value: hasPending ? pendingValuesRef.current[cellKey] : null
             }
           }
         }
@@ -178,8 +167,9 @@ export function useTableEditing(entries: CellSelectionEntry[]) {
           if (!isAllowed) return current
         }
 
+        onPendingValueChangeRef.current(session.cellKey, value)
+
         return {
-          pendingValues: writePendingValue(current.pendingValues, session.cellKey, value),
           session: {
             ...session,
             draft: value === null ? '' : String(value)
@@ -187,7 +177,7 @@ export function useTableEditing(entries: CellSelectionEntry[]) {
         }
       })
     },
-    [transition, writePendingValue]
+    [transition]
   )
 
   const commitEditing = useCallback(() => {
@@ -204,17 +194,13 @@ export function useTableEditing(entries: CellSelectionEntry[]) {
         return { ...current, session: null }
       }
 
-      const next = { ...current.pendingValues }
       if (session.initialPending.exists) {
-        next[session.cellKey] = session.initialPending.value
+        onPendingValueChangeRef.current(session.cellKey, session.initialPending.value)
       } else {
-        delete next[session.cellKey]
+        onPendingValueChangeRef.current(session.cellKey, entry.cell.value)
       }
 
-      return {
-        pendingValues: next,
-        session: null
-      }
+      return { session: null }
     })
   }, [transition])
 
@@ -229,7 +215,6 @@ export function useTableEditing(entries: CellSelectionEntry[]) {
   }, [entries, transition])
 
   return {
-    pendingValues: state.pendingValues,
     session: state.session,
     startEditing,
     updateDraft,

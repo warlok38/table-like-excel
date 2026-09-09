@@ -4,10 +4,21 @@ import { useCallback, useMemo, useRef, useState, useId } from 'react'
 
 import type { AvailableBackgroundColor, CellTable } from '@/types'
 import { getCellCapabilities, makeCellSelectionEntries } from './helpers'
+import type { TableSaveChangeset } from './data-adapter/types'
 import type { EditStart } from './editing/types'
 import { useTableEditing } from './hooks/use-table-editing'
 import { useTableInteractions } from './hooks/use-table-interactions'
 import { useTableSelection } from './hooks/use-table-selection'
+import {
+  emptyPendingChanges,
+  getPendingNote,
+  hasPendingChanges,
+  setPendingBackgroundChange,
+  setPendingNoteChange,
+  setPendingValueChange,
+  summarizePendingChanges
+} from './pending/pending-changes'
+import type { PendingChanges } from './pending/types'
 import { TableBody } from './table-body'
 import { TableContextMenu } from './table-context-menu'
 import { TableToolbar } from './table-toolbar'
@@ -19,20 +30,58 @@ type TableProps = {
   isEditablePage?: boolean | string
   formatCalendare?: string
   isFetching?: boolean
+  onSaveChanges: (changeset: TableSaveChangeset) => Promise<CellTable[][]>
 }
 
-export function Table({ data, availableBackgroundColors = [] }: TableProps) {
+function toSaveChangeset(changes: PendingChanges): TableSaveChangeset {
+  return {
+    values: Object.entries(changes.values).map(([cellKey, value]) => ({ cellKey, value })),
+    backgrounds: Object.entries(changes.backgrounds).map(([cellKey, background]) => ({
+      cellKey,
+      background
+    })),
+    notes: Object.entries(changes.notes).map(([cellKey, note]) => ({ cellKey, note }))
+  }
+}
+
+export function Table({ data, availableBackgroundColors = [], onSaveChanges }: TableProps) {
   const ownerId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
   const selection = useTableSelection(data)
   const selectionEntries = useMemo(() => makeCellSelectionEntries(data), [data])
-  const editing = useTableEditing(selectionEntries)
-  const [manualBackgrounds, setManualBackgrounds] = useState<Record<string, string>>({})
-  const [manualNotes, setManualNotes] = useState<Record<string, string | null>>({})
+  const [pendingChanges, setPendingChanges] = useState<PendingChanges>(emptyPendingChanges)
+  const pendingChangesRef = useRef(pendingChanges)
   const [openNoteKey, setOpenNoteKey] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{ cellKey: string; x: number; y: number } | null>(
     null
   )
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'failure'>('idle')
+  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const updatePendingChanges = useCallback(
+    (updater: (current: PendingChanges) => PendingChanges) => {
+      const next = updater(pendingChangesRef.current)
+      pendingChangesRef.current = next
+      setPendingChanges(next)
+      setSaveStatus('idle')
+      setSaveMessage(null)
+    },
+    []
+  )
+  const changePendingValue = useCallback(
+    (cellKey: string, value: CellTable['value']) => {
+      const entry = selectionEntries.find((item) => item.key === cellKey)
+
+      if (!entry || !getCellCapabilities(entry.cell).canEditValue) return
+
+      updatePendingChanges((current) => setPendingValueChange(current, cellKey, entry.cell, value))
+    },
+    [selectionEntries, updatePendingChanges]
+  )
+  const editing = useTableEditing({
+    entries: selectionEntries,
+    pendingValues: pendingChanges.values,
+    onPendingValueChange: changePendingValue
+  })
 
   const selectedEntries = useMemo(
     () => selectionEntries.filter((entry) => selection.selectedCellKeys.has(entry.key)),
@@ -43,6 +92,8 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
       selectedEntries.filter((entry) => getCellCapabilities(entry.cell).canChangeBackground).length,
     [selectedEntries]
   )
+  const pendingSummary = useMemo(() => summarizePendingChanges(pendingChanges), [pendingChanges])
+  const canSaveDraft = Boolean(editing.session)
   const contextMenuEntry = useMemo(
     () =>
       contextMenu
@@ -54,33 +105,29 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
   const applyBackground = useCallback(
     (background: string | null) => {
       editing.commitEditing()
-      setManualBackgrounds((currentBackgrounds) => {
-        const nextBackgrounds = { ...currentBackgrounds }
-
+      updatePendingChanges((current) => {
+        let nextChanges = current
         selectedEntries.forEach((entry) => {
           if (getCellCapabilities(entry.cell).canChangeBackground) {
-            if (background) {
-              nextBackgrounds[entry.key] = background
-            } else {
-              delete nextBackgrounds[entry.key]
-            }
+            nextChanges = setPendingBackgroundChange(nextChanges, entry.key, entry.cell, background)
           }
         })
 
-        return nextBackgrounds
+        return nextChanges
       })
     },
-    [editing, selectedEntries]
+    [editing, selectedEntries, updatePendingChanges]
   )
   const getNoteValue = useCallback(
     (cellKey: string, cell: CellTable) => {
-      if (Object.prototype.hasOwnProperty.call(manualNotes, cellKey)) {
-        return manualNotes[cellKey]
+      const pendingNote = getPendingNote(pendingChanges, cellKey)
+      if (pendingNote !== undefined) {
+        return pendingNote
       }
 
       return cell.data_status?.note?.value ?? null
     },
-    [manualNotes]
+    [pendingChanges]
   )
   const changeNote = useCallback(
     (cellKey: string, value: string) => {
@@ -88,12 +135,9 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
 
       if (!entry || !getCellCapabilities(entry.cell).canEditNote) return
 
-      setManualNotes((currentNotes) => ({
-        ...currentNotes,
-        [cellKey]: value
-      }))
+      updatePendingChanges((current) => setPendingNoteChange(current, cellKey, entry.cell, value))
     },
-    [selectionEntries]
+    [selectionEntries, updatePendingChanges]
   )
   const deleteNote = useCallback(
     (cellKey: string) => {
@@ -101,14 +145,11 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
 
       if (!entry || !getCellCapabilities(entry.cell).canEditNote) return
 
-      setManualNotes((currentNotes) => ({
-        ...currentNotes,
-        [cellKey]: null
-      }))
+      updatePendingChanges((current) => setPendingNoteChange(current, cellKey, entry.cell, null))
       setOpenNoteKey(null)
       setContextMenu(null)
     },
-    [selectionEntries]
+    [selectionEntries, updatePendingChanges]
   )
   const openNoteEditor = useCallback(
     (cellKey: string) => {
@@ -119,16 +160,6 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
         return
       }
 
-      setManualNotes((currentNotes) => {
-        if (Object.prototype.hasOwnProperty.call(currentNotes, cellKey)) {
-          return currentNotes
-        }
-
-        return {
-          ...currentNotes,
-          [cellKey]: entry.cell.data_status?.note?.value ?? ''
-        }
-      })
       setOpenNoteKey(cellKey)
       setContextMenu(null)
     },
@@ -172,6 +203,39 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
     setOpenNoteKey(null)
     setContextMenu(null)
   }, [selection])
+  const handleSave = useCallback(async () => {
+    if (saveStatus === 'saving') return
+
+    editing.commitEditing()
+    setOpenNoteKey(null)
+    setContextMenu(null)
+
+    const changes = pendingChangesRef.current
+    if (!hasPendingChanges(changes)) return
+
+    setSaveStatus('saving')
+    setSaveMessage('Сохраняем изменения')
+
+    try {
+      await onSaveChanges(toSaveChangeset(changes))
+      pendingChangesRef.current = emptyPendingChanges
+      setPendingChanges(emptyPendingChanges)
+      setSaveStatus('success')
+      setSaveMessage('Изменения сохранены')
+    } catch (error) {
+      setSaveStatus('failure')
+      setSaveMessage(error instanceof Error ? error.message : 'Не удалось сохранить изменения')
+    }
+  }, [editing, onSaveChanges, saveStatus])
+  const handleCancelChanges = useCallback(() => {
+    editing.cancelEditing()
+    pendingChangesRef.current = emptyPendingChanges
+    setPendingChanges(emptyPendingChanges)
+    setOpenNoteKey(null)
+    setContextMenu(null)
+    setSaveStatus('idle')
+    setSaveMessage(null)
+  }, [editing])
   const handleRootKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.target !== rootRef.current) return
@@ -225,20 +289,25 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
       tabIndex={0}
       onKeyDown={handleRootKeyDown}
     >
-      <div className={styles.toolbarSlot}>
+      <div className={styles.toolbarSlot} data-value-editor-owner={ownerId}>
         <TableToolbar
           colors={availableBackgroundColors}
           selectedCount={selection.selectedCellKeys.size}
           backgroundEditableSelectedCount={backgroundEditableSelectedCount}
+          pendingSummary={pendingSummary}
+          canSaveDraft={canSaveDraft}
+          saveStatus={saveStatus}
+          saveMessage={saveMessage}
           onBackgroundChange={applyBackground}
+          onSave={handleSave}
+          onCancel={handleCancelChanges}
         />
       </div>
       {Array.isArray(data) && data.length > 0 && (
         <TableBody
           data={data}
           selection={selection}
-          manualBackgrounds={manualBackgrounds}
-          pendingValues={editing.pendingValues}
+          pendingChanges={pendingChanges}
           session={editing.session}
           tableOwnerId={ownerId}
           openNoteKey={openNoteKey}

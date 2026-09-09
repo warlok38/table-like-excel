@@ -14,6 +14,7 @@
   z-index: 30;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 0.75rem;
   width: max-content;
   max-width: 100%;
@@ -27,6 +28,15 @@
   font-size: 0.78rem;
   font-weight: 600;
   color: #111827;
+  white-space: nowrap;
+}
+
+.pendingSummary {
+  padding-left: 0.75rem;
+  border-left: 1px solid #d1d5db;
+  color: #7c2d12;
+  font-size: 0.78rem;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -62,6 +72,64 @@
 .emptyBackgroundButton:not(:disabled):focus-visible {
   outline: 2px solid #1d4ed8;
   outline-offset: 2px;
+}
+
+.saveActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.saveButton,
+.cancelButton {
+  min-height: 1.7rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid #4b5563;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.saveButton {
+  border-color: #166534;
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.cancelButton {
+  border-color: #9ca3af;
+}
+
+.saveButton:not(:disabled):hover,
+.saveButton:not(:disabled):focus-visible,
+.cancelButton:not(:disabled):hover,
+.cancelButton:not(:disabled):focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 1px;
+}
+
+.saveButton:disabled,
+.cancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.saveSuccess,
+.saveFailure {
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.saveSuccess {
+  color: #166534;
+}
+
+.saveFailure {
+  color: #b91c1c;
 }
 
 .contextMenu {
@@ -169,6 +237,12 @@
   border-left: 0.45rem solid transparent;
   content: '';
   pointer-events: none;
+}
+
+.tableContainer .pendingCell {
+  box-shadow:
+    inset 0 0 0 1px rgba(234, 88, 12, 0.36),
+    1px 1px 0 0 rgba(0, 0, 0, 1);
 }
 
 .tableContainer .selectedCell::after {

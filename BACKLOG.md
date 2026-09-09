@@ -230,12 +230,23 @@ Acceptance criteria:
 
 ## Phase 10: Pending Changes, Save, And Cancel
 
-- [ ] Move value, background, and note changes into one explicit pending changes model.
-- [ ] Add `Сохранить` and `Отмена` controls for local pending changes.
-- [ ] Show when the table has unsaved changes.
-- [ ] Make `Сохранить` send one changeset through the table data adapter.
-- [ ] Make `Отмена` discard all pending changes and restore the last loaded backend or mock state.
-- [ ] Keep changed-cell styling derived from pending changes, not from local input component state.
+- [x] Move value, background, and note changes into one explicit pending changes model.
+- [x] Add `Сохранить` and `Отмена` controls for local pending changes.
+- [x] Show when the table has unsaved changes.
+- [x] Make `Сохранить` send one changeset through the table data adapter.
+- [x] Make `Отмена` discard all pending changes and restore the last loaded backend or mock state.
+- [x] Keep changed-cell styling derived from pending changes, not from local input component state.
+
+Implementation documents:
+
+- [Design and agreed rules](docs/superpowers/specs/2026-09-09-phase10-pending-save-cancel-design.md).
+- [Step-by-step implementation plan](docs/superpowers/plans/2026-09-09-phase10-pending-save-cancel.md).
+
+Implementation note, 2026-09-09:
+
+- Phase 10 is implemented with a source-agnostic table data adapter boundary, a mock adapter, one unified pending changes model for values/backgrounds/notes, and toolbar save/cancel states.
+- `npm.cmd run build` and `npm.cmd run lint` pass. `git diff --check` is part of final verification for this phase.
+- Manual browser smoke checks were run on `http://localhost:3001`: active text editor saves with one `Сохранить` click; saved value becomes the new loaded snapshot; background pending state appears and `Отмена` restores the loaded style; note add/save clears pending and keeps the note marker; select pending value saves; date clear pending value is discarded by `Отмена`.
 
 Acceptance criteria:
 

@@ -2,17 +2,23 @@
 
 import type { CellTable } from '@/types'
 import { formatPendingValue, getEffectiveValue } from './editing/value-conversion'
-import type { EditingSession, PendingValues } from './editing/types'
+import type { EditingSession } from './editing/types'
 import { formatCellValue, getCellCapabilities, makeCellKey } from './helpers'
 import type { TableSelectionState } from './hooks/use-table-selection'
+import {
+  getPendingBackground,
+  isBackgroundPending,
+  isNotePending,
+  isValuePending
+} from './pending/pending-changes'
+import type { PendingChanges } from './pending/types'
 import { MemoTableCell } from './table-cell'
 import styles from './table.module.css'
 
 type TableBodyProps = {
   data: CellTable[][]
   selection: TableSelectionState
-  manualBackgrounds: Record<string, string>
-  pendingValues: PendingValues
+  pendingChanges: PendingChanges
   session: EditingSession | null
   tableOwnerId: string
   openNoteKey: string | null
@@ -34,8 +40,7 @@ type TableBodyProps = {
 export function TableBody({
   data,
   selection,
-  manualBackgrounds,
-  pendingValues,
+  pendingChanges,
   session,
   tableOwnerId,
   openNoteKey,
@@ -58,13 +63,16 @@ export function TableBody({
             {row.map((cell, cellIndex) => {
               const cellKey = makeCellKey(cell, rowIndex, cellIndex)
               const capabilities = getCellCapabilities(cell)
-              const hasPending = Object.prototype.hasOwnProperty.call(pendingValues, cellKey)
-              const value = getEffectiveValue(cellKey, cell, pendingValues)
+              const hasPendingValue = isValuePending(pendingChanges, cellKey)
+              const hasPendingBackground = isBackgroundPending(pendingChanges, cellKey)
+              const hasPendingNote = isNotePending(pendingChanges, cellKey)
+              const pendingBackground = getPendingBackground(pendingChanges, cellKey)
+              const value = getEffectiveValue(cellKey, cell, pendingChanges.values)
               let displayValue = formatCellValue(cell.formatted_value)
 
-              if (hasPending && cell.data.editor && cell.data.editor.type !== 'readonly') {
+              if (hasPendingValue && cell.data.editor && cell.data.editor.type !== 'readonly') {
                 displayValue = formatPendingValue(value, cell.data.editor)
-              } else if (hasPending) {
+              } else if (hasPendingValue) {
                 displayValue = String(value ?? '')
               }
 
@@ -77,13 +85,14 @@ export function TableBody({
                   cellIndex={cellIndex}
                   displayValue={displayValue}
                   currentValue={value}
-                  manualBackground={manualBackgrounds[cellKey] ?? null}
+                  manualBackground={hasPendingBackground ? (pendingBackground ?? null) : undefined}
                   noteValue={getNoteValue(cellKey, cell)}
                   isNoteOpen={openNoteKey === cellKey}
                   isActive={selection.activeCellKey === cellKey}
                   isSelected={selection.selectedCellKeys.has(cellKey)}
                   isLocked={capabilities.isLocked}
-                  isValueChanged={hasPending}
+                  isValueChanged={hasPendingValue}
+                  isCellChanged={hasPendingValue || hasPendingBackground || hasPendingNote}
                   canEditValue={capabilities.canEditValue}
                   canEditNote={capabilities.canEditNote}
                   session={session?.cellKey === cellKey ? session : null}
