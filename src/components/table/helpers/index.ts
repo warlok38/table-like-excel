@@ -1,5 +1,6 @@
 export * from './make-virtual-table-for-arrow-navigation'
 export * from './isTimestampInRange'
 export * from './cell-key'
+export * from './cell-capabilities'
 export * from './cell-style'
 export * from './cell-value'

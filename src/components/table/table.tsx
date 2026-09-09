@@ -3,7 +3,7 @@
 import { useCallback, useMemo, useState } from 'react'
 
 import type { AvailableBackgroundColor, CellTable } from '@/types'
-import { isCellLocked, makeCellKey, makeCellSelectionEntries } from './helpers'
+import { getCellCapabilities, makeCellKey, makeCellSelectionEntries } from './helpers'
 import { useTableSelection } from './hooks/use-table-selection'
 import { MemoTableCell } from './table-cell'
 import { TableContextMenu } from './table-context-menu'
@@ -32,8 +32,9 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
     () => selectionEntries.filter((entry) => selection.selectedCellKeys.has(entry.key)),
     [selection.selectedCellKeys, selectionEntries]
   )
-  const editableSelectedCount = useMemo(
-    () => selectedEntries.filter((entry) => !isCellLocked(entry.cell)).length,
+  const backgroundEditableSelectedCount = useMemo(
+    () =>
+      selectedEntries.filter((entry) => getCellCapabilities(entry.cell).canChangeBackground).length,
     [selectedEntries]
   )
   const contextMenuEntry = useMemo(
@@ -50,7 +51,7 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
         const nextBackgrounds = { ...currentBackgrounds }
 
         selectedEntries.forEach((entry) => {
-          if (!isCellLocked(entry.cell)) {
+          if (getCellCapabilities(entry.cell).canChangeBackground) {
             if (background) {
               nextBackgrounds[entry.key] = background
             } else {
@@ -74,25 +75,39 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
     },
     [manualNotes]
   )
-  const changeNote = useCallback((cellKey: string, value: string) => {
-    setManualNotes((currentNotes) => ({
-      ...currentNotes,
-      [cellKey]: value
-    }))
-  }, [])
-  const deleteNote = useCallback((cellKey: string) => {
-    setManualNotes((currentNotes) => ({
-      ...currentNotes,
-      [cellKey]: null
-    }))
-    setOpenNoteKey(null)
-    setContextMenu(null)
-  }, [])
+  const changeNote = useCallback(
+    (cellKey: string, value: string) => {
+      const entry = selectionEntries.find((item) => item.key === cellKey)
+
+      if (!entry || !getCellCapabilities(entry.cell).canEditNote) return
+
+      setManualNotes((currentNotes) => ({
+        ...currentNotes,
+        [cellKey]: value
+      }))
+    },
+    [selectionEntries]
+  )
+  const deleteNote = useCallback(
+    (cellKey: string) => {
+      const entry = selectionEntries.find((item) => item.key === cellKey)
+
+      if (!entry || !getCellCapabilities(entry.cell).canEditNote) return
+
+      setManualNotes((currentNotes) => ({
+        ...currentNotes,
+        [cellKey]: null
+      }))
+      setOpenNoteKey(null)
+      setContextMenu(null)
+    },
+    [selectionEntries]
+  )
   const openNoteEditor = useCallback(
     (cellKey: string) => {
       const entry = selectionEntries.find((selectionEntry) => selectionEntry.key === cellKey)
 
-      if (!entry || isCellLocked(entry.cell)) {
+      if (!entry || !getCellCapabilities(entry.cell).canEditNote) {
         return
       }
 
@@ -124,7 +139,7 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
         <TableToolbar
           colors={availableBackgroundColors}
           selectedCount={selection.selectedCellKeys.size}
-          editableSelectedCount={editableSelectedCount}
+          backgroundEditableSelectedCount={backgroundEditableSelectedCount}
           onBackgroundChange={applyBackground}
         />
       </div>
@@ -145,7 +160,7 @@ export function Table({ data, availableBackgroundColors = [] }: TableProps) {
           x={contextMenu.x}
           y={contextMenu.y}
           hasNote={Boolean(getNoteValue(contextMenu.cellKey, contextMenuEntry.cell)?.trim())}
-          isLocked={isCellLocked(contextMenuEntry.cell)}
+          canEditNote={getCellCapabilities(contextMenuEntry.cell).canEditNote}
           onAddNote={() => openNoteEditor(contextMenu.cellKey)}
           onEditNote={() => openNoteEditor(contextMenu.cellKey)}
           onDeleteNote={() => deleteNote(contextMenu.cellKey)}
@@ -182,6 +197,7 @@ function TableBody({
           <tr key={`row-${rowIndex + 1}`} className={styles.tr}>
             {row.map((cell, cellIndex) => {
               const cellKey = makeCellKey(cell, rowIndex, cellIndex)
+              const capabilities = getCellCapabilities(cell)
 
               return (
                 <MemoTableCell
@@ -195,7 +211,8 @@ function TableBody({
                   isNoteOpen={openNoteKey === cellKey}
                   isActive={selection.activeCellKey === cellKey}
                   isSelected={selection.selectedCellKeys.has(cellKey)}
-                  isLocked={isCellLocked(cell)}
+                  isLocked={capabilities.isLocked}
+                  canEditNote={capabilities.canEditNote}
                   onSelect={selection.selectCell}
                   onExtendSelection={selection.extendRangeToCell}
                   onCloseNote={onCloseNote}

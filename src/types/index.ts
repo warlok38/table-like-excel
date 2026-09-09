@@ -1,3 +1,7 @@
+import type { CellEditor, CellPermissions, CellValue } from './cell-editor'
+
+export type * from './cell-editor'
+
 export type CellField = 'text' | 'number' | 'comment' | 'vector'
 
 export type FiltersCell = Record<string, string | number | boolean | null | undefined>
@@ -20,6 +24,8 @@ export type CellTable = {
     timestamp?: string | null
     change_mode?: string | null
     editable?: boolean | null
+    editor?: CellEditor | null
+    permissions?: CellPermissions | null
     changed?: boolean
     filters?: FiltersCell | null
     tdata_id?: string | null
@@ -30,6 +36,7 @@ export type CellTable = {
     production_period?: unknown[] | null
     properties_journal_tech_id?: string | null
   }
+  value: CellValue
   formatted_value: number | string | null
   chart_data?: unknown | null
   chart_svg?: string | null

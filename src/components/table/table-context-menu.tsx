@@ -8,7 +8,7 @@ type TableContextMenuProps = {
   x: number
   y: number
   hasNote: boolean
-  isLocked: boolean
+  canEditNote: boolean
   onAddNote: () => void
   onEditNote: () => void
   onDeleteNote: () => void
@@ -19,7 +19,7 @@ export function TableContextMenu({
   x,
   y,
   hasNote,
-  isLocked,
+  canEditNote,
   onAddNote,
   onEditNote,
   onDeleteNote,
@@ -64,7 +64,7 @@ export function TableContextMenu({
             type="button"
             className={styles.contextMenuItem}
             role="menuitem"
-            disabled={isLocked}
+            disabled={!canEditNote}
             onClick={onEditNote}
           >
             Изменить примечание
@@ -73,7 +73,7 @@ export function TableContextMenu({
             type="button"
             className={styles.contextMenuItem}
             role="menuitem"
-            disabled={isLocked}
+            disabled={!canEditNote}
             onClick={onDeleteNote}
           >
             Удалить примечание
@@ -84,7 +84,7 @@ export function TableContextMenu({
           type="button"
           className={styles.contextMenuItem}
           role="menuitem"
-          disabled={isLocked}
+          disabled={!canEditNote}
           onClick={onAddNote}
         >
           Добавить примечание

@@ -28,6 +28,7 @@ type TableCellProps = {
   isActive: boolean
   isSelected: boolean
   isLocked: boolean
+  canEditNote: boolean
   onSelect: (cellKey: string, options: { append: boolean }) => void
   onExtendSelection: (cellKey: string) => void
   onCloseNote: () => void
@@ -77,6 +78,7 @@ function TableCell({
   isActive,
   isSelected,
   isLocked,
+  canEditNote,
   onSelect,
   onExtendSelection,
   onCloseNote,
@@ -152,7 +154,7 @@ function TableCell({
           anchorRef={tdRef}
           onClose={onCloseNote}
           onChange={handleNoteChange}
-          readOnly={isLocked}
+          readOnly={!canEditNote}
         />
       )}
       {hasNote && isNoteTooltipOpen && !isNoteOpen && (

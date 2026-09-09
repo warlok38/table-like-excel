@@ -46,7 +46,3 @@ export function getCellKeysInRange(
     )
     .map((entry) => entry.key)
 }
-
-export function isCellLocked(cell: CellTable): boolean {
-  return cell.data.editable === false
-}
