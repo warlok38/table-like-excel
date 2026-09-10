@@ -6,6 +6,7 @@ import styles from './table.module.css'
 
 type TableToolbarProps = {
   colors: AvailableBackgroundColor[]
+  dataStatusActionsEnabled: boolean
   selectedCount: number
   backgroundEditableSelectedCount: number
   pendingSummary: PendingChangeSummary
@@ -19,6 +20,7 @@ type TableToolbarProps = {
 
 export function TableToolbar({
   colors,
+  dataStatusActionsEnabled,
   selectedCount,
   backgroundEditableSelectedCount,
   pendingSummary,
@@ -31,17 +33,20 @@ export function TableToolbar({
 }: TableToolbarProps) {
   const hasPendingChanges = pendingSummary.operations > 0
 
-  if (selectedCount === 0 && !hasPendingChanges && !canSaveDraft && saveStatus === 'idle') {
-    return null
-  }
+  const isHidden =
+    selectedCount === 0 && !hasPendingChanges && !canSaveDraft && saveStatus === 'idle'
 
   const isSaving = saveStatus === 'saving'
   const isBackgroundDisabled = backgroundEditableSelectedCount === 0 || isSaving
   const arePendingActionsDisabled = (!hasPendingChanges && !canSaveDraft) || isSaving
 
   return (
-    <div className={styles.toolbar} aria-label="Действия с выбранными ячейками">
-      {selectedCount > 0 && (
+    <div
+      className={styles.toolbar}
+      style={isHidden ? { visibility: 'hidden' } : undefined}
+      aria-label="Действия с выбранными ячейками"
+    >
+      {dataStatusActionsEnabled && (
         <>
           <span className={styles.toolbarSummary}>
             Выбрано {selectedCount}, доступно для заливки {backgroundEditableSelectedCount}

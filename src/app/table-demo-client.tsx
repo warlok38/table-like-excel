@@ -41,6 +41,11 @@ type TableDemoFromAdapterProps = {
 
 function TableDemoFromAdapter({ title, description, adapter }: TableDemoFromAdapterProps) {
   const tableState = useTableDataAdapter(adapter)
+  const hasDataStatus =
+    tableState.status === 'ready' &&
+    tableState.snapshot.data.some((row) =>
+      row.some((cell) => cell.data_status !== null && cell.data_status !== undefined)
+    )
 
   return (
     <section>
@@ -50,7 +55,9 @@ function TableDemoFromAdapter({ title, description, adapter }: TableDemoFromAdap
       {tableState.status === 'error' && <p role="alert">{tableState.error}</p>}
       {tableState.status === 'ready' && (
         <>
-          <p>Доступно цветов заливки: {tableState.snapshot.availableBackgroundColors.length}</p>
+          {hasDataStatus && (
+            <p>Доступно цветов заливки: {tableState.snapshot.availableBackgroundColors.length}</p>
+          )}
           <Table
             data={tableState.snapshot.data}
             availableBackgroundColors={tableState.snapshot.availableBackgroundColors}

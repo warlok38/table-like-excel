@@ -11,6 +11,7 @@ export type DataStatusNoteProps = {
   onClose: () => void
   onChange: (value: string) => void
   readOnly?: boolean
+  preview?: boolean
 }
 
 export function DataStatusNote({
@@ -19,7 +20,8 @@ export function DataStatusNote({
   tableOwnerId,
   onClose,
   onChange,
-  readOnly = false
+  readOnly = false,
+  preview = false
 }: DataStatusNoteProps) {
   const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
   const noteRef = useRef<HTMLDivElement>(null)
@@ -30,9 +32,13 @@ export function DataStatusNote({
       const anchor = anchorRef.current
       if (!anchor) return
       const rect = anchor.getBoundingClientRect()
+      const width = noteRef.current?.offsetWidth ?? 256
+      const height = noteRef.current?.offsetHeight ?? 120
+      const left =
+        rect.right + 4 + width <= window.innerWidth - 8 ? rect.right + 4 : rect.left - width - 4
       setPosition({
-        top: rect.top,
-        left: rect.right + 2
+        top: Math.max(8, Math.min(rect.top, window.innerHeight - height - 8)),
+        left: Math.max(8, Math.min(left, window.innerWidth - width - 8))
       })
     }
     updatePosition()
@@ -45,7 +51,7 @@ export function DataStatusNote({
   }, [anchorRef])
 
   useLayoutEffect(() => {
-    if (readOnly || !position) {
+    if (readOnly || preview || !position) {
       return
     }
 
@@ -54,9 +60,11 @@ export function DataStatusNote({
       return
     }
 
-    textarea.focus()
-    textarea.setSelectionRange(textarea.value.length, textarea.value.length)
-  }, [position, readOnly])
+    if (document.activeElement !== textarea) {
+      textarea.focus({ preventScroll: true })
+      textarea.setSelectionRange(textarea.value.length, textarea.value.length)
+    }
+  }, [position, preview, readOnly])
 
   useEffect(() => {
     function handleMouseDown(e: MouseEvent) {
@@ -81,6 +89,8 @@ export function DataStatusNote({
     <div
       ref={noteRef}
       className={styles.noteContainer}
+      data-preview={preview || undefined}
+      role={preview ? 'tooltip' : undefined}
       style={{ top: position.top, left: position.left }}
       data-table-owner={tableOwnerId}
       onMouseDown={(e) => e.stopPropagation()}
@@ -91,8 +101,16 @@ export function DataStatusNote({
         rows={3}
         value={value}
         onChange={handleChange}
-        readOnly={readOnly}
+        readOnly={readOnly || preview}
+        tabIndex={preview ? -1 : undefined}
         aria-label="Текст примечания"
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            event.stopPropagation()
+            onClose()
+          }
+        }}
       />
     </div>,
     document.body

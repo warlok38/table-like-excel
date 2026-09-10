@@ -1,17 +1,34 @@
 import type { AvailableBackgroundColor, CellTable, CellValue } from '@/types'
 
-export type TableValueChange = {
+export type TableCellBackendIdentifiers = {
+  id: string | null
+  commentsId: string | null
+  parameterId: string | null
+  catalogsId: string | null
+  dataStatusTechId: string | null
+  tdataId: string | null
+  propertiesJournalTechId: string | null
+}
+
+export type TableCellOperationTarget = {
   cellKey: string
+  row: number
+  col: number
+  identifiers: TableCellBackendIdentifiers
+}
+
+export type TableValueChange = {
+  target: TableCellOperationTarget
   value: CellValue
 }
 
 export type TableBackgroundChange = {
-  cellKey: string
+  target: TableCellOperationTarget
   background: string | null
 }
 
 export type TableNoteChange = {
-  cellKey: string
+  target: TableCellOperationTarget
   note: string | null
 }
 
@@ -27,6 +44,7 @@ export type LoadedTableSnapshot = {
 }
 
 export type TableDataAdapter = {
-  load: () => Promise<LoadedTableSnapshot>
+  loadTableData: () => Promise<CellTable[][]>
+  loadAvailableBackgroundColors: () => Promise<AvailableBackgroundColor[]>
   saveChanges: (changeset: TableSaveChangeset) => Promise<LoadedTableSnapshot>
 }

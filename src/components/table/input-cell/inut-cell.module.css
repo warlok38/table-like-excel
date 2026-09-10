@@ -1,4 +1,5 @@
 .input {
+  box-sizing: border-box;
   margin: auto;
   border: 0;
   /* padding-left: 0.3rem;
@@ -14,6 +15,8 @@ max-width: calc(100% - 4px); */
   text-align: center;
   background: transparent;
   width: 100%;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .input:not(:focus) {
@@ -43,10 +46,13 @@ max-width: calc(100% - 4px); */
 }
 
 .textArea {
+  box-sizing: border-box;
   margin: auto;
   margin-top: 0;
   margin-bottom: 0;
   width: calc(100% - 4px);
+  min-width: 0;
+  max-width: 100%;
   height: calc(100% - 4px);
   outline: none;
   border: 0;

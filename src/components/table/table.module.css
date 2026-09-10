@@ -21,7 +21,7 @@
   padding: 0.45rem 0.6rem;
   background: #ffffff;
   border: 1px solid #d1d5db;
-  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
 .toolbarSummary {
@@ -136,13 +136,14 @@
   position: fixed;
   z-index: 10000;
   min-width: 10.5rem;
-  padding: 0.25rem;
+  padding: 0.25rem 0;
   background: #ffffff;
   border: 1px solid #d1d5db;
-  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.18);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
 }
 
-.contextMenuItem {
+.contextMenuItem,
+.contextMenuUnavailableItem {
   display: block;
   width: 100%;
   padding: 0.45rem 0.6rem;
@@ -152,37 +153,31 @@
   font: inherit;
   font-size: 0.82rem;
   text-align: left;
+}
+
+.contextMenuItem {
   cursor: pointer;
 }
 
-.contextMenuItem:hover,
-.contextMenuItem:focus-visible {
-  background: #e8f3ff;
+.contextMenuItem:not(:disabled):hover,
+.contextMenuItem:not(:disabled):focus-visible {
+  background: #f0f0f0;
   outline: none;
 }
 
-.contextMenuItem:disabled {
+.contextMenuItem:disabled,
+.contextMenuUnavailableItem {
   color: #9ca3af;
-  cursor: not-allowed;
-}
-
-.noteTooltip {
-  position: fixed;
-  z-index: 9999;
-  max-width: 16rem;
-  padding: 0.45rem 0.55rem;
-  background: #fff8c5;
-  border: 1px solid #d6b656;
-  box-shadow: 0 12px 24px rgba(15, 23, 42, 0.18);
-  color: #111827;
-  font-size: 0.78rem;
-  line-height: 1.3;
-  white-space: pre-wrap;
-  pointer-events: none;
+  cursor: default;
 }
 
 .tableContainer[data-is-selecting='true'] {
   cursor: cell;
+}
+
+.tableContainer[data-data-status-actions-enabled='true'] .td {
+  cursor: cell;
+  user-select: none;
 }
 
 .tableContainer .table {
@@ -208,20 +203,22 @@
 
 .tableContainer .td {
   position: relative;
+  box-sizing: border-box;
   padding: 0.15rem;
   min-width: 2.4rem;
   height: 1.15rem;
+  overflow: hidden;
   box-shadow: 1px 1px 0 0 rgba(0, 0, 0, 1);
   border: 1px solid black;
   border-right: none;
   border-bottom: none;
-  cursor: cell;
-  user-select: none;
+  user-select: text;
 }
 
 .tableContainer .td::after {
   position: absolute;
   inset: 0;
+  box-sizing: border-box;
   content: '';
   pointer-events: none;
 }
@@ -239,25 +236,12 @@
   pointer-events: none;
 }
 
-.tableContainer .pendingCell {
-  box-shadow:
-    inset 0 0 0 1px rgba(234, 88, 12, 0.36),
-    1px 1px 0 0 rgba(0, 0, 0, 1);
-}
-
 .tableContainer .selectedCell::after {
-  background-color: rgba(49, 130, 206, 0.18);
-  outline: 1px solid rgba(37, 99, 235, 0.62);
-  outline-offset: -1px;
+  background-color: rgba(0, 0, 0, 0.22);
 }
 
 .tableContainer .activeCell::after {
-  outline: 2px solid #1d4ed8;
-  outline-offset: -2px;
-}
-
-.tableContainer .lockedCell {
-  cursor: not-allowed;
+  background-color: transparent;
 }
 
 .tableContainer .selectedLockedCell::after {
@@ -268,27 +252,21 @@
     rgba(255, 255, 255, 0.15) 4px,
     rgba(255, 255, 255, 0.15) 8px
   );
-  outline: 1px dashed rgba(71, 85, 105, 0.9);
-  outline-offset: -1px;
-}
-
-.tableContainer .td:has(input),
-.tableContainer .td:has(textarea) {
-  padding: 0;
 }
 
 .valuePickerButton {
   position: absolute;
-  right: 0.1rem;
-  bottom: 0.1rem;
+  right: 0.05rem;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 2;
   display: grid;
   place-items: center;
   width: 1.1rem;
   height: 1.1rem;
   padding: 0;
-  border: 1px solid rgba(15, 23, 42, 0.35);
-  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid #797979;
+  background-color: #f0f0f0;
   color: #111827;
   font-size: 0.75rem;
   line-height: 1;
@@ -297,8 +275,8 @@
 
 .valuePickerButton:hover,
 .valuePickerButton:focus-visible {
-  border-color: #1d4ed8;
-  outline: 1px solid #1d4ed8;
+  border-color: #a3a3a3;
+  background-color: #f5f5f5;
 }
 
 .valueChangedMarker {
@@ -308,7 +286,7 @@
   left: 2px;
   z-index: 1;
   height: 3px;
-  background: #facc15;
+  background: #ffb829;
   pointer-events: none;
 }
 
@@ -318,6 +296,11 @@
 }
 
 .constCell {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
   margin: 0;
   border: 0;
   background: none;
@@ -339,4 +322,24 @@
 
 .preWrap {
   white-space: pre-wrap;
+}
+
+.tableSurface {
+  position: relative;
+  width: max-content;
+  margin-bottom: 3rem;
+}
+
+.tableSurface .table {
+  margin-bottom: 0;
+}
+
+.selectionOutline {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+  z-index: 12;
 }

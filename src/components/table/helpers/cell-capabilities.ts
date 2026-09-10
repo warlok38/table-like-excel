@@ -1,7 +1,15 @@
 import type { CellCapabilities, CellTable } from '@/types'
 
-export function getCellCapabilities(cell: CellTable): CellCapabilities {
+type CellCapabilitiesOptions = {
+  dataStatusActionsEnabled?: boolean
+}
+
+export function getCellCapabilities(
+  cell: CellTable,
+  { dataStatusActionsEnabled = true }: CellCapabilitiesOptions = {}
+): CellCapabilities {
   const allowed = cell.data.editable !== false
+  const dataStatusActionsAllowed = dataStatusActionsEnabled && allowed
   const permissions = cell.data.permissions
   const editor = cell.data.editor
   const canEditValue =
@@ -10,13 +18,13 @@ export function getCellCapabilities(cell: CellTable): CellCapabilities {
     editor !== undefined &&
     editor.type !== 'readonly' &&
     permissions?.value !== false
-  const canChangeBackground = allowed && permissions?.background !== false
-  const canEditNote = allowed && permissions?.note !== false
+  const canChangeBackground = dataStatusActionsAllowed && permissions?.background !== false
+  const canEditNote = dataStatusActionsAllowed && permissions?.note !== false
 
   return {
     canEditValue,
     canChangeBackground,
     canEditNote,
-    isLocked: !canEditValue && !canChangeBackground && !canEditNote
+    isLocked: dataStatusActionsEnabled && !canChangeBackground && !canEditNote
   }
 }

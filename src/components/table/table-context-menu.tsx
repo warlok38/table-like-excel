@@ -9,6 +9,7 @@ type TableContextMenuProps = {
   y: number
   hasNote: boolean
   canEditNote: boolean
+  showUnavailableActions: boolean
   onAddNote: () => void
   onEditNote: () => void
   onDeleteNote: () => void
@@ -20,12 +21,14 @@ export function TableContextMenu({
   y,
   hasNote,
   canEditNote,
+  showUnavailableActions,
   onAddNote,
   onEditNote,
   onDeleteNote,
   onClose
 }: TableContextMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null)
+  let menuContent
 
   useEffect(() => {
     function handleMouseDown(event: MouseEvent) {
@@ -50,6 +53,49 @@ export function TableContextMenu({
     }
   }, [onClose])
 
+  if (showUnavailableActions) {
+    menuContent = (
+      <button type="button" className={styles.contextMenuUnavailableItem} role="menuitem" disabled>
+        Действия недоступны
+      </button>
+    )
+  } else if (hasNote) {
+    menuContent = (
+      <>
+        <button
+          type="button"
+          className={styles.contextMenuItem}
+          role="menuitem"
+          disabled={!canEditNote}
+          onClick={onEditNote}
+        >
+          Изменить примечание
+        </button>
+        <button
+          type="button"
+          className={styles.contextMenuItem}
+          role="menuitem"
+          disabled={!canEditNote}
+          onClick={onDeleteNote}
+        >
+          Удалить примечание
+        </button>
+      </>
+    )
+  } else {
+    menuContent = (
+      <button
+        type="button"
+        className={styles.contextMenuItem}
+        role="menuitem"
+        disabled={!canEditNote}
+        onClick={onAddNote}
+      >
+        Добавить примечание
+      </button>
+    )
+  }
+
   return (
     <div
       ref={menuRef}
@@ -58,38 +104,7 @@ export function TableContextMenu({
       role="menu"
       onContextMenu={(event) => event.preventDefault()}
     >
-      {hasNote ? (
-        <>
-          <button
-            type="button"
-            className={styles.contextMenuItem}
-            role="menuitem"
-            disabled={!canEditNote}
-            onClick={onEditNote}
-          >
-            Изменить примечание
-          </button>
-          <button
-            type="button"
-            className={styles.contextMenuItem}
-            role="menuitem"
-            disabled={!canEditNote}
-            onClick={onDeleteNote}
-          >
-            Удалить примечание
-          </button>
-        </>
-      ) : (
-        <button
-          type="button"
-          className={styles.contextMenuItem}
-          role="menuitem"
-          disabled={!canEditNote}
-          onClick={onAddNote}
-        >
-          Добавить примечание
-        </button>
-      )}
+      {menuContent}
     </div>
   )
 }

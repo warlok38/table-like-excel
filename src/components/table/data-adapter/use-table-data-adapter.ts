@@ -15,9 +15,9 @@ export function useTableDataAdapter(adapter: TableDataAdapter) {
     let isMounted = true
     setState({ status: 'loading', snapshot: null, error: null })
 
-    adapter
-      .load()
-      .then((snapshot) => {
+    Promise.all([adapter.loadTableData(), adapter.loadAvailableBackgroundColors()])
+      .then(([data, availableBackgroundColors]) => {
+        const snapshot: LoadedTableSnapshot = { data, availableBackgroundColors }
         if (isMounted) setState({ status: 'ready', snapshot, error: null })
       })
       .catch((error: unknown) => {

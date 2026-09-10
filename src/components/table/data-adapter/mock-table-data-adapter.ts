@@ -23,8 +23,11 @@ export function createMockTableDataAdapter({
   let shouldFailNextSave = failNextSave
 
   return {
-    async load() {
-      return snapshot
+    async loadTableData() {
+      return snapshot.data
+    },
+    async loadAvailableBackgroundColors() {
+      return snapshot.availableBackgroundColors
     },
     async saveChanges(changeset) {
       await delay(saveDelayMs)
@@ -49,11 +52,15 @@ function delay(ms: number): Promise<void> {
 }
 
 function applyChangeset(data: CellTable[][], changeset: TableSaveChangeset): CellTable[][] {
-  const values = new Map(changeset.values.map((change) => [change.cellKey, change.value] as const))
-  const backgrounds = new Map(
-    changeset.backgrounds.map((change) => [change.cellKey, change.background] as const)
+  const values = new Map(
+    changeset.values.map((change) => [change.target.cellKey, change.value] as const)
   )
-  const notes = new Map(changeset.notes.map((change) => [change.cellKey, change.note] as const))
+  const backgrounds = new Map(
+    changeset.backgrounds.map((change) => [change.target.cellKey, change.background] as const)
+  )
+  const notes = new Map(
+    changeset.notes.map((change) => [change.target.cellKey, change.note] as const)
+  )
 
   return data.map((row, rowIndex) =>
     row.map((cell, cellIndex) => {

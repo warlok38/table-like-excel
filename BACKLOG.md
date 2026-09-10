@@ -286,11 +286,18 @@ Acceptance criteria:
 
 ## Phase 12: API Adapter
 
-- [ ] Introduce a table data adapter boundary so UI code does not care whether data comes from mocks or the backend.
-- [ ] Keep the current mocks as the first adapter implementation.
-- [ ] Add adapter methods for loading table data, loading available background colors, and saving a pending changeset.
-- [ ] Represent saves as explicit operations, such as value changes, background changes, and note changes.
-- [ ] Keep backend identifiers static and passed through from data. Do not add runtime id generators for `techId`, `tech_id`, or replacement ids.
+- [x] Introduce a table data adapter boundary so UI code does not care whether data comes from mocks or the backend.
+- [x] Keep the current mocks as the first adapter implementation.
+- [x] Add adapter methods for loading table data, loading available background colors, and saving a pending changeset.
+- [x] Represent saves as explicit operations, such as value changes, background changes, and note changes.
+- [x] Keep backend identifiers static and passed through from data. Do not add runtime id generators for `techId`, `tech_id`, or replacement ids.
+
+Implementation note, 2026-09-09:
+
+- Phase 12 is implemented with a `TableDataAdapter` contract that loads table data and available background colors separately, while table UI receives the same presentational `data`, `availableBackgroundColors`, and `onSaveChanges` props.
+- The mock adapter remains the first implementation and applies only explicit save operations for values, backgrounds, and notes.
+- Save operations include a stable UI `cellKey`, visual row/column coordinates, and static backend identifiers copied from the loaded cell data. No runtime identifier generators were added.
+- Failed saves leave pending changes in place so the user can retry.
 
 Acceptance criteria:
 
@@ -299,6 +306,19 @@ Acceptance criteria:
 - API errors keep pending changes available for retry.
 
 ## Phase 13: Virtualization Research
+
+Before virtualization, keep the Excel-like selection and edit sizing polish stable:
+
+- [x] Selected range cells use a neutral transparent dark overlay instead of a colored selection fill.
+- [x] Selected ranges show one continuous 2px blue external contour, without gaps at cell joins or blue internal edges. Disjoint Ctrl selections have separate contours; merged cells expose only the parts of their edges adjacent to unselected cells.
+- [x] The range anchor remains the active cell during drag selection and `Shift + Arrow` extension; the cell reached by dragging or keyboard extension is only the range focus.
+- [x] The active cell is part of the selection but has no dark overlay and no separate outline inside a range. Its original/manual background is preserved. A single selected cell uses the same external contour rule.
+- [x] A fully locked selected cell keeps its unavailability hatch even when it is the active/first cell of the selection. The active cell still has no dark overlay or separate outline; the hatch communicates permissions independently of selection shading.
+- [x] Text, number and textarea editors stay within the current cell. Opening an editor, typing/pasting long text, Enter, Escape, clicking away, Save and Cancel must preserve column widths and row heights, including empty and merged cells.
+- [x] Initial content determines the grid dimensions once per table structure. Subsequent values and save responses do not resize that grid. Recalculate only when the cell keys or spans/structure change, or when the table is mounted again.
+- [x] Long drafts scroll inside the editor; committed text is clipped inside the existing cell. Full text remains available when editing and via the cell content tooltip. Textarea keeps line breaks and internal scrolling without growing the row.
+
+Verification (2026-09-09): reproduced a long committed comment expanding the table from 779.39px to 3633.64px. After the fix, every cell retained its width and height during the same input and after Enter; the table remained 779.39px after Save. Manually checked multiline input, numeric Escape, merged-cell editing, Cancel, drag, Shift extension and disjoint Ctrl selections. Selection is rendered in a shared SVG layer; layout measurement is isolated in `use-cell-layout`.
 
 - [ ] Move virtualization to the end of the roadmap until editing, selection, keyboard navigation, and save semantics are stable.
 - [ ] Research whether native `<table>` rendering can support the required row virtualization with sticky headers, merged cells, context menus, and selection overlays.

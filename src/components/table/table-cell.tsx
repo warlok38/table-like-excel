@@ -1,15 +1,6 @@
 'use client'
 
-import {
-  memo,
-  useCallback,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  type RefObject
-} from 'react'
-import { createPortal } from 'react-dom'
+import { memo, useCallback, useMemo, useRef, useState } from 'react'
 import cn from 'classnames'
 
 import type { CellTable, CellValue } from '@/types'
@@ -17,6 +8,7 @@ import { DataStatusNote } from './data-status/data-status-note'
 import { CellValueEditor } from './editors/cell-value-editor'
 import type { EditStart, EditingSession } from './editing/types'
 import { getCellStyle, isNumericCellValue } from './helpers'
+import type { CellContentSize } from './hooks/use-cell-layout'
 import styles from './table.module.css'
 
 type TableCellProps = {
@@ -32,10 +24,12 @@ type TableCellProps = {
   isActive: boolean
   isSelected: boolean
   isLocked: boolean
+  contentSize?: CellContentSize
   isValueChanged: boolean
   isCellChanged: boolean
   canEditValue: boolean
   canEditNote: boolean
+  canUseDataStatusActions: boolean
   session: EditingSession | null
   tableOwnerId: string
   onSelect: (cellKey: string, options: { append: boolean }) => void
@@ -51,37 +45,6 @@ type TableCellProps = {
   onContextMenu: (cellKey: string, position: { x: number; y: number }) => void
 }
 
-type NoteTooltipProps = {
-  value: string
-  anchorRef: RefObject<HTMLElement>
-}
-
-function NoteTooltip({ value, anchorRef }: NoteTooltipProps) {
-  const [position, setPosition] = useState<{ top: number; left: number } | null>(null)
-
-  useLayoutEffect(() => {
-    const anchor = anchorRef.current
-    if (!anchor) {
-      return
-    }
-
-    const rect = anchor.getBoundingClientRect()
-    setPosition({
-      top: rect.top,
-      left: rect.right + 2
-    })
-  }, [anchorRef])
-
-  if (!position) return null
-
-  return createPortal(
-    <div className={styles.noteTooltip} style={{ top: position.top, left: position.left }}>
-      {value}
-    </div>,
-    document.body
-  )
-}
-
 function TableCell({
   cell,
   cellKey,
@@ -95,10 +58,12 @@ function TableCell({
   isActive,
   isSelected,
   isLocked,
+  contentSize,
   isValueChanged,
   isCellChanged,
   canEditValue,
   canEditNote,
+  canUseDataStatusActions,
   session,
   tableOwnerId,
   onSelect,
@@ -121,6 +86,7 @@ function TableCell({
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLTableCellElement>) => {
       if (event.button !== 0) return
+      if (!canUseDataStatusActions) return
       if (event.target instanceof Element && event.target.closest('[data-table-interactive]')) {
         return
       }
@@ -129,7 +95,7 @@ function TableCell({
       onSelect(cellKey, { append: event.ctrlKey || event.metaKey })
       onFocusTable()
     },
-    [cellKey, onFocusTable, onSelect]
+    [canUseDataStatusActions, cellKey, onFocusTable, onSelect]
   )
   const handleMouseEnter = useCallback(() => {
     onExtendSelection(cellKey)
@@ -141,13 +107,13 @@ function TableCell({
   const handleMouseLeave = useCallback(() => setIsNoteTooltipOpen(false), [])
   const handleContextMenu = useCallback(
     (event: React.MouseEvent<HTMLTableCellElement>) => {
+      if (!canUseDataStatusActions) return
+
       event.preventDefault()
       setIsNoteTooltipOpen(false)
-      onSelect(cellKey, { append: false })
-      onFocusTable()
       onContextMenu(cellKey, { x: event.clientX, y: event.clientY })
     },
-    [cellKey, onContextMenu, onFocusTable, onSelect]
+    [canUseDataStatusActions, cellKey, onContextMenu]
   )
   const handleDoubleClick = useCallback(
     (event: React.MouseEvent<HTMLTableCellElement>) => {
@@ -196,6 +162,7 @@ function TableCell({
       colSpan={cell.data.colspan}
       rowSpan={cell.data.rowspan}
       style={style}
+      data-cell-key={cellKey}
       data-row={rowIndex}
       data-col={cellIndex}
       data-value-changed={isValueChanged || undefined}
@@ -208,12 +175,15 @@ function TableCell({
       onDoubleClick={handleDoubleClick}
     >
       <div
+        data-cell-content={cellKey}
+        style={contentSize}
+        title={hasNote || session ? undefined : displayValue}
         className={cn(styles.constCell, {
           [styles.nowrap]: isNumericCellValue(cell.formatted_value),
           [styles.preWrap]: cell.data.editor?.type === 'textarea'
         })}
       >
-        {isEditingTextLike ? null : displayValue}
+        <span style={isEditingTextLike ? { visibility: 'hidden' } : undefined}>{displayValue}</span>
         {isEditingTextLike && session && (
           <CellValueEditor
             session={session}
@@ -266,7 +236,14 @@ function TableCell({
         />
       )}
       {hasNote && isNoteTooltipOpen && !isNoteOpen && (
-        <NoteTooltip value={noteValue ?? ''} anchorRef={tdRef} />
+        <DataStatusNote
+          value={noteValue ?? ''}
+          anchorRef={tdRef}
+          tableOwnerId={tableOwnerId}
+          onClose={handleMouseLeave}
+          onChange={handleNoteChange}
+          preview
+        />
       )}
     </td>
   )

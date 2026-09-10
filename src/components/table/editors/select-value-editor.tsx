@@ -1,16 +1,14 @@
 'use client'
 
-import { useLayoutEffect, useRef, type RefObject } from 'react'
+import { useLayoutEffect, useRef } from 'react'
 
 import type { CellValue } from '@/types'
 import type { EditingSession } from '../editing/types'
-import { EditorPopover } from './editor-popover'
 import styles from './editors.module.css'
 
 type SelectValueEditorProps = {
   session: EditingSession
   currentValue: CellValue
-  anchorRef: RefObject<HTMLElement>
   tableOwnerId: string
   onChooseValue: (value: CellValue) => void
   onCommit: () => void
@@ -20,65 +18,65 @@ type SelectValueEditorProps = {
 export function SelectValueEditor({
   session,
   currentValue,
-  anchorRef,
   tableOwnerId,
   onChooseValue,
   onCommit,
   onCancel
 }: SelectValueEditorProps) {
-  const firstButtonRef = useRef<HTMLButtonElement>(null)
+  const selectRef = useRef<HTMLSelectElement>(null)
   const editor = session.editor.type === 'select' ? session.editor : null
 
   useLayoutEffect(() => {
-    firstButtonRef.current?.focus()
+    const select = selectRef.current
+    if (!select) return
+
+    select.focus({ preventScroll: true })
+    try {
+      select.showPicker?.()
+    } catch {
+      // Keep the native select focusable even when automatic opening is unavailable.
+    }
   }, [session.cellKey])
 
   if (!editor) return null
 
-  const handleKeyDown = (event: React.KeyboardEvent) => {
-    if (event.key === 'Escape') {
-      event.preventDefault()
-      event.stopPropagation()
-      onCancel()
-      return
-    }
-
-    if (event.key === 'Enter') {
-      event.preventDefault()
-      event.stopPropagation()
-      onCommit()
-    }
-  }
+  // Index values keep null distinct from an option whose value is an empty string.
+  const selectedIndex = editor.options.findIndex((option) => option.value === currentValue)
 
   return (
-    <EditorPopover anchorRef={anchorRef} tableOwnerId={tableOwnerId}>
-      <div className={styles.panel} role="listbox" onKeyDown={handleKeyDown}>
-        <div className={styles.hint}>Пробел - выбрать · Enter - закрыть · Esc - отменить</div>
-        {editor.options.length === 0 && (
-          <div className={styles.emptyMessage}>Нет доступных вариантов</div>
-        )}
-        {editor.options.map((option, index) => (
-          <button
-            key={option.value}
-            ref={index === 0 ? firstButtonRef : undefined}
-            type="button"
-            className={styles.optionButton}
-            aria-pressed={currentValue === option.value}
-            onClick={() => onChooseValue(option.value)}
-          >
-            {option.label}
-          </button>
-        ))}
-        <button
-          ref={editor.options.length === 0 ? firstButtonRef : undefined}
-          type="button"
-          className={styles.clearButton}
-          aria-pressed={currentValue === null}
-          onClick={() => onChooseValue(null)}
-        >
-          Очистить
-        </button>
-      </div>
-    </EditorPopover>
+    <select
+      ref={selectRef}
+      className={styles.nativeSelect}
+      aria-label="Выбрать значение"
+      data-table-interactive="true"
+      data-table-owner={tableOwnerId}
+      data-value-editor-owner={tableOwnerId}
+      value={selectedIndex < 0 ? '' : String(selectedIndex)}
+      onChange={(event) => {
+        const index = event.currentTarget.value
+        onChooseValue(index === '' ? null : editor.options[Number(index)].value)
+        onCommit()
+      }}
+      onMouseDown={(event) => event.stopPropagation()}
+      onPointerDown={(event) => event.stopPropagation()}
+      onKeyDown={(event) => {
+        event.stopPropagation()
+        if (event.key === 'Escape') {
+          event.preventDefault()
+          onCancel()
+        } else if (event.key === 'Enter') {
+          event.preventDefault()
+          onCommit()
+        }
+      }}
+    >
+      <option value="">Очистить</option>
+      {editor.options.length === 0 && <option disabled>Нет доступных вариантов</option>}
+      {editor.options.map((option, index) => (
+        <option key={option.value} value={String(index)}>
+          {option.label}
+        </option>
+      ))}
+    </select>
   )
 }

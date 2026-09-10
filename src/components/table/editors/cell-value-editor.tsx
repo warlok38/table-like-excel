@@ -50,7 +50,6 @@ export function CellValueEditor({
       <SelectValueEditor
         session={session}
         currentValue={currentValue}
-        anchorRef={anchorRef}
         tableOwnerId={tableOwnerId}
         onChooseValue={onChooseValue}
         onCommit={onCommit}
