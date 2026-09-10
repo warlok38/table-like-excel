@@ -1,4 +1,10 @@
-import type { CellEditor, CellPermissions, CellTable, CellValue, DataStatus } from '@/types'
+import type {
+  CellEditor,
+  CellPermissions,
+  CellTable,
+  CellValue,
+  DataStatus
+} from '@/components/table'
 
 type DemoCellOptions = {
   editable?: boolean | null

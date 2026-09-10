@@ -1,4 +1,4 @@
-import type { BackgroundDataStatusItem, CellEditor, CellTable, CellValue } from '@/types'
+import type { BackgroundDataStatusItem, CellEditor, CellTable, CellValue } from '@/components/table'
 
 const statusBackground = (
   alias: string,

@@ -330,3 +330,26 @@ Acceptance criteria:
 - There is a written decision before implementation starts.
 - The decision covers `rowSpan`, `colSpan`, sticky rows or headers, keyboard navigation, and selection rendering.
 - If virtualization is deferred, the backlog records the table size/performance assumptions behind that decision.
+
+## Phase 14: Table Module Refactor
+
+Implementation documents:
+
+- [Design and agreed rules](docs/superpowers/specs/2026-09-10-table-module-refactor-design.md).
+- [Step-by-step implementation plan](docs/superpowers/plans/2026-09-10-table-module-refactor.md).
+- [Verification log](docs/superpowers/plans/2026-09-10-table-module-refactor-verification.md).
+
+- [x] Move public table types into `src/components/table` and expose `Table`, `TableProps`, save types and `getTableCellKey` from the public component entry.
+- [x] Move the demo adapter to `src/integrations/table` / `src/mocks/table`; compute `cellManagementEnabled` outside the table from DataStatus presence.
+- [x] Remove backend identifier assembly from the table core; keep the legacy mapper in the integration layer.
+- [x] Add table-owned confirmed base data, pending changes and save lifecycle. A successful save response becomes the new base even without a prop refresh.
+- [x] Block table mutation commands while save is pending; keep scroll and page focus available; indicate waiting on the save button/disabled controls.
+- [x] Optimize batch pending changes, virtual coordinate map construction and pure selection-outline generation.
+- [x] Move table UI, editors, note UI, model and lib code under local table folders and remove unused legacy `input-cell` / timestamp helper files.
+
+Verification note, 2026-09-10:
+
+- `npm.cmd run build` passes.
+- `npm.cmd run lint` passes with no warnings or errors.
+- Production smoke on `http://localhost:3001` covered render, click selection, Ctrl/Cmd multi-selection, value edit/save, no-DataStatus selection disable and partial save-control blocking.
+- Pure Node measurements were recorded for P1/P2/P3 in the verification log. Full browser profiler P4 and exhaustive M2/M4/M5/M7/M8/M10/M11 remain manual follow-up items.

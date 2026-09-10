@@ -2,88 +2,28 @@
 
 import { useCallback, useMemo, useRef, useState, useId } from 'react'
 
-import type { AvailableBackgroundColor, CellTable } from '@/types'
+import type { CellTable, TableProps } from './types'
+import { getCellCapabilities } from './lib/cell-capabilities'
+import type { TableCellEntry } from './lib/table-index'
+import type { KeyboardDirection } from './lib/virtual-table'
+import type { EditStart } from './model/editing.types'
+import { useTableChanges } from './model/use-table-changes'
+import { useTableData } from './model/use-table-data'
+import { useTableEditing } from './model/use-table-editing'
+import { useTableInteractions } from './model/use-table-interactions'
+import { useTableSave } from './model/use-table-save'
+import { useTableSelection } from './model/use-table-selection'
 import {
-  getCellCapabilities,
-  makeCellSelectionEntries,
-  type CellSelectionEntry,
-  type KeyboardDirection
-} from './helpers'
-import type { TableCellOperationTarget, TableSaveChangeset } from './data-adapter/types'
-import type { EditStart } from './editing/types'
-import { useTableEditing } from './hooks/use-table-editing'
-import { useTableInteractions } from './hooks/use-table-interactions'
-import { useTableSelection } from './hooks/use-table-selection'
-import {
-  emptyPendingChanges,
   getPendingNote,
-  hasPendingChanges,
-  setPendingBackgroundChange,
+  setPendingBackgroundChanges,
   setPendingNoteChange,
   setPendingValueChange,
-  summarizePendingChanges
-} from './pending/pending-changes'
-import type { PendingChanges } from './pending/types'
-import { TableBody } from './table-body'
-import { TableContextMenu } from './table-context-menu'
-import { TableToolbar } from './table-toolbar'
+  setPendingValueChanges
+} from './model/pending-changes'
+import { TableBody } from './ui/body/table-body'
+import { TableContextMenu } from './ui/context-menu/table-context-menu'
+import { TableToolbar } from './ui/toolbar/table-toolbar'
 import styles from './table.module.css'
-
-type TableProps = {
-  data: CellTable[][]
-  availableBackgroundColors?: AvailableBackgroundColor[]
-  isEditablePage?: boolean | string
-  formatCalendare?: string
-  isFetching?: boolean
-  onSaveChanges: (changeset: TableSaveChangeset) => Promise<CellTable[][]>
-}
-
-function toOperationTarget(entry: CellSelectionEntry): TableCellOperationTarget {
-  return {
-    cellKey: entry.key,
-    row: entry.cell.data.row,
-    col: entry.cell.data.col,
-    identifiers: {
-      id: entry.cell.data.id ?? null,
-      commentsId: entry.cell.data.comments_id ?? null,
-      parameterId: entry.cell.data.parameter_id ?? null,
-      catalogsId: entry.cell.data.catalogs_id ?? null,
-      dataStatusTechId: entry.cell.data_status?.data_statuses_tech_id ?? null,
-      tdataId: entry.cell.data.tdata_id ?? null,
-      propertiesJournalTechId: entry.cell.data.properties_journal_tech_id ?? null
-    }
-  }
-}
-
-function toSaveChangeset(
-  changes: PendingChanges,
-  entries: CellSelectionEntry[]
-): TableSaveChangeset {
-  const entriesByKey = new Map(entries.map((entry) => [entry.key, entry]))
-  const getTarget = (cellKey: string) => {
-    const entry = entriesByKey.get(cellKey)
-
-    return entry ? toOperationTarget(entry) : null
-  }
-
-  return {
-    values: Object.entries(changes.values).flatMap(([cellKey, value]) => {
-      const target = getTarget(cellKey)
-
-      return target ? [{ target, value }] : []
-    }),
-    backgrounds: Object.entries(changes.backgrounds).flatMap(([cellKey, background]) => {
-      const target = getTarget(cellKey)
-
-      return target ? [{ target, background }] : []
-    }),
-    notes: Object.entries(changes.notes).flatMap(([cellKey, note]) => {
-      const target = getTarget(cellKey)
-
-      return target ? [{ target, note }] : []
-    })
-  }
-}
 
 function getKeyboardDirection(key: string): KeyboardDirection | null {
   if (key === 'ArrowUp') return 'up'
@@ -93,90 +33,106 @@ function getKeyboardDirection(key: string): KeyboardDirection | null {
   return null
 }
 
-export function Table({ data, availableBackgroundColors = [], onSaveChanges }: TableProps) {
+export function Table({
+  data,
+  availableBackgroundColors = [],
+  cellManagementEnabled,
+  onSaveChanges
+}: TableProps) {
   const ownerId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
-  const selectionEntries = useMemo(() => makeCellSelectionEntries(data), [data])
-  const dataStatusActionsEnabled = useMemo(
-    () =>
-      selectionEntries.some(
-        (entry) => entry.cell.data_status !== null && entry.cell.data_status !== undefined
-      ),
-    [selectionEntries]
-  )
-  const selection = useTableSelection(data, { isEnabled: dataStatusActionsEnabled })
-  const [pendingChanges, setPendingChanges] = useState<PendingChanges>(emptyPendingChanges)
-  const pendingChangesRef = useRef(pendingChanges)
+  const editingOpenRef = useRef(false)
+  const savingOpenRef = useRef(false)
+  const {
+    pendingChanges,
+    pendingRef,
+    updatePending,
+    resetPending,
+    summary: pendingSummary
+  } = useTableChanges()
+  const {
+    baseData,
+    acceptSavedData,
+    entries: selectionEntries,
+    entriesByKey,
+    structure
+  } = useTableData(data, {
+    canAcceptIncoming: () =>
+      !savingOpenRef.current &&
+      !editingOpenRef.current &&
+      Object.keys(pendingRef.current.values).length === 0 &&
+      Object.keys(pendingRef.current.backgrounds).length === 0 &&
+      Object.keys(pendingRef.current.notes).length === 0
+  })
+  const selection = useTableSelection(baseData, {
+    isEnabled: cellManagementEnabled,
+    isBlockedRef: savingOpenRef
+  })
   const [openNoteKey, setOpenNoteKey] = useState<string | null>(null)
   const [contextMenu, setContextMenu] = useState<{ cellKey: string; x: number; y: number } | null>(
     null
   )
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'success' | 'failure'>('idle')
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
-  const updatePendingChanges = useCallback(
-    (updater: (current: PendingChanges) => PendingChanges) => {
-      const next = updater(pendingChangesRef.current)
-      pendingChangesRef.current = next
-      setPendingChanges(next)
-      setSaveStatus('idle')
-      setSaveMessage(null)
-    },
-    []
-  )
   const changePendingValue = useCallback(
     (cellKey: string, value: CellTable['value']) => {
-      const entry = selectionEntries.find((item) => item.key === cellKey)
+      if (savingOpenRef.current) return
+
+      const entry = entriesByKey.get(cellKey)
 
       if (!entry || !getCellCapabilities(entry.cell).canEditValue) {
         return
       }
 
-      updatePendingChanges((current) => setPendingValueChange(current, cellKey, entry.cell, value))
+      updatePending((current) => setPendingValueChange(current, cellKey, entry.cell, value))
     },
-    [selectionEntries, updatePendingChanges]
+    [entriesByKey, updatePending]
   )
   const editing = useTableEditing({
     entries: selectionEntries,
     pendingValues: pendingChanges.values,
-    onPendingValueChange: changePendingValue
+    onPendingValueChange: changePendingValue,
+    isBlockedRef: savingOpenRef
   })
+  editingOpenRef.current = Boolean(editing.session)
 
-  const selectedEntries = useMemo(
-    () => selectionEntries.filter((entry) => selection.selectedCellKeys.has(entry.key)),
-    [selection.selectedCellKeys, selectionEntries]
-  )
+  const selectedEntries = useMemo(() => {
+    const result: TableCellEntry[] = []
+    Array.from(selection.selectedCellKeys).forEach((key) => {
+      const entry = entriesByKey.get(key)
+      if (entry) result.push(entry)
+    })
+    return result
+  }, [entriesByKey, selection.selectedCellKeys])
   const backgroundEditableSelectedCount = useMemo(
     () =>
       selectedEntries.filter(
-        (entry) => getCellCapabilities(entry.cell, { dataStatusActionsEnabled }).canChangeBackground
+        (entry) =>
+          getCellCapabilities(entry.cell, { dataStatusActionsEnabled: cellManagementEnabled })
+            .canChangeBackground
       ).length,
-    [dataStatusActionsEnabled, selectedEntries]
+    [cellManagementEnabled, selectedEntries]
   )
-  const pendingSummary = useMemo(() => summarizePendingChanges(pendingChanges), [pendingChanges])
   const canSaveDraft = Boolean(editing.session)
   const contextMenuEntry = useMemo(
-    () =>
-      contextMenu
-        ? (selectionEntries.find((entry) => entry.key === contextMenu.cellKey) ?? null)
-        : null,
-    [contextMenu, selectionEntries]
+    () => (contextMenu ? (entriesByKey.get(contextMenu.cellKey) ?? null) : null),
+    [contextMenu, entriesByKey]
   )
 
   const applyBackground = useCallback(
     (background: string | null) => {
-      editing.commitEditing()
-      updatePendingChanges((current) => {
-        let nextChanges = current
-        selectedEntries.forEach((entry) => {
-          if (getCellCapabilities(entry.cell, { dataStatusActionsEnabled }).canChangeBackground) {
-            nextChanges = setPendingBackgroundChange(nextChanges, entry.key, entry.cell, background)
-          }
-        })
+      if (savingOpenRef.current) return
 
-        return nextChanges
+      editing.commitEditing()
+      updatePending((current) => {
+        const editableEntries = selectedEntries.filter(
+          (entry) =>
+            getCellCapabilities(entry.cell, { dataStatusActionsEnabled: cellManagementEnabled })
+              .canChangeBackground
+        )
+
+        return setPendingBackgroundChanges(current, editableEntries, background)
       })
     },
-    [dataStatusActionsEnabled, editing, selectedEntries, updatePendingChanges]
+    [cellManagementEnabled, editing, selectedEntries, updatePending]
   )
   const getNoteValue = useCallback(
     (cellKey: string, cell: CellTable) => {
@@ -191,49 +147,72 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
   )
   const changeNote = useCallback(
     (cellKey: string, value: string) => {
-      const entry = selectionEntries.find((item) => item.key === cellKey)
+      if (savingOpenRef.current) return
 
-      if (!entry || !getCellCapabilities(entry.cell, { dataStatusActionsEnabled }).canEditNote) {
+      const entry = entriesByKey.get(cellKey)
+
+      if (
+        !entry ||
+        !getCellCapabilities(entry.cell, { dataStatusActionsEnabled: cellManagementEnabled })
+          .canEditNote
+      ) {
         return
       }
 
-      updatePendingChanges((current) => setPendingNoteChange(current, cellKey, entry.cell, value))
+      updatePending((current) => setPendingNoteChange(current, cellKey, entry.cell, value))
     },
-    [dataStatusActionsEnabled, selectionEntries, updatePendingChanges]
+    [cellManagementEnabled, entriesByKey, updatePending]
   )
   const deleteNote = useCallback(
     (cellKey: string) => {
-      const entry = selectionEntries.find((item) => item.key === cellKey)
+      if (savingOpenRef.current) return
 
-      if (!entry || !getCellCapabilities(entry.cell, { dataStatusActionsEnabled }).canEditNote) {
+      const entry = entriesByKey.get(cellKey)
+
+      if (
+        !entry ||
+        !getCellCapabilities(entry.cell, { dataStatusActionsEnabled: cellManagementEnabled })
+          .canEditNote
+      ) {
         return
       }
 
-      updatePendingChanges((current) => setPendingNoteChange(current, cellKey, entry.cell, null))
+      updatePending((current) => setPendingNoteChange(current, cellKey, entry.cell, null))
       setOpenNoteKey(null)
       setContextMenu(null)
     },
-    [dataStatusActionsEnabled, selectionEntries, updatePendingChanges]
+    [cellManagementEnabled, entriesByKey, updatePending]
   )
   const openNoteEditor = useCallback(
     (cellKey: string) => {
-      editing.commitEditing()
-      const entry = selectionEntries.find((selectionEntry) => selectionEntry.key === cellKey)
+      if (savingOpenRef.current) return
 
-      if (!entry || !getCellCapabilities(entry.cell, { dataStatusActionsEnabled }).canEditNote) {
+      editing.commitEditing()
+      const entry = entriesByKey.get(cellKey)
+
+      if (
+        !entry ||
+        !getCellCapabilities(entry.cell, { dataStatusActionsEnabled: cellManagementEnabled })
+          .canEditNote
+      ) {
         return
       }
 
       setOpenNoteKey(cellKey)
       setContextMenu(null)
     },
-    [dataStatusActionsEnabled, editing, selectionEntries]
+    [cellManagementEnabled, editing, entriesByKey]
   )
-  const closeNoteEditor = useCallback(() => setOpenNoteKey(null), [])
+  const closeNoteEditor = useCallback(() => {
+    if (savingOpenRef.current) return
+    setOpenNoteKey(null)
+  }, [])
   const openContextMenu = useCallback(
     (cellKey: string, position: { x: number; y: number }) => {
-      const entry = selectionEntries.find((selectionEntry) => selectionEntry.key === cellKey)
-      if (!entry || !dataStatusActionsEnabled) {
+      if (savingOpenRef.current) return
+
+      const entry = entriesByKey.get(cellKey)
+      if (!entry || !cellManagementEnabled) {
         setOpenNoteKey(null)
         setContextMenu(null)
         return
@@ -243,9 +222,12 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
       setOpenNoteKey(null)
       setContextMenu({ cellKey, ...position })
     },
-    [dataStatusActionsEnabled, editing, selectionEntries]
+    [cellManagementEnabled, editing, entriesByKey]
   )
-  const closeContextMenu = useCallback(() => setContextMenu(null), [])
+  const closeContextMenu = useCallback(() => {
+    if (savingOpenRef.current) return
+    setContextMenu(null)
+  }, [])
   const focusRoot = useCallback(() => {
     requestAnimationFrame(() => rootRef.current?.focus({ preventScroll: true }))
   }, [])
@@ -259,6 +241,8 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
   }, [editing, focusRoot])
   const openEditor = useCallback(
     (cellKey: string, start: EditStart) => {
+      if (savingOpenRef.current) return
+
       const didStart = editing.startEditing(cellKey, start)
 
       if (didStart) {
@@ -270,43 +254,36 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
     [editing, selection]
   )
   const leaveTable = useCallback(() => {
+    if (savingOpenRef.current) return
+
     selection.clearSelection()
     setOpenNoteKey(null)
     setContextMenu(null)
   }, [selection])
-  const handleSave = useCallback(async () => {
-    if (saveStatus === 'saving') return
-
+  const prepareForSave = useCallback(() => {
     editing.commitEditing()
     setOpenNoteKey(null)
     setContextMenu(null)
-
-    const changes = pendingChangesRef.current
-    if (!hasPendingChanges(changes)) return
-
-    setSaveStatus('saving')
-    setSaveMessage('Сохраняем изменения')
-
-    try {
-      await onSaveChanges(toSaveChangeset(changes, selectionEntries))
-      pendingChangesRef.current = emptyPendingChanges
-      setPendingChanges(emptyPendingChanges)
-      setSaveStatus('success')
-      setSaveMessage('Изменения сохранены')
-    } catch (error) {
-      setSaveStatus('failure')
-      setSaveMessage(error instanceof Error ? error.message : 'Не удалось сохранить изменения')
-    }
-  }, [editing, onSaveChanges, saveStatus, selectionEntries])
+    selection.stopDragging()
+  }, [editing, selection])
+  const tableSave = useTableSave({
+    isSavingRef: savingOpenRef,
+    pendingRef,
+    entriesByKey,
+    onSaveChanges,
+    acceptSavedData,
+    resetPending,
+    prepareForSave
+  })
   const handleCancelChanges = useCallback(() => {
+    if (savingOpenRef.current) return
+
     editing.cancelEditing()
-    pendingChangesRef.current = emptyPendingChanges
-    setPendingChanges(emptyPendingChanges)
+    resetPending()
     setOpenNoteKey(null)
     setContextMenu(null)
-    setSaveStatus('idle')
-    setSaveMessage(null)
-  }, [editing])
+    tableSave.clearSaveMessage()
+  }, [editing, resetPending, tableSave])
   const handleRootKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       if (event.target !== rootRef.current) return
@@ -316,7 +293,8 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
 
       const activeEntry = selectionEntries.find((entry) => entry.key === activeKey)
       if (!activeEntry) return
-      if (!dataStatusActionsEnabled) return
+      if (!cellManagementEnabled) return
+      if (savingOpenRef.current) return
 
       const direction = getKeyboardDirection(event.key)
       if (direction) {
@@ -339,17 +317,13 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
         editing.commitEditing()
         setOpenNoteKey(null)
         setContextMenu(null)
-        updatePendingChanges((current) => {
-          let nextChanges = current
-
-          selectedEntries.forEach((entry) => {
-            if (getCellCapabilities(entry.cell).canEditValue) {
-              nextChanges = setPendingValueChange(nextChanges, entry.key, entry.cell, null)
-            }
-          })
-
-          return nextChanges
-        })
+        updatePending((current) =>
+          setPendingValueChanges(
+            current,
+            selectedEntries.filter((entry) => getCellCapabilities(entry.cell).canEditValue),
+            null
+          )
+        )
         return
       }
 
@@ -377,13 +351,13 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
       openEditor(activeKey, { kind: 'replace', text: event.key })
     },
     [
-      dataStatusActionsEnabled,
+      cellManagementEnabled,
       editing,
       openEditor,
       selectedEntries,
       selection,
       selectionEntries,
-      updatePendingChanges
+      updatePending
     ]
   )
 
@@ -392,7 +366,8 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
     rootRef,
     hasEditor: Boolean(editing.session),
     onLeaveEditor: editing.commitEditing,
-    onLeaveTable: leaveTable
+    onLeaveTable: leaveTable,
+    isBlockedRef: savingOpenRef
   })
 
   return (
@@ -400,35 +375,39 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
       ref={rootRef}
       className={styles.tableContainer}
       data-is-selecting={selection.isDragging}
-      data-data-status-actions-enabled={dataStatusActionsEnabled}
+      data-data-status-actions-enabled={cellManagementEnabled}
       data-table-owner={ownerId}
+      aria-busy={tableSave.isSaving}
       tabIndex={0}
       onKeyDown={handleRootKeyDown}
     >
       <div className={styles.toolbarSlot} data-value-editor-owner={ownerId}>
         <TableToolbar
           colors={availableBackgroundColors}
-          dataStatusActionsEnabled={dataStatusActionsEnabled}
+          dataStatusActionsEnabled={cellManagementEnabled}
           selectedCount={selection.selectedCellKeys.size}
           backgroundEditableSelectedCount={backgroundEditableSelectedCount}
           pendingSummary={pendingSummary}
           canSaveDraft={canSaveDraft}
-          saveStatus={saveStatus}
-          saveMessage={saveMessage}
+          saveStatus={tableSave.saveStatus}
+          saveMessage={tableSave.saveMessage}
+          isSaving={tableSave.isSaving}
           onBackgroundChange={applyBackground}
-          onSave={handleSave}
+          onSave={tableSave.save}
           onCancel={handleCancelChanges}
         />
       </div>
-      {Array.isArray(data) && data.length > 0 && (
+      {Array.isArray(baseData) && baseData.length > 0 && (
         <TableBody
-          data={data}
+          data={baseData}
+          structure={structure}
           selection={selection}
           pendingChanges={pendingChanges}
           session={editing.session}
           tableOwnerId={ownerId}
           openNoteKey={openNoteKey}
-          dataStatusActionsEnabled={dataStatusActionsEnabled}
+          dataStatusActionsEnabled={cellManagementEnabled}
+          isSaving={tableSave.isSaving}
           getNoteValue={getNoteValue}
           onOpenEditor={openEditor}
           onDraftChange={editing.updateDraft}
@@ -447,10 +426,14 @@ export function Table({ data, availableBackgroundColors = [], onSaveChanges }: T
           y={contextMenu.y}
           hasNote={Boolean(getNoteValue(contextMenu.cellKey, contextMenuEntry.cell)?.trim())}
           canEditNote={
-            getCellCapabilities(contextMenuEntry.cell, { dataStatusActionsEnabled }).canEditNote
+            getCellCapabilities(contextMenuEntry.cell, {
+              dataStatusActionsEnabled: cellManagementEnabled
+            }).canEditNote
           }
           showUnavailableActions={
-            getCellCapabilities(contextMenuEntry.cell, { dataStatusActionsEnabled }).isLocked
+            getCellCapabilities(contextMenuEntry.cell, {
+              dataStatusActionsEnabled: cellManagementEnabled
+            }).isLocked
           }
           onAddNote={() => openNoteEditor(contextMenu.cellKey)}
           onEditNote={() => openNoteEditor(contextMenu.cellKey)}

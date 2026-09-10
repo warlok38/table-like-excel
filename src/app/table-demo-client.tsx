@@ -2,11 +2,10 @@
 
 import { useMemo } from 'react'
 
-import { Table } from '@/components/table/table'
-import { createMockTableDataAdapter } from '@/components/table/data-adapter/mock-table-data-adapter'
-import { useTableDataAdapter } from '@/components/table/data-adapter/use-table-data-adapter'
-import type { TableDataAdapter } from '@/components/table/data-adapter/types'
-import type { AvailableBackgroundColor, CellTable } from '@/types'
+import { Table, type AvailableBackgroundColor, type CellTable } from '@/components/table'
+import { useTableDataAdapter } from '@/integrations/table/use-table-data-adapter'
+import type { TableDataAdapter } from '@/integrations/table/types'
+import { createMockTableDataAdapter } from '@/mocks/table/mock-table-data-adapter'
 
 type TableDemoClientProps = {
   title?: string
@@ -61,6 +60,7 @@ function TableDemoFromAdapter({ title, description, adapter }: TableDemoFromAdap
           <Table
             data={tableState.snapshot.data}
             availableBackgroundColors={tableState.snapshot.availableBackgroundColors}
+            cellManagementEnabled={hasDataStatus}
             onSaveChanges={tableState.saveChanges}
           />
         </>

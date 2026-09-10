@@ -1,4 +1,4 @@
-import type { CellEditor, CellTable } from '@/types'
+import type { CellEditor, CellTable } from '@/components/table'
 
 type NoDataStatusCellOptions = {
   color?: string
