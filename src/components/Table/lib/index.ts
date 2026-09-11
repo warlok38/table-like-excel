@@ -1,0 +1,1 @@
+export { getTableCellKey } from './cellKey'

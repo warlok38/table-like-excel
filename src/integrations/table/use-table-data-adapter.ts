@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import type { TableSaveChangeset } from '@/components/table'
+import type { TableSaveChangeset } from '@/components/Table'
 import type { LoadedTableSnapshot, TableDataAdapter } from './types'
 
 type LoadState =

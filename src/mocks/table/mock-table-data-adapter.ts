@@ -4,8 +4,8 @@ import type {
   CellTable,
   CellValue,
   TableSaveChangeset
-} from '@/components/table'
-import { getTableCellKey } from '@/components/table'
+} from '@/components/Table'
+import { getTableCellKey } from '@/components/Table'
 import type { LoadedTableSnapshot, TableDataAdapter } from '@/integrations/table/types'
 
 type MockTableDataAdapterOptions = {

@@ -1,5 +1,5 @@
-import type { CellTable, TableSaveChangeset } from '@/components/table'
-import { getTableCellKey } from '@/components/table'
+import type { CellTable, TableSaveChangeset } from '@/components/Table'
+import { getTableCellKey } from '@/components/Table'
 
 export type TableCellBackendIdentifiers = {
   id: string | null

@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 
-import { Table, type AvailableBackgroundColor, type CellTable } from '@/components/table'
+import { Table, type AvailableBackgroundColor, type CellTable } from '@/components/Table'
 import { useTableDataAdapter } from '@/integrations/table/use-table-data-adapter'
 import type { TableDataAdapter } from '@/integrations/table/types'
 import { createMockTableDataAdapter } from '@/mocks/table/mock-table-data-adapter'

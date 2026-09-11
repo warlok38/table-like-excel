@@ -1,4 +1,4 @@
-import type { AvailableBackgroundColor } from '@/components/table'
+import type { AvailableBackgroundColor } from '@/components/Table'
 
 export const availableBackgroundColorsMock: AvailableBackgroundColor[] = [
   {

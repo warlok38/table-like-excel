@@ -4,7 +4,7 @@ import type {
   CellTable,
   CellValue,
   DataStatus
-} from '@/components/table'
+} from '@/components/Table'
 
 type DemoCellOptions = {
   editable?: boolean | null

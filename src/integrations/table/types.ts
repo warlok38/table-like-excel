@@ -1,4 +1,4 @@
-import type { AvailableBackgroundColor, CellTable, TableSaveChangeset } from '@/components/table'
+import type { AvailableBackgroundColor, CellTable, TableSaveChangeset } from '@/components/Table'
 
 export type LoadedTableSnapshot = {
   data: CellTable[][]
