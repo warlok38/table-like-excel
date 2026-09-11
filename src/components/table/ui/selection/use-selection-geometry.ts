@@ -7,45 +7,77 @@ import {
   type RefObject
 } from 'react'
 
-import type { SelectionRect } from '../../lib/selection-outline'
+import type { SelectionRect } from './make-selection-outline'
 
 export function useSelectionGeometry(tableRef: RefObject<HTMLTableElement>, structure: string) {
   const cellRefsRef = useRef(new Map<string, HTMLTableCellElement>())
   const refCallbacksRef = useRef(new Map<string, RefCallback<HTMLTableCellElement>>())
   const rectsRef = useRef(new Map<string, SelectionRect>())
   const frameRef = useRef<number | null>(null)
+  const fullMeasureRef = useRef(false)
   const [version, setVersion] = useState(0)
 
-  const measure = useCallback(() => {
-    const table = tableRef.current
-    const wrapper = table?.parentElement
-    if (!table || !wrapper) return
+  const measure = useCallback(
+    (stickyOnly = false) => {
+      const table = tableRef.current
+      const wrapper = table?.parentElement
+      if (!table || !wrapper) return
 
-    const origin = wrapper.getBoundingClientRect()
-    const rects = new Map<string, SelectionRect>()
+      const origin = wrapper.getBoundingClientRect()
+      const rects = stickyOnly ? new Map(rectsRef.current) : new Map<string, SelectionRect>()
 
-    cellRefsRef.current.forEach((cell, key) => {
-      const rect = cell.getBoundingClientRect()
-      rects.set(key, {
-        left: rect.left - origin.left,
-        right: rect.right - origin.left,
-        top: rect.top - origin.top,
-        bottom: rect.bottom - origin.top
+      const cells = stickyOnly
+        ? new Map(
+            Array.from(table.rows[0]?.cells ?? []).map((cell) => [cell.dataset.cellKey!, cell])
+          )
+        : cellRefsRef.current
+      cells.forEach((cell, key) => {
+        const rect = cell.getBoundingClientRect()
+        rects.set(key, {
+          left: rect.left - origin.left,
+          right: rect.right - origin.left,
+          top: rect.top - origin.top,
+          bottom: rect.bottom - origin.top
+        })
       })
-    })
 
-    rectsRef.current = rects
-    setVersion((current) => current + 1)
-  }, [tableRef])
+      const previous = rectsRef.current
+      const unchanged =
+        previous.size === rects.size &&
+        Array.from(rects).every(([key, rect]) => {
+          const old = previous.get(key)
+          return (
+            old &&
+            old.left === rect.left &&
+            old.right === rect.right &&
+            old.top === rect.top &&
+            old.bottom === rect.bottom
+          )
+        })
+      if (unchanged) return
+      rectsRef.current = rects
+      setVersion((current) => current + 1)
+    },
+    [tableRef]
+  )
 
-  const scheduleMeasure = useCallback(() => {
-    if (frameRef.current !== null) return
-
-    frameRef.current = requestAnimationFrame(() => {
-      frameRef.current = null
-      measure()
-    })
-  }, [measure])
+  const schedule = useCallback(
+    (full: boolean) => {
+      fullMeasureRef.current ||= full
+      if (frameRef.current !== null) return
+      frameRef.current = requestAnimationFrame(() => {
+        frameRef.current = null
+        const full = fullMeasureRef.current
+        fullMeasureRef.current = false
+        measure(!full)
+      })
+    },
+    [measure]
+  )
+  const scheduleMeasure = useCallback(() => schedule(true), [schedule])
+  // Sticky headers really move relative to the surface on scroll; normal
+  // cells do not. Refresh just that row, coalesced with pending layout work.
+  const scheduleStickyMeasure = useCallback(() => schedule(false), [schedule])
 
   const registerCellRef = useCallback(
     (cellKey: string): RefCallback<HTMLTableCellElement> => {
@@ -85,15 +117,22 @@ export function useSelectionGeometry(tableRef: RefObject<HTMLTableElement>, stru
 
     const observer = new ResizeObserver(scheduleMeasure)
     observer.observe(table)
+    cellRefsRef.current.forEach((cell) => observer.observe(cell))
+    window.addEventListener('resize', scheduleMeasure)
+    window.addEventListener('scroll', scheduleStickyMeasure, true)
+    document.fonts?.addEventListener('loadingdone', scheduleMeasure)
 
     return () => {
       observer.disconnect()
+      window.removeEventListener('resize', scheduleMeasure)
+      window.removeEventListener('scroll', scheduleStickyMeasure, true)
+      document.fonts?.removeEventListener('loadingdone', scheduleMeasure)
       if (frameRef.current !== null) {
         cancelAnimationFrame(frameRef.current)
         frameRef.current = null
       }
     }
-  }, [scheduleMeasure, tableRef])
+  }, [scheduleMeasure, scheduleStickyMeasure, tableRef, structure])
 
   return {
     rectsRef,

@@ -1,5 +1,5 @@
-import type { CellTable } from '../types'
-import { getTableCellKey } from './cell-key'
+import type { CellTable } from '../../types'
+import { getTableCellKey } from '../../lib/cell-key'
 
 export type TableCellEntry = {
   key: string

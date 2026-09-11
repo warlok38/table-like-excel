@@ -1,16 +1,12 @@
 'use client'
 
+import { isDateAllowed } from '../../model/editing/date-rules'
+
 import { useMemo, useState, type RefObject } from 'react'
 
 import type { CellValue } from '../../types'
-import {
-  getMonthDays,
-  getMonthFromIso,
-  isDateAllowed,
-  shiftMonth,
-  type CalendarMonth
-} from '../../lib/date-calendar'
-import type { EditingSession } from '../../model/editing.types'
+import { getMonthDays, getMonthFromIso, shiftMonth, type CalendarMonth } from './date-calendar'
+import type { EditingSession } from '../../model/editing/editing.types'
 import { EditorPopover } from './editor-popover'
 import styles from './editors.module.css'
 

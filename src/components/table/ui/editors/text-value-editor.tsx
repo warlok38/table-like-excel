@@ -2,8 +2,8 @@
 
 import { useLayoutEffect, useRef } from 'react'
 
-import { normalizeNumberDraft } from '../../lib/value-conversion'
-import type { EditingSession } from '../../model/editing.types'
+import { normalizeNumberDraft } from '../../model/editing/value-conversion'
+import type { EditingSession } from '../../model/editing/editing.types'
 import styles from './editors.module.css'
 
 type TextValueEditorProps = {

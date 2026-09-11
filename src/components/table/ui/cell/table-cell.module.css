@@ -1,0 +1,131 @@
+[data-table-owner][data-data-status-actions-enabled='true'] .td {
+  cursor: cell;
+  user-select: none;
+}
+
+[data-table-owner] .td:first-child {
+  border-left: 1px solid black;
+}
+
+[data-table-owner] .td {
+  position: relative;
+  box-sizing: border-box;
+  padding: 0.15rem;
+  min-width: 2.4rem;
+  height: 1.15rem;
+  overflow: hidden;
+  box-shadow: 1px 1px 0 0 rgba(0, 0, 0, 1);
+  border: 1px solid black;
+  border-right: none;
+  border-bottom: none;
+  user-select: text;
+}
+
+[data-table-owner] .td::after {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  content: '';
+  pointer-events: none;
+}
+
+[data-table-owner] .noteCell::before {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 1;
+  width: 0;
+  height: 0;
+  border-top: 0.45rem solid #dc2626;
+  border-left: 0.45rem solid transparent;
+  content: '';
+  pointer-events: none;
+}
+
+[data-table-owner] .selectedCell::after {
+  background-color: rgba(0, 0, 0, 0.22);
+}
+
+[data-table-owner] .activeCell::after {
+  background-color: transparent;
+}
+
+[data-table-owner] .selectedLockedCell::after {
+  background-image: repeating-linear-gradient(
+    135deg,
+    rgba(100, 116, 139, 0.2) 0,
+    rgba(100, 116, 139, 0.2) 4px,
+    rgba(255, 255, 255, 0.15) 4px,
+    rgba(255, 255, 255, 0.15) 8px
+  );
+}
+
+.valuePickerButton {
+  position: absolute;
+  right: 0.05rem;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  padding: 0;
+  border: 1px solid #797979;
+  background-color: #f0f0f0;
+  color: #111827;
+  font-size: 0.75rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.valuePickerButton:hover,
+.valuePickerButton:focus-visible {
+  border-color: #a3a3a3;
+  background-color: #f5f5f5;
+}
+
+.valueChangedMarker {
+  position: absolute;
+  right: 2px;
+  bottom: 1px;
+  left: 2px;
+  z-index: 1;
+  height: 3px;
+  background: #ffb829;
+  pointer-events: none;
+}
+
+.loading {
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.constCell {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  border: 0;
+  background: none;
+  outline: none;
+  font-size: var(--fontSizeCells);
+  font-weight: 450;
+  text-align: center;
+  background: transparent;
+}
+
+.constCellComments {
+  height: 100%;
+  text-align: left;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.preWrap {
+  white-space: pre-wrap;
+}

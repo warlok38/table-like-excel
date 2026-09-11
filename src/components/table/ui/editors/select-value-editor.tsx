@@ -3,7 +3,7 @@
 import { useLayoutEffect, useRef } from 'react'
 
 import type { CellValue } from '../../types'
-import type { EditingSession } from '../../model/editing.types'
+import type { EditingSession } from '../../model/editing/editing.types'
 import styles from './editors.module.css'
 
 type SelectValueEditorProps = {

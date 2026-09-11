@@ -1,9 +1,9 @@
 'use client'
 
-import type { MutableRefObject } from 'react'
-import { makeSelectionOutline } from '../../lib/selection-outline'
-import type { SelectionRect } from '../../lib/selection-outline'
-import styles from '../../table.module.css'
+import { useMemo, type MutableRefObject } from 'react'
+import { makeSelectionOutline } from './make-selection-outline'
+import type { SelectionRect } from './make-selection-outline'
+import styles from './selection-outline.module.css'
 
 export function SelectionOutline({
   rectsRef,
@@ -14,12 +14,13 @@ export function SelectionOutline({
   geometryVersion: number
   selectedCellKeys: Set<string>
 }) {
-  void geometryVersion
-
-  const rects = Array.from(selectedCellKeys)
-    .map((cellKey) => rectsRef.current.get(cellKey))
-    .filter((rect): rect is SelectionRect => Boolean(rect))
-  const path = makeSelectionOutline(rects)
+  const path = useMemo(() => {
+    void geometryVersion
+    const rects = Array.from(selectedCellKeys)
+      .map((key) => rectsRef.current.get(key))
+      .filter((rect): rect is SelectionRect => Boolean(rect))
+    return makeSelectionOutline(rects)
+  }, [selectedCellKeys, geometryVersion, rectsRef])
 
   return (
     <svg className={styles.selectionOutline} aria-hidden="true">

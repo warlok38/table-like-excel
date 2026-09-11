@@ -1,14 +1,14 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useMemo, useState, type MutableRefObject } from 'react'
 
-import type { CellTable } from '../types'
+import type { TableStructure } from '../data/table-structure'
 import {
   getCellKeysInVirtualRange,
   getNextCellKey,
   makeVirtualTableMap,
   type KeyboardDirection
-} from '../lib/virtual-table'
+} from './virtual-table'
 
 type SelectCellOptions = {
   append: boolean
@@ -33,12 +33,10 @@ export type TableSelectionState = {
 }
 
 export function useTableSelection(
-  data: CellTable[][],
+  structure: TableStructure,
   { isEnabled = true, isBlockedRef }: UseTableSelectionOptions = {}
 ): TableSelectionState {
-  const virtualMap = useMemo(() => makeVirtualTableMap(data), [data])
-  const blockedRef = useRef(false)
-  blockedRef.current = Boolean(isBlockedRef?.current)
+  const virtualMap = useMemo(() => makeVirtualTableMap(structure.rows), [structure])
   const [activeCellKey, setActiveCellKey] = useState<string | null>(null)
   const [selectedCellKeys, setSelectedCellKeys] = useState<Set<string>>(() => new Set())
   const [rangeAnchorKey, setRangeAnchorKey] = useState<string | null>(null)
@@ -48,7 +46,7 @@ export function useTableSelection(
   const selectCell = useCallback(
     (cellKey: string, { append }: SelectCellOptions) => {
       if (!isEnabled) return
-      if (blockedRef.current) return
+      if (isBlockedRef?.current) return
 
       setActiveCellKey(cellKey)
       setRangeAnchorKey(cellKey)
@@ -73,13 +71,13 @@ export function useTableSelection(
       setIsDragging(true)
       setSelectedCellKeys(new Set([cellKey]))
     },
-    [isEnabled]
+    [isBlockedRef, isEnabled]
   )
 
   const selectOnly = useCallback(
     (cellKey: string) => {
       if (!isEnabled) return false
-      if (blockedRef.current) return false
+      if (isBlockedRef?.current) return false
 
       setActiveCellKey(cellKey)
       setRangeAnchorKey(cellKey)
@@ -88,18 +86,18 @@ export function useTableSelection(
       setIsDragging(false)
       return true
     },
-    [isEnabled]
+    [isBlockedRef, isEnabled]
   )
 
   const clearSelection = useCallback(() => {
-    if (blockedRef.current) return
+    if (isBlockedRef?.current) return
 
     setActiveCellKey(null)
     setRangeAnchorKey(null)
     setRangeFocusKey(null)
     setSelectedCellKeys(new Set())
     setIsDragging(false)
-  }, [])
+  }, [isBlockedRef])
 
   const stopDragging = useCallback(() => {
     setIsDragging(false)
@@ -112,14 +110,14 @@ export function useTableSelection(
       }
 
       if (!isEnabled) return
-      if (blockedRef.current) return
+      if (isBlockedRef?.current) return
 
       const rangeKeys = getCellKeysInVirtualRange(virtualMap, rangeAnchorKey, cellKey)
       setActiveCellKey(rangeAnchorKey)
       setRangeFocusKey(cellKey)
       setSelectedCellKeys(rangeKeys)
     },
-    [isDragging, isEnabled, rangeAnchorKey, virtualMap]
+    [isBlockedRef, isDragging, isEnabled, rangeAnchorKey, virtualMap]
   )
 
   const moveActiveCell = useCallback(
@@ -127,7 +125,7 @@ export function useTableSelection(
       if (!activeCellKey) return
 
       if (!isEnabled) return
-      if (blockedRef.current) return
+      if (isBlockedRef?.current) return
 
       const nextKey = getNextCellKey(virtualMap, activeCellKey, direction)
       if (nextKey === activeCellKey) return
@@ -138,7 +136,7 @@ export function useTableSelection(
       setSelectedCellKeys(new Set([nextKey]))
       setIsDragging(false)
     },
-    [activeCellKey, isEnabled, virtualMap]
+    [activeCellKey, isBlockedRef, isEnabled, virtualMap]
   )
 
   const extendActiveRange = useCallback(
@@ -146,7 +144,7 @@ export function useTableSelection(
       if (!activeCellKey) return
 
       if (!isEnabled) return
-      if (blockedRef.current) return
+      if (isBlockedRef?.current) return
 
       const focusKey = rangeFocusKey ?? activeCellKey
       const nextKey = getNextCellKey(virtualMap, focusKey, direction)
@@ -159,7 +157,7 @@ export function useTableSelection(
       setSelectedCellKeys(rangeKeys)
       setIsDragging(false)
     },
-    [activeCellKey, isEnabled, rangeAnchorKey, rangeFocusKey, virtualMap]
+    [activeCellKey, isBlockedRef, isEnabled, rangeAnchorKey, rangeFocusKey, virtualMap]
   )
 
   useEffect(() => {

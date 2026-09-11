@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
 
-import type { CellTable, TableSaveChangeset } from '../types'
-import { makeSaveChangeset } from '../lib/save-changeset'
-import type { TableCellEntry } from '../lib/table-index'
-import { hasPendingChanges } from './pending-changes'
-import type { PendingChanges } from './pending.types'
+import type { CellTable, TableSaveChangeset } from '../../types'
+import { makeSaveChangeset } from './save-changeset'
+import type { TableCellEntry } from '../data/table-index'
+import { hasPendingChanges } from '../changes/pending-changes'
+import type { PendingChanges } from '../changes/pending.types'
 
 type SaveStatus = 'idle' | 'saving' | 'success' | 'failure'
 
@@ -28,24 +28,33 @@ export function useTableSave({
   prepareForSave
 }: UseTableSaveOptions) {
   const mountedRef = useRef(true)
+  const lifecycleRef = useRef(0)
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   const [saveMessage, setSaveMessage] = useState<string | null>(null)
 
   useEffect(() => {
+    mountedRef.current = true
+    lifecycleRef.current += 1
+    isSavingRef.current = false
+    setIsSaving(false)
+    setSaveStatus('idle')
+    setSaveMessage(null)
     return () => {
       mountedRef.current = false
+      lifecycleRef.current += 1
+      isSavingRef.current = false
     }
   }, [isSavingRef])
 
   const clearSaveMessage = useCallback(() => {
-    if (isSavingRef.current) return
+    if (!mountedRef.current || isSavingRef.current) return
     setSaveStatus('idle')
     setSaveMessage(null)
   }, [isSavingRef])
 
   const save = useCallback(async () => {
-    if (isSavingRef.current) return
+    if (!mountedRef.current || isSavingRef.current) return
 
     prepareForSave()
 
@@ -62,26 +71,28 @@ export function useTableSave({
     }
 
     isSavingRef.current = true
+    const lifecycle = lifecycleRef.current
+    const isCurrentLifecycle = () => mountedRef.current && lifecycleRef.current === lifecycle
     setIsSaving(true)
     setSaveStatus('saving')
     setSaveMessage('Сохраняем изменения')
 
     try {
       const confirmedData = await onSaveChanges(changeset)
-      if (!mountedRef.current) return
+      if (!isCurrentLifecycle()) return
 
       acceptSavedData(confirmedData)
       resetPending()
       setSaveStatus('success')
       setSaveMessage('Изменения сохранены')
     } catch (error) {
-      if (!mountedRef.current) return
+      if (!isCurrentLifecycle()) return
 
       setSaveStatus('failure')
       setSaveMessage(error instanceof Error ? error.message : 'Не удалось сохранить изменения')
     } finally {
-      isSavingRef.current = false
-      if (mountedRef.current) {
+      if (isCurrentLifecycle()) {
+        isSavingRef.current = false
         setIsSaving(false)
       }
     }

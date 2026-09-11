@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 
-import styles from '../../table.module.css'
+import styles from './table-context-menu.module.css'
 
 type TableContextMenuProps = {
   x: number

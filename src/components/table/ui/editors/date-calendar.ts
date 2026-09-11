@@ -1,9 +1,7 @@
+import { MIN_YEAR, MAX_YEAR, makeLocalDate, isRealIsoDate } from '../../model/editing/date-rules'
 export type CalendarMonth = { year: number; month: number }
 
 export type CalendarDay = { iso: string; day: number; inMonth: boolean }
-
-const MIN_YEAR = 1
-const MAX_YEAR = 9999
 
 export function getMonthDays(month: CalendarMonth): CalendarDay[] {
   const firstDay = makeLocalDate(month.year, month.month, 1)
@@ -39,14 +37,6 @@ export function shiftMonth(month: CalendarMonth, delta: number): CalendarMonth {
   return { year, month: date.getMonth() + 1 }
 }
 
-export function isDateAllowed(iso: string, min?: string, max?: string): boolean {
-  if (!isRealIsoDate(iso)) return false
-  if (min && iso < min) return false
-  if (max && iso > max) return false
-
-  return true
-}
-
 export function getMonthFromIso(iso: string | null): CalendarMonth {
   if (iso && isRealIsoDate(iso)) {
     return {
@@ -57,29 +47,6 @@ export function getMonthFromIso(iso: string | null): CalendarMonth {
 
   const today = new Date()
   return { year: today.getFullYear(), month: today.getMonth() + 1 }
-}
-
-export function isRealIsoDate(iso: string): boolean {
-  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso)
-  if (!match) return false
-
-  const year = Number(match[1])
-  const month = Number(match[2])
-  const day = Number(match[3])
-
-  if (year < MIN_YEAR || year > MAX_YEAR || month < 1 || month > 12 || day < 1) {
-    return false
-  }
-
-  const date = makeLocalDate(year, month, day)
-  return date.getFullYear() === year && date.getMonth() + 1 === month && date.getDate() === day
-}
-
-function makeLocalDate(year: number, month: number, day: number): Date {
-  const date = new Date(0)
-  date.setFullYear(year, month - 1, day)
-  date.setHours(0, 0, 0, 0)
-  return date
 }
 
 function toIsoDate(year: number, month: number, day: number): string {

@@ -353,3 +353,17 @@ Verification note, 2026-09-10:
 - `npm.cmd run lint` passes with no warnings or errors.
 - Production smoke on `http://localhost:3001` covered render, click selection, Ctrl/Cmd multi-selection, value edit/save, no-DataStatus selection disable and partial save-control blocking.
 - Pure Node measurements were recorded for P1/P2/P3 in the verification log. Full browser profiler P4 and exhaustive M2/M4/M5/M7/M8/M10/M11 remain manual follow-up items.
+
+## Table refactor v2 — 2026-09-11
+
+The v2 design/plan supersede the unfinished module-refactor steps above. Verification is in `docs/superpowers/plans/2026-09-10-table-refactor-v2-verification.md`.
+
+- [x] Split table workflows into data/changes/editing/selection/notes/save owners; keep controller as composition and keyboard in its own hook.
+- [x] Localize UI helpers and CSS; preserve public exports, save DTO and external management flag.
+- [x] Fix Strict Mode save lifecycle and accept returned snapshots without prop refresh; preserve pending changes on rejection.
+- [x] Share the synchronous save lock, close note previews and reset stale statuses on new edits.
+- [x] Share one current cell index, retain cell-free topology across value-only saves and stabilize cell callbacks.
+- [x] Cache outline paths and index coordinates/intervals, preserving pairwise epsilon and small edges.
+- [x] Record actual baseline/after React profiling; remove temporary profiling pages/instrumentation.
+
+User clarification reduced exhaustive profiling: no further heavy CPU runs or full drag-frame/zoom sweep. Existing measurements remain diagnostic evidence, not a browser latency guarantee. Virtualization and incoming-data conflicts remain outside this change.

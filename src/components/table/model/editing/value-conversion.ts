@@ -1,5 +1,5 @@
-import type { CellTable, CellValue } from '../types'
-import type { EditableCellEditor, PendingValues } from '../model/editing.types'
+import type { CellTable, CellValue } from '../../types'
+import type { EditableCellEditor, PendingValues } from './editing.types'
 
 const ruNumberFormatter = new Intl.NumberFormat('ru-RU', { maximumSignificantDigits: 21 })
 

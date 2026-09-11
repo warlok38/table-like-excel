@@ -1,0 +1,127 @@
+.toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  width: max-content;
+  max-width: 100%;
+  padding: 0.45rem 0.6rem;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.toolbarSummary {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #111827;
+  white-space: nowrap;
+}
+
+.pendingSummary {
+  padding-left: 0.75rem;
+  border-left: 1px solid #d1d5db;
+  color: #7c2d12;
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.backgroundPalette {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.backgroundButton,
+.emptyBackgroundButton {
+  width: 1.35rem;
+  height: 1.35rem;
+  padding: 0;
+  border: 1px solid #4b5563;
+  cursor: pointer;
+}
+
+.emptyBackgroundButton {
+  background:
+    linear-gradient(135deg, transparent 46%, #dc2626 48%, #dc2626 52%, transparent 54%), #ffffff;
+}
+
+.backgroundButton:disabled,
+.emptyBackgroundButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.backgroundButton:not(:disabled):hover,
+.backgroundButton:not(:disabled):focus-visible,
+.emptyBackgroundButton:not(:disabled):hover,
+.emptyBackgroundButton:not(:disabled):focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 2px;
+}
+
+.saveActions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.saveButton,
+.cancelButton {
+  min-height: 1.7rem;
+  padding: 0.25rem 0.65rem;
+  border: 1px solid #4b5563;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.saveButton {
+  border-color: #166534;
+  background: #dcfce7;
+  color: #14532d;
+}
+
+.cancelButton {
+  border-color: #9ca3af;
+}
+
+.saveButton:not(:disabled):hover,
+.saveButton:not(:disabled):focus-visible,
+.cancelButton:not(:disabled):hover,
+.cancelButton:not(:disabled):focus-visible {
+  outline: 2px solid #1d4ed8;
+  outline-offset: 1px;
+}
+
+.saveButton:disabled,
+.cancelButton:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.saveSuccess,
+.saveFailure {
+  font-size: 0.78rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.saveSuccess {
+  color: #166534;
+}
+
+.saveFailure {
+  color: #b91c1c;
+}
+
+.toolbar[data-saving='true'] button:disabled {
+  opacity: 1;
+}

@@ -1,5 +1,4 @@
-import type { CellTable } from '../types'
-import { makeCellKey } from './cell-key'
+import type { StructureCell } from '../data/table-structure'
 
 export type KeyboardDirection = 'up' | 'down' | 'left' | 'right'
 
@@ -11,7 +10,6 @@ export type VirtualTableCell = {
   visualCol: number
   rowSpan: number
   colSpan: number
-  cell: CellTable
 }
 
 export type VirtualTableMap = {
@@ -51,7 +49,7 @@ function getCellBounds(cell: VirtualTableCell): CellBounds {
   }
 }
 
-export function makeVirtualTableMap(data: CellTable[][]): VirtualTableMap {
+export function makeVirtualTableMap(data: StructureCell[][]): VirtualTableMap {
   const grid: Array<Array<string | null>> = []
   const cellsByKey = new Map<string, VirtualTableCell>()
 
@@ -64,9 +62,9 @@ export function makeVirtualTableMap(data: CellTable[][]): VirtualTableMap {
         visualCol += 1
       }
 
-      const key = makeCellKey(cell, rowIndex, cellIndex)
-      const rowSpan = Math.max(1, cell.data.rowspan)
-      const colSpan = Math.max(1, cell.data.colspan)
+      const key = cell.key
+      const rowSpan = Math.max(1, cell.rowSpan)
+      const colSpan = Math.max(1, cell.colSpan)
 
       cellsByKey.set(key, {
         key,
@@ -75,8 +73,7 @@ export function makeVirtualTableMap(data: CellTable[][]): VirtualTableMap {
         visualRow: rowIndex,
         visualCol,
         rowSpan,
-        colSpan,
-        cell
+        colSpan
       })
 
       for (let rowOffset = 0; rowOffset < rowSpan; rowOffset += 1) {

@@ -1,6 +1,6 @@
-import type { CellTable, CellValue } from '../types'
-import { getDataStatusBackground } from '../lib/cell-style'
-import type { TableCellEntry } from '../lib/table-index'
+import type { CellTable, CellValue } from '../../types'
+import { getLoadedBackground } from './cell-background'
+import type { TableCellEntry } from '../data/table-index'
 import type { PendingChanges, PendingChangeSummary } from './pending.types'
 
 export const emptyPendingChanges: PendingChanges = {
@@ -49,10 +49,6 @@ export function summarizePendingChanges(changes: PendingChanges): PendingChangeS
     backgrounds: backgroundKeys.length,
     notes: noteKeys.length
   }
-}
-
-export function getLoadedBackground(cell: CellTable): string | null {
-  return getDataStatusBackground(cell) ?? cell.data.color ?? null
 }
 
 export function getLoadedNote(cell: CellTable): string | null {

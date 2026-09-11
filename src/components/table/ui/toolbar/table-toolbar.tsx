@@ -1,8 +1,8 @@
 'use client'
 
 import type { AvailableBackgroundColor } from '../../types'
-import type { PendingChangeSummary } from '../../model/pending.types'
-import styles from '../../table.module.css'
+import type { PendingChangeSummary } from '../../model/changes/pending.types'
+import styles from './table-toolbar.module.css'
 
 type TableToolbarProps = {
   colors: AvailableBackgroundColor[]
@@ -44,6 +44,7 @@ export function TableToolbar({
   return (
     <div
       className={styles.toolbar}
+      data-saving={isSaving}
       style={isHidden ? { visibility: 'hidden' } : undefined}
       aria-label="Действия с выбранными ячейками"
     >

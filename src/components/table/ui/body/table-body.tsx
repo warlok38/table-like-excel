@@ -2,29 +2,35 @@
 
 import { useRef } from 'react'
 
+import type { TableStructure } from '../../model/data/table-structure'
 import type { CellTable } from '../../types'
-import { formatPendingValue, getEffectiveValue } from '../../lib/value-conversion'
-import type { EditingSession } from '../../model/editing.types'
-import { formatCellValue } from '../../lib/cell-value'
-import { getCellCapabilities } from '../../lib/cell-capabilities'
+import { formatPendingValue, getEffectiveValue } from '../../model/editing/value-conversion'
+import type { EditingSession } from '../../model/editing/editing.types'
+const cellNumberFormat = new Intl.NumberFormat('ru-RU')
+function formatCellValue(value: CellTable['formatted_value']): string {
+  if (value === null) return ''
+  if (typeof value === 'number') return cellNumberFormat.format(value)
+  return value
+}
+import { getCellCapabilities } from '../../model/cell-capabilities'
 import { makeCellKey } from '../../lib/cell-key'
-import type { TableSelectionState } from '../../model/use-table-selection'
+import type { TableSelectionState } from '../../model/selection/use-table-selection'
 import {
   getPendingBackground,
   isBackgroundPending,
   isNotePending,
   isValuePending
-} from '../../model/pending-changes'
-import type { PendingChanges } from '../../model/pending.types'
+} from '../../model/changes/pending-changes'
+import type { PendingChanges } from '../../model/changes/pending.types'
 import { MemoTableCell } from '../cell/table-cell'
-import styles from '../../table.module.css'
-import { useCellLayout } from '../layout/use-cell-layout'
+import styles from './table-body.module.css'
+import { useCellLayout } from './use-cell-layout'
 import { SelectionOutline } from '../selection/selection-outline'
 import { useSelectionGeometry } from '../selection/use-selection-geometry'
 
 type TableBodyProps = {
   data: CellTable[][]
-  structure: string
+  structure: TableStructure
   selection: TableSelectionState
   pendingChanges: PendingChanges
   session: EditingSession | null
@@ -69,8 +75,8 @@ export function TableBody({
   onContextMenu
 }: TableBodyProps) {
   const tableRef = useRef<HTMLTableElement>(null)
-  const cellSizes = useCellLayout(tableRef, structure)
-  const selectionGeometry = useSelectionGeometry(tableRef, structure)
+  const cellSizes = useCellLayout(tableRef, structure.key)
+  const selectionGeometry = useSelectionGeometry(tableRef, structure.key)
 
   return (
     <div className={styles.tableSurface}>

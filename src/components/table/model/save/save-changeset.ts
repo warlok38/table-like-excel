@@ -1,6 +1,6 @@
-import type { TableSaveChangeset } from '../types'
-import type { PendingChanges } from '../model/pending.types'
-import type { TableCellEntry } from './table-index'
+import type { TableSaveChangeset } from '../../types'
+import type { PendingChanges } from '../changes/pending.types'
+import type { TableCellEntry } from '../data/table-index'
 
 export function makeSaveChangeset(
   changes: PendingChanges,

@@ -1,0 +1,38 @@
+.contextMenu {
+  position: fixed;
+  z-index: 10000;
+  min-width: 10.5rem;
+  padding: 0.25rem 0;
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.16);
+}
+
+.contextMenuItem,
+.contextMenuUnavailableItem {
+  display: block;
+  width: 100%;
+  padding: 0.45rem 0.6rem;
+  border: 0;
+  background: transparent;
+  color: #111827;
+  font: inherit;
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.contextMenuItem {
+  cursor: pointer;
+}
+
+.contextMenuItem:not(:disabled):hover,
+.contextMenuItem:not(:disabled):focus-visible {
+  background: #f0f0f0;
+  outline: none;
+}
+
+.contextMenuItem:disabled,
+.contextMenuUnavailableItem {
+  color: #9ca3af;
+  cursor: default;
+}

@@ -1,17 +1,17 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useRef, useState, type MutableRefObject } from 'react'
 
-import type { CellValue } from '../types'
-import { getCellCapabilities } from '../lib/cell-capabilities'
-import type { CellSelectionEntry } from '../lib/cell-key'
-import { isDateAllowed } from '../lib/date-calendar'
+import type { CellValue } from '../../types'
+import { getCellCapabilities } from '../cell-capabilities'
+import type { TableCellEntry } from '../data/table-index'
+import { isDateAllowed } from './date-rules'
 import {
   getEffectiveValue,
   getInitialDraft,
   normalizeCommittedValue,
   normalizeNumberDraft
-} from '../lib/value-conversion'
+} from './value-conversion'
 import type { EditStart, EditingSession, PendingValues } from './editing.types'
 
 type EditingState = {
@@ -23,14 +23,16 @@ const emptyState: EditingState = {
 }
 
 type UseTableEditingOptions = {
-  entries: CellSelectionEntry[]
+  onLocalChange: () => void
+  entriesByKey: Map<string, TableCellEntry>
   pendingValues: PendingValues
   onPendingValueChange: (cellKey: string, value: CellValue) => void
   isBlockedRef?: MutableRefObject<boolean>
 }
 
 export function useTableEditing({
-  entries,
+  entriesByKey,
+  onLocalChange,
   pendingValues,
   onPendingValueChange,
   isBlockedRef
@@ -42,10 +44,6 @@ export function useTableEditing({
   const onPendingValueChangeRef = useRef(onPendingValueChange)
   onPendingValueChangeRef.current = onPendingValueChange
 
-  const entriesByKey = useMemo(
-    () => new Map(entries.map((entry) => [entry.key, entry] as const)),
-    [entries]
-  )
   const entriesByKeyRef = useRef(entriesByKey)
   entriesByKeyRef.current = entriesByKey
 
@@ -114,6 +112,7 @@ export function useTableEditing({
         const hasPending = Object.prototype.hasOwnProperty.call(pendingValuesRef.current, cellKey)
 
         didStart = true
+        if (start.kind === 'replace') onLocalChange()
         return {
           session: {
             cellKey,
@@ -129,18 +128,20 @@ export function useTableEditing({
 
       return didStart
     },
-    [commitSession, isBlockedRef, transition]
+    [commitSession, isBlockedRef, onLocalChange, transition]
   )
 
   const updateDraft = useCallback(
     (draft: string) => {
+      if (isBlockedRef?.current) return
+      if (stateRef.current.session?.draft !== draft && stateRef.current.session) onLocalChange()
       if (isBlockedRef?.current) return
 
       transition((current) =>
         current.session ? { ...current, session: { ...current.session, draft } } : current
       )
     },
-    [isBlockedRef, transition]
+    [isBlockedRef, onLocalChange, transition]
   )
 
   const chooseValue = useCallback(
@@ -188,10 +189,12 @@ export function useTableEditing({
   )
 
   const commitEditing = useCallback(() => {
+    if (isBlockedRef?.current) return
     transition((current) => commitSession(current))
-  }, [commitSession, transition])
+  }, [commitSession, isBlockedRef, transition])
 
   const cancelEditing = useCallback(() => {
+    if (isBlockedRef?.current) return
     transition((current) => {
       const session = current.session
       if (!session) return current
@@ -209,7 +212,7 @@ export function useTableEditing({
 
       return { session: null }
     })
-  }, [transition])
+  }, [isBlockedRef, transition])
 
   useEffect(() => {
     const session = stateRef.current.session
@@ -219,7 +222,7 @@ export function useTableEditing({
     if (!entry || !getCellCapabilities(entry.cell).canEditValue) {
       transition((current) => ({ ...current, session: null }))
     }
-  }, [entries, transition])
+  }, [entriesByKey, transition])
 
   return {
     session: state.session,

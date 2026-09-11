@@ -1,16 +1,18 @@
 'use client'
 
-import { memo, useCallback, useMemo, useRef, useState, type RefCallback } from 'react'
+import { memo, useCallback, useEffect, useMemo, useRef, useState, type RefCallback } from 'react'
 import cn from 'classnames'
 
 import type { CellTable, CellValue } from '../../types'
 import { DataStatusNote } from '../data-status/data-status-note'
 import { CellValueEditor } from '../editors/cell-value-editor'
-import type { EditStart, EditingSession } from '../../model/editing.types'
-import { getCellStyle } from '../../lib/cell-style'
-import { isNumericCellValue } from '../../lib/cell-value'
-import type { CellContentSize } from '../layout/use-cell-layout'
-import styles from '../../table.module.css'
+import type { EditStart, EditingSession } from '../../model/editing/editing.types'
+import { getCellStyle } from './cell-style'
+function isNumericCellValue(value: CellTable['formatted_value']): boolean {
+  return value !== null && value !== '' && !Number.isNaN(Number(value))
+}
+import type { CellContentSize } from '../body/use-cell-layout'
+import styles from './table-cell.module.css'
 
 type TableCellProps = {
   cell: CellTable
@@ -94,6 +96,10 @@ function TableCell({
   )
   const hasNote = Boolean(noteValue?.trim())
   const [isNoteTooltipOpen, setIsNoteTooltipOpen] = useState(false)
+
+  useEffect(() => {
+    if (isSaving) setIsNoteTooltipOpen(false)
+  }, [isSaving])
 
   const style = useMemo(() => getCellStyle(cell, manualBackground), [cell, manualBackground])
   const handleMouseDown = useCallback(
@@ -255,7 +261,7 @@ function TableCell({
           readOnly={!canEditNote}
         />
       )}
-      {hasNote && isNoteTooltipOpen && !isNoteOpen && (
+      {hasNote && isNoteTooltipOpen && !isNoteOpen && !isSaving && (
         <DataStatusNote
           value={noteValue ?? ''}
           anchorRef={tdRef}

@@ -1,5 +1,5 @@
-import type { CellEditor, CellValue } from '../types'
-import type { PendingChanges } from './pending.types'
+import type { CellEditor, CellValue } from '../../types'
+import type { PendingChanges } from '../changes/pending.types'
 
 export type EditableCellEditor = Exclude<CellEditor, { type: 'readonly' }>
 

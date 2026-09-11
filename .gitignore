@@ -37,5 +37,7 @@ next-env.d.ts
 
 # codex
 /docs/superpowers/
+/.agents
+skills-lock.json
 
 *.vscode

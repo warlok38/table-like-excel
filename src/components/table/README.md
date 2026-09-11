@@ -46,5 +46,25 @@ different independent dataset, mount the table with a different React `key`.
 
 ## Dependencies
 
-The component uses React and existing CSS Modules only. It does not import Next.js, app code, mocks,
+The component uses React, react-dom (portals), classnames and CSS Modules. It does not import Next.js, app code, mocks,
 Redux or backend adapters.
+
+## Ownership
+
+- `table.tsx` composes the controller and presentational `ui/table-view.tsx`.
+- `model/data` owns confirmed data, the current cell index and stable key/span topology. Navigation never caches old cell data.
+- `model/changes` owns pending batches, value/background commands and loaded background precedence.
+- `model/editing` owns draft sessions, normalization and shared date validity; calendar grid construction stays in `ui/editors`.
+- `model/selection` owns ranges, keyboard coordinates and navigation; `model/notes` owns note/menu state and commands.
+- `model/save` owns changeset serialization, the shared synchronous lock and async lifecycle. The controller coordinates these commands; keyboard branches have their own hook.
+- Body, cells, toolbar, menu and selection own their CSS. Cell styles/contrast, content measurement and outline geometry stay beside their UI.
+
+The management flag disables selection/navigation and background/note actions, but does not disable value editors permitted by cell metadata. An active save blocks all mutation commands without dimming; wheel and Tab remain available. New local edits clear stale save messages. Save lifecycle guards tolerate Strict Mode and ignore completion from an unmounted lifecycle.
+
+The incoming-prop observation ref is separate from accepted save data. An unchanged prop reference cannot undo the returned snapshot. Consumers must not replace the dataset during local work; conflict merging, deferred external updates and virtualization are out of scope.
+
+## Performance boundaries
+
+Cell callbacks stay stable across draft changes; only the active memoized Cell renders. Body mapping still traverses all cells. Structure identity survives a value-only save. Outline paths are cached by selection and geometry version; coordinate and interval indexes avoid a global all-pairs edge scan. Fractional intersections retain the 0.1 tolerance per pair. Pathological overlapping geometry can still have many candidates.
+
+Resize/font changes refresh geometry; ordinary scrolling does not remeasure every cell. The sticky first row is refreshed separately because its relative position changes on scroll. Portalled editor positioning retains its own scroll listeners.

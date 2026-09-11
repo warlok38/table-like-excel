@@ -1,4 +1,4 @@
-import type { CellValue } from '../types'
+import type { CellValue } from '../../types'
 
 export type PendingChanges = {
   values: Record<string, CellValue>

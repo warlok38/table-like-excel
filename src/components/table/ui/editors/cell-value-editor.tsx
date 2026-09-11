@@ -3,7 +3,7 @@
 import type { RefObject } from 'react'
 
 import type { CellValue } from '../../types'
-import type { EditingSession } from '../../model/editing.types'
+import type { EditingSession } from '../../model/editing/editing.types'
 import { DateValueEditor } from './date-value-editor'
 import { SelectValueEditor } from './select-value-editor'
 import { TextValueEditor } from './text-value-editor'
