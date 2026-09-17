@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useState, type MutableRefObject } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from 'react'
 
 import type { TableStructure } from '../data/tableStructure'
 import {
@@ -17,6 +17,11 @@ type SelectCellOptions = {
 type UseTableSelectionOptions = {
   isEnabled?: boolean
   isBlockedRef?: MutableRefObject<boolean>
+}
+
+type DragSelection = {
+  append: boolean
+  baseKeys: Set<string>
 }
 
 export type TableSelectionState = {
@@ -42,6 +47,10 @@ export function useTableSelection(
   const [rangeAnchorKey, setRangeAnchorKey] = useState<string | null>(null)
   const [rangeFocusKey, setRangeFocusKey] = useState<string | null>(null)
   const [isDragging, setIsDragging] = useState(false)
+  const selectedCellKeysRef = useRef(selectedCellKeys)
+  const dragSelectionRef = useRef<DragSelection | null>(null)
+
+  selectedCellKeysRef.current = selectedCellKeys
 
   const selectCell = useCallback(
     (cellKey: string, { append }: SelectCellOptions) => {
@@ -53,21 +62,22 @@ export function useTableSelection(
       setRangeFocusKey(cellKey)
 
       if (append) {
-        setIsDragging(false)
-        setSelectedCellKeys((currentKeys) => {
-          const nextKeys = new Set(currentKeys)
+        const baseKeys = new Set(selectedCellKeysRef.current)
+        const nextKeys = new Set(baseKeys)
 
-          if (nextKeys.has(cellKey)) {
-            nextKeys.delete(cellKey)
-          } else {
-            nextKeys.add(cellKey)
-          }
+        if (nextKeys.has(cellKey)) {
+          nextKeys.delete(cellKey)
+        } else {
+          nextKeys.add(cellKey)
+        }
 
-          return nextKeys
-        })
+        dragSelectionRef.current = { append: true, baseKeys }
+        setIsDragging(true)
+        setSelectedCellKeys(nextKeys)
         return
       }
 
+      dragSelectionRef.current = { append: false, baseKeys: new Set() }
       setIsDragging(true)
       setSelectedCellKeys(new Set([cellKey]))
     },
@@ -83,6 +93,7 @@ export function useTableSelection(
       setRangeAnchorKey(cellKey)
       setRangeFocusKey(cellKey)
       setSelectedCellKeys(new Set([cellKey]))
+      dragSelectionRef.current = null
       setIsDragging(false)
       return true
     },
@@ -96,10 +107,12 @@ export function useTableSelection(
     setRangeAnchorKey(null)
     setRangeFocusKey(null)
     setSelectedCellKeys(new Set())
+    dragSelectionRef.current = null
     setIsDragging(false)
   }, [isBlockedRef])
 
   const stopDragging = useCallback(() => {
+    dragSelectionRef.current = null
     setIsDragging(false)
   }, [])
 
@@ -113,9 +126,16 @@ export function useTableSelection(
       if (isBlockedRef?.current) return
 
       const rangeKeys = getCellKeysInVirtualRange(virtualMap, rangeAnchorKey, cellKey)
+      const dragSelection = dragSelectionRef.current
+      const nextKeys = dragSelection?.append ? new Set(dragSelection.baseKeys) : rangeKeys
+
+      if (dragSelection?.append) {
+        rangeKeys.forEach((key) => nextKeys.add(key))
+      }
+
       setActiveCellKey(rangeAnchorKey)
       setRangeFocusKey(cellKey)
-      setSelectedCellKeys(rangeKeys)
+      setSelectedCellKeys(nextKeys)
     },
     [isBlockedRef, isDragging, isEnabled, rangeAnchorKey, virtualMap]
   )
@@ -134,6 +154,7 @@ export function useTableSelection(
       setRangeAnchorKey(nextKey)
       setRangeFocusKey(nextKey)
       setSelectedCellKeys(new Set([nextKey]))
+      dragSelectionRef.current = null
       setIsDragging(false)
     },
     [activeCellKey, isBlockedRef, isEnabled, virtualMap]
@@ -155,6 +176,7 @@ export function useTableSelection(
       setRangeAnchorKey(anchorKey)
       setRangeFocusKey(nextKey)
       setSelectedCellKeys(rangeKeys)
+      dragSelectionRef.current = null
       setIsDragging(false)
     },
     [activeCellKey, isBlockedRef, isEnabled, rangeAnchorKey, rangeFocusKey, virtualMap]
@@ -171,11 +193,9 @@ export function useTableSelection(
       return
     }
 
-    const stopDragging = () => setIsDragging(false)
-
     window.addEventListener('mouseup', stopDragging)
     return () => window.removeEventListener('mouseup', stopDragging)
-  }, [isDragging])
+  }, [isDragging, stopDragging])
 
   return {
     activeCellKey,

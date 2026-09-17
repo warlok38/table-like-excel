@@ -103,7 +103,7 @@ The incoming-prop observation ref is separate from accepted save data. An unchan
 
 Tables with at least 100 rows are vertically virtualized automatically. Their first render measures the complete natural layout, then the grid retains the sticky top prefix, the visible rows, eight overscan rows on each side and any complete `rowSpan` intervals that intersect that window. The internal viewport is limited to `70vh`; smaller tables keep the normal page-height layout. Column widths, row heights, cell content sizes and selection geometry are preserved in a structure-keyed snapshot. Changing the structure or loading new fonts rebuilds that snapshot; value, background and note changes do not.
 
-While a drag selection is active, moving the pointer into any viewport edge zone scrolls it vertically, horizontally or diagonally with proximity-based speed and continues extending the selection across newly visible cells.
+While a drag selection is active, moving the pointer into any viewport edge zone scrolls it vertically, horizontally or diagonally with proximity-based speed and continues extending the selection across newly visible cells. Holding `Ctrl` or `Cmd` while starting a drag adds the dragged range to the existing selection; a modified click without dragging still toggles one cell.
 
 Cell callbacks stay stable across draft changes; only the active memoized Cell renders. Structure identity survives a value-only save. Outline paths are cached by selection and geometry version; coordinate and interval indexes avoid a global all-pairs edge scan. Fractional intersections retain the 0.1 tolerance per pair. Pathological overlapping geometry can still have many candidates.
 
