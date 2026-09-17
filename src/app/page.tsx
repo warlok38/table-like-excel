@@ -1,6 +1,7 @@
 import { TableDemoClient } from './table-demo-client'
 import {
   availableBackgroundColorsMock,
+  mappedBackendTableDataMock,
   editorModelDataMock,
   noDataStatusTableMock,
   tableDataMock,
@@ -19,6 +20,12 @@ export default function Home() {
         title="Модель редакторов и права ячеек"
         description="Проверка выделения, заливки, примечаний, локального ввода, несохранённых изменений, сохранения и отмены."
         data={editorModelDataMock}
+        availableBackgroundColors={availableBackgroundColorsMock}
+      />
+      <TableDemoClient
+        title="Backend-контракт без editor"
+        description="Backend-ячейки преобразуются в UI-модель один раз; editable включает только текстовый редактор."
+        data={mappedBackendTableDataMock}
         availableBackgroundColors={availableBackgroundColorsMock}
       />
       <TableDemoClient

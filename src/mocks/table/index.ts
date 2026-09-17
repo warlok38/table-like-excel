@@ -1,4 +1,5 @@
 export { availableBackgroundColorsMock } from './background-colors'
+export { backendTableDataMock, mappedBackendTableDataMock } from './backend-table-data'
 export { editorModelDataMock } from './editor-model-data'
 export { noDataStatusTableMock } from './no-data-status-table'
 export { tableDataMock } from './table-data'
