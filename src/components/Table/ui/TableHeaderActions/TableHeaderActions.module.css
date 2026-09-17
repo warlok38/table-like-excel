@@ -1,36 +1,13 @@
-.toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
+.actions {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+  justify-content: flex-end;
   gap: 0.75rem;
-  width: max-content;
-  max-width: 100%;
-  padding: 0.45rem 0.6rem;
-  background: #ffffff;
-  border: 1px solid #d1d5db;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
 }
 
-.toolbarSummary {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #111827;
-  white-space: nowrap;
-}
-
-.pendingSummary {
-  padding-left: 0.75rem;
-  border-left: 1px solid #d1d5db;
-  color: #7c2d12;
-  font-size: 0.78rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.backgroundPalette {
+.backgroundPalette,
+.saveActions {
   display: flex;
   align-items: center;
   gap: 0.35rem;
@@ -62,12 +39,6 @@
 .emptyBackgroundButton:not(:disabled):focus-visible {
   outline: 2px solid #1d4ed8;
   outline-offset: 2px;
-}
-
-.saveActions {
-  display: flex;
-  align-items: center;
-  gap: 0.35rem;
 }
 
 .saveButton,
@@ -107,21 +78,6 @@
   opacity: 0.55;
 }
 
-.saveSuccess,
-.saveFailure {
-  font-size: 0.78rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.saveSuccess {
-  color: #166534;
-}
-
-.saveFailure {
-  color: #b91c1c;
-}
-
-.toolbar[data-saving='true'] button:disabled {
+.actions[data-saving='true'] button:disabled {
   opacity: 1;
 }

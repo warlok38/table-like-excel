@@ -5,7 +5,9 @@ import { makeSaveChangeset } from './saveChangeset'
 import type { TableCellEntry } from '../data/tableIndex'
 import { hasPendingChanges, type PendingChanges } from '../changes/pendingChanges'
 
-type SaveStatus = 'idle' | 'saving' | 'success' | 'failure'
+export type TableSaveStatus = 'idle' | 'saving' | 'success' | 'failure'
+
+const SAVE_STATUS_RESET_DELAY_MS = 3000
 
 type UseTableSaveOptions = {
   isSavingRef: MutableRefObject<boolean>
@@ -29,8 +31,7 @@ export function useTableSave({
   const mountedRef = useRef(true)
   const lifecycleRef = useRef(0)
   const [isSaving, setIsSaving] = useState(false)
-  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
-  const [saveMessage, setSaveMessage] = useState<string | null>(null)
+  const [saveStatus, setSaveStatus] = useState<TableSaveStatus>('idle')
 
   useEffect(() => {
     mountedRef.current = true
@@ -38,7 +39,6 @@ export function useTableSave({
     isSavingRef.current = false
     setIsSaving(false)
     setSaveStatus('idle')
-    setSaveMessage(null)
     return () => {
       mountedRef.current = false
       lifecycleRef.current += 1
@@ -46,10 +46,21 @@ export function useTableSave({
     }
   }, [isSavingRef])
 
-  const clearSaveMessage = useCallback(() => {
+  useEffect(() => {
+    if (saveStatus !== 'success' && saveStatus !== 'failure') return
+
+    const timeoutId = window.setTimeout(() => {
+      if (mountedRef.current && !isSavingRef.current) {
+        setSaveStatus('idle')
+      }
+    }, SAVE_STATUS_RESET_DELAY_MS)
+
+    return () => window.clearTimeout(timeoutId)
+  }, [isSavingRef, saveStatus])
+
+  const clearSaveStatus = useCallback(() => {
     if (!mountedRef.current || isSavingRef.current) return
     setSaveStatus('idle')
-    setSaveMessage(null)
   }, [isSavingRef])
 
   const save = useCallback(async () => {
@@ -63,9 +74,8 @@ export function useTableSave({
     let changeset: TableSaveChangeset
     try {
       changeset = makeSaveChangeset(snapshot, entriesByKey)
-    } catch (error) {
+    } catch {
       setSaveStatus('failure')
-      setSaveMessage(error instanceof Error ? error.message : 'Не удалось подготовить изменения')
       return
     }
 
@@ -74,7 +84,6 @@ export function useTableSave({
     const isCurrentLifecycle = () => mountedRef.current && lifecycleRef.current === lifecycle
     setIsSaving(true)
     setSaveStatus('saving')
-    setSaveMessage('Сохраняем изменения')
 
     try {
       const confirmedData = await onSaveChanges(changeset)
@@ -83,12 +92,10 @@ export function useTableSave({
       acceptSavedData(confirmedData)
       resetPending()
       setSaveStatus('success')
-      setSaveMessage('Изменения сохранены')
-    } catch (error) {
+    } catch {
       if (!isCurrentLifecycle()) return
 
       setSaveStatus('failure')
-      setSaveMessage(error instanceof Error ? error.message : 'Не удалось сохранить изменения')
     } finally {
       if (isCurrentLifecycle()) {
         isSavingRef.current = false
@@ -110,7 +117,6 @@ export function useTableSave({
     isSaving,
     isSavingRef,
     saveStatus,
-    saveMessage,
-    clearSaveMessage
+    clearSaveStatus
   }
 }

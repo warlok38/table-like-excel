@@ -1,5 +1,7 @@
-export { Table } from './Table'
 export { getTableCellKey } from './lib'
+export { useTableController } from './model'
+export type { TableController, TableHeaderActionsModel } from './model'
+export { TableHeaderActions, TableSurface } from './ui'
 export type {
   AvailableBackgroundColor,
   BackgroundDataStatusItem,

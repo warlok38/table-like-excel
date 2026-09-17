@@ -1,10 +1,15 @@
 'use client'
 
-import { getCellCapabilities, useTableController, type TableProps } from './model'
-import { TableContextMenu, TableGrid, TableToolbar } from './ui'
-import styles from './Table.module.css'
+import { getCellCapabilities, type TableController } from '../../model'
+import { TableContextMenu } from '../TableContextMenu/TableContextMenu'
+import { TableGrid } from '../TableGrid/TableGrid'
+import styles from './TableSurface.module.css'
 
-export function Table(props: TableProps) {
+type TableSurfaceProps = {
+  controller: TableController
+}
+
+export function TableSurface({ controller }: TableSurfaceProps) {
   const {
     rootRef,
     selection,
@@ -12,12 +17,6 @@ export function Table(props: TableProps) {
     ownerId,
     tableSave,
     handleRootKeyDown,
-    availableBackgroundColors,
-    backgroundEditableSelectedCount,
-    pendingSummary,
-    canSaveDraft,
-    applyBackground,
-    handleCancelChanges,
     baseData,
     structure,
     pendingChanges,
@@ -36,7 +35,7 @@ export function Table(props: TableProps) {
     openNoteEditor,
     deleteNote,
     closeContextMenu
-  } = useTableController(props)
+  } = controller
 
   return (
     <div
@@ -49,22 +48,6 @@ export function Table(props: TableProps) {
       tabIndex={0}
       onKeyDown={handleRootKeyDown}
     >
-      <div className={styles.toolbarSlot} data-value-editor-owner={ownerId}>
-        <TableToolbar
-          colors={availableBackgroundColors}
-          dataStatusActionsEnabled={cellManagementEnabled}
-          selectedCount={selection.selectedCellKeys.size}
-          backgroundEditableSelectedCount={backgroundEditableSelectedCount}
-          pendingSummary={pendingSummary}
-          canSaveDraft={canSaveDraft}
-          saveStatus={tableSave.saveStatus}
-          saveMessage={tableSave.saveMessage}
-          isSaving={tableSave.isSaving}
-          onBackgroundChange={applyBackground}
-          onSave={tableSave.save}
-          onCancel={handleCancelChanges}
-        />
-      </div>
       {Array.isArray(baseData) && baseData.length > 0 && (
         <TableGrid
           data={baseData}

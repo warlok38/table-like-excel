@@ -18,6 +18,7 @@ export {
   normalizeNumberDraft
 } from './editing/valueConversion'
 export { useTableController } from './useTableController'
+export type { TableController, TableHeaderActionsModel } from './useTableController'
 export type { PendingChanges, PendingChangeSummary } from './changes/pendingChanges'
 export type { TableStructure } from './data/tableStructure'
 export type { EditStart, EditingSession } from './editing/editingSession'

@@ -2,8 +2,32 @@
 
 Public import:
 
-```ts
-import { Table, getTableCellKey, type TableSaveChangeset } from '@/components/Table'
+```tsx
+import {
+  TableHeaderActions,
+  TableSurface,
+  useTableController,
+  getTableCellKey,
+  type TableSaveChangeset
+} from '@/components/Table'
+
+const table = useTableController({
+  data,
+  availableBackgroundColors,
+  cellManagementEnabled,
+  onSaveChanges
+})
+
+return (
+  <>
+    <header>
+      <TableHeaderActions model={table.headerActions} />
+    </header>
+    <main>
+      <TableSurface controller={table} />
+    </main>
+  </>
+)
 ```
 
 ## Props
@@ -24,15 +48,21 @@ type TableProps = {
 table snapshot; the table accepts that snapshot as its new local base even when the caller does not
 refresh React props.
 
+`useTableController` must be called once by the nearest client component that composes the page
+header and the table surface. `TableHeaderActions` receives only `table.headerActions`; the full
+controller belongs to `TableSurface`.
+
 ## Save And Cancel
 
-The table owns confirmed base data plus local pending changes. `Сохранить` commits any open editor,
-closes table portals, sends one changeset and blocks table mutations while the promise is pending.
-Scroll and normal page focus remain available. `Отмена` is local and returns the visible data to the
-last confirmed base without calling `onSaveChanges`.
+The controller owns confirmed base data plus local pending changes. `Сохранить` commits any open
+editor, closes table portals, sends one changeset and blocks table mutations while the promise is
+pending. Scroll and normal page focus remain available. `Отмена` is local and returns the visible
+data to the last confirmed base without calling `onSaveChanges`.
 
-On save failure, pending changes and changed-cell markers remain available for retry. On success, the
-returned snapshot becomes the new base and pending changes are cleared.
+The save button displays `Сохранить`, `Сохраняем`, `Успешно` or `Ошибка`. Success and failure remain
+visible for three seconds and then return to `Сохранить`. On failure, pending changes and changed-cell
+markers remain available for retry. On success, the returned snapshot becomes the new base and pending
+changes are cleared. A new local change resets the status immediately.
 
 ## Integration Boundary
 
@@ -51,7 +81,12 @@ Redux or backend adapters.
 
 ## Ownership
 
-- `Table.tsx` composes the controller with the toolbar, grid and context menu exported by `ui/index.ts`.
+- `useTableController` owns table state and exposes a narrow `headerActions` model for external page
+  composition.
+- `TableSurface` composes the focusable grid, context menu and editor interactions without rendering
+  page-level actions.
+- `TableHeaderActions` renders the background palette and save/cancel controls. Its owner markers keep
+  header interactions inside the table interaction boundary.
 - `model/index.ts` and `lib/index.ts` are internal segment facades; the root `index.ts` remains the only public API.
 - `model/data` owns confirmed data, the current cell index and stable key/span topology. Navigation never caches old cell data.
 - `model/changes` owns pending batches, value/background commands and loaded background precedence.

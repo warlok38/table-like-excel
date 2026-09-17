@@ -1,3 +1,4 @@
 export { TableContextMenu } from './TableContextMenu/TableContextMenu'
 export { TableGrid } from './TableGrid/TableGrid'
-export { TableToolbar } from './TableToolbar/TableToolbar'
+export { TableHeaderActions } from './TableHeaderActions/TableHeaderActions'
+export { TableSurface } from './TableSurface/TableSurface'

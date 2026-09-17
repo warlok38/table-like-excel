@@ -13,6 +13,22 @@ import { useTableInteractions } from './useTableInteractions'
 import { useTableSave } from './save/useTableSave'
 import { useTableSelection } from './selection/useTableSelection'
 import { useCellChanges } from './changes/useCellChanges'
+import type { AvailableBackgroundColor } from './table'
+import type { TableSaveStatus } from './save/useTableSave'
+
+export type TableHeaderActionsModel = {
+  ownerId: string
+  colors: AvailableBackgroundColor[]
+  dataStatusActionsEnabled: boolean
+  canChangeBackground: boolean
+  canSave: boolean
+  canCancel: boolean
+  isSaving: boolean
+  saveStatus: TableSaveStatus
+  applyBackground: (color: string | null) => void
+  save: () => Promise<void>
+  cancel: () => void
+}
 
 export function useTableController({
   data,
@@ -22,8 +38,8 @@ export function useTableController({
 }: TableProps) {
   const ownerId = useId()
   const rootRef = useRef<HTMLDivElement>(null)
-  const clearSaveMessageRef = useRef<() => void>(() => {})
-  const onLocalChange = useCallback(() => clearSaveMessageRef.current(), [])
+  const clearSaveStatusRef = useRef<() => void>(() => {})
+  const onLocalChange = useCallback(() => clearSaveStatusRef.current(), [])
   const editingOpenRef = useRef(false)
   const savingOpenRef = useRef(false)
   const {
@@ -146,16 +162,16 @@ export function useTableController({
     resetPending,
     prepareForSave
   })
-  clearSaveMessageRef.current = tableSave.clearSaveMessage
-  const { clearSaveMessage } = tableSave
+  clearSaveStatusRef.current = tableSave.clearSaveStatus
+  const { clearSaveStatus } = tableSave
   const handleCancelChanges = useCallback(() => {
     if (savingOpenRef.current) return
 
     cancelEditing()
     resetPending()
     closeNotes()
-    clearSaveMessage()
-  }, [cancelEditing, resetPending, clearSaveMessage, closeNotes])
+    clearSaveStatus()
+  }, [cancelEditing, resetPending, clearSaveStatus, closeNotes])
   const handleRootKeyDown = useTableKeyboard({
     rootRef,
     savingOpenRef,
@@ -177,7 +193,23 @@ export function useTableController({
     isBlockedRef: savingOpenRef
   })
 
+  const hasPendingActions = pendingSummary.operations > 0 || canSaveDraft
+  const headerActions: TableHeaderActionsModel = {
+    ownerId,
+    colors: availableBackgroundColors,
+    dataStatusActionsEnabled: cellManagementEnabled,
+    canChangeBackground: backgroundEditableSelectedCount > 0 && !tableSave.isSaving,
+    canSave: hasPendingActions && !tableSave.isSaving,
+    canCancel: hasPendingActions && !tableSave.isSaving,
+    isSaving: tableSave.isSaving,
+    saveStatus: tableSave.saveStatus,
+    applyBackground,
+    save: tableSave.save,
+    cancel: handleCancelChanges
+  }
+
   return {
+    headerActions,
     rootRef,
     selection,
     cellManagementEnabled,
@@ -210,3 +242,5 @@ export function useTableController({
     closeContextMenu
   }
 }
+
+export type TableController = ReturnType<typeof useTableController>

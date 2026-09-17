@@ -3,11 +3,6 @@
   outline: none;
 }
 
-.toolbarSlot {
-  min-height: 2.9rem;
-  margin-bottom: 0.75rem;
-}
-
 .tableContainer[data-is-selecting='true'] {
   cursor: cell;
 }
