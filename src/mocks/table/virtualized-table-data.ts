@@ -28,6 +28,7 @@ function makeLargeTableCell(
     rowspan?: number
     editable?: boolean
     editor?: CellEditor | null
+    permissions?: CellTable['data']['permissions']
     dataStatus?: DataStatus | null
     color?: string | null
   } = {}
@@ -46,7 +47,8 @@ function makeLargeTableCell(
       parameter_id: null,
       catalogs_id: null,
       editable: options.editable ?? true,
-      editor: options.editor ?? { type: 'text' }
+      editor: options.editor ?? { type: 'text' },
+      permissions: options.permissions
     },
     value,
     formatted_value: value,
@@ -57,6 +59,7 @@ function makeLargeTableCell(
 function makeBodyRow(rowIndex: number): CellTable[] {
   const row = rowIndex + 1
   const cells: CellTable[] = []
+  const isValueOnlyRow = row === 5
   const mergedStart = mergedBodyRowStarts.has(rowIndex)
   const mergedContinuation =
     mergedBodyRowStarts.has(rowIndex - 1) || mergedBodyRowStarts.has(rowIndex - 2)
@@ -74,13 +77,23 @@ function makeBodyRow(rowIndex: number): CellTable[] {
 
   for (let col = 2; col <= columnCount; col += 1) {
     const multiline = col === 2 && rowIndex % 23 === 0
-    const value = multiline
-      ? `Показатель ${row}\nДополнительная строка для проверки высоты`
-      : `R${row} C${col}`
+    let value: CellValue = `R${row} C${col}`
+    let dataStatus: DataStatus | null = null
+
+    if (multiline) {
+      value = `Показатель ${row}\nДополнительная строка для проверки высоты`
+    }
+
+    if (!isValueOnlyRow && rowIndex === 3 && col === 2) {
+      dataStatus = attentionStatus
+    }
+
     cells.push(
       makeLargeTableCell(row, col, value, {
+        editable: true,
         editor: multiline ? { type: 'textarea' } : { type: 'text' },
-        dataStatus: rowIndex === 3 && col === 2 ? attentionStatus : null,
+        permissions: isValueOnlyRow ? { value: true, background: false, note: false } : undefined,
+        dataStatus,
         color: rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb'
       })
     )

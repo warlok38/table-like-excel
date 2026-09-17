@@ -25,6 +25,6 @@ export function getCellCapabilities(
     canEditValue,
     canChangeBackground,
     canEditNote,
-    isLocked: dataStatusActionsEnabled && !canChangeBackground && !canEditNote
+    isLocked: !canEditValue && !canChangeBackground && !canEditNote
   }
 }
