@@ -6,8 +6,10 @@ import type { TableStructure } from '../data/tableStructure'
 import {
   getCellKeysInVirtualRange,
   getNextCellKey,
+  getNextLinearCellKey,
   makeVirtualTableMap,
-  type KeyboardDirection
+  type KeyboardDirection,
+  type LinearDirection
 } from './virtualTable'
 
 type SelectCellOptions = {
@@ -34,6 +36,8 @@ export type TableSelectionState = {
   stopDragging: () => void
   extendRangeToCell: (cellKey: string) => void
   moveActiveCell: (direction: KeyboardDirection) => void
+  moveActiveCellLinear: (direction: LinearDirection) => boolean
+  selectBoundaryCell: (direction: LinearDirection) => boolean
   extendActiveRange: (direction: KeyboardDirection) => void
 }
 
@@ -42,6 +46,10 @@ export function useTableSelection(
   { isEnabled = true, isBlockedRef }: UseTableSelectionOptions = {}
 ): TableSelectionState {
   const virtualMap = useMemo(() => makeVirtualTableMap(structure.rows), [structure])
+  const linearCellKeys = useMemo(
+    () => structure.rows.flatMap((row) => row.map((cell) => cell.key)),
+    [structure]
+  )
   const [activeCellKey, setActiveCellKey] = useState<string | null>(null)
   const [selectedCellKeys, setSelectedCellKeys] = useState<Set<string>>(() => new Set())
   const [rangeAnchorKey, setRangeAnchorKey] = useState<string | null>(null)
@@ -160,6 +168,41 @@ export function useTableSelection(
     [activeCellKey, isBlockedRef, isEnabled, virtualMap]
   )
 
+  const moveActiveCellLinear = useCallback(
+    (direction: LinearDirection) => {
+      if (!activeCellKey || !isEnabled || isBlockedRef?.current) return false
+
+      const nextKey = getNextLinearCellKey(linearCellKeys, activeCellKey, direction)
+      if (!nextKey) return false
+
+      setActiveCellKey(nextKey)
+      setRangeAnchorKey(nextKey)
+      setRangeFocusKey(nextKey)
+      setSelectedCellKeys(new Set([nextKey]))
+      dragSelectionRef.current = null
+      setIsDragging(false)
+      return true
+    },
+    [activeCellKey, isBlockedRef, isEnabled, linearCellKeys]
+  )
+
+  const selectBoundaryCell = useCallback(
+    (direction: LinearDirection) => {
+      if (!isEnabled || isBlockedRef?.current || linearCellKeys.length === 0) return false
+
+      const boundaryKey =
+        direction === 'forward' ? linearCellKeys[0] : linearCellKeys[linearCellKeys.length - 1]
+      setActiveCellKey(boundaryKey)
+      setRangeAnchorKey(boundaryKey)
+      setRangeFocusKey(boundaryKey)
+      setSelectedCellKeys(new Set([boundaryKey]))
+      dragSelectionRef.current = null
+      setIsDragging(false)
+      return true
+    },
+    [isBlockedRef, isEnabled, linearCellKeys]
+  )
+
   const extendActiveRange = useCallback(
     (direction: KeyboardDirection) => {
       if (!activeCellKey) return
@@ -207,6 +250,8 @@ export function useTableSelection(
     stopDragging,
     extendRangeToCell,
     moveActiveCell,
+    moveActiveCellLinear,
+    selectBoundaryCell,
     extendActiveRange
   }
 }

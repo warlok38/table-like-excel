@@ -16,6 +16,7 @@ type CellValueEditorProps = {
   onChooseValue: (value: CellValue) => void
   onCommit: () => void
   onCancel: () => void
+  onNavigateByTab: (backward: boolean) => boolean
 }
 
 export function CellValueEditor({
@@ -26,7 +27,8 @@ export function CellValueEditor({
   onDraftChange,
   onChooseValue,
   onCommit,
-  onCancel
+  onCancel,
+  onNavigateByTab
 }: CellValueEditorProps) {
   if (
     session.editor.type === 'text' ||
@@ -40,6 +42,7 @@ export function CellValueEditor({
         onDraftChange={onDraftChange}
         onCommit={onCommit}
         onCancel={onCancel}
+        onNavigateByTab={onNavigateByTab}
       />
     )
   }
@@ -53,6 +56,7 @@ export function CellValueEditor({
         onChooseValue={onChooseValue}
         onCommit={onCommit}
         onCancel={onCancel}
+        onNavigateByTab={onNavigateByTab}
       />
     )
   }
@@ -66,6 +70,7 @@ export function CellValueEditor({
       onChooseValue={onChooseValue}
       onCommit={onCommit}
       onCancel={onCancel}
+      onNavigateByTab={onNavigateByTab}
     />
   )
 }

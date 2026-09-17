@@ -17,6 +17,7 @@ export function TableSurface({ controller }: TableSurfaceProps) {
     ownerId,
     tableSave,
     handleRootKeyDown,
+    handleRootFocus,
     baseData,
     structure,
     pendingChanges,
@@ -26,6 +27,7 @@ export function TableSurface({ controller }: TableSurfaceProps) {
     openEditor,
     commitEditorWithFocus,
     cancelEditorWithFocus,
+    navigateEditorByTab,
     focusRoot,
     closeNoteEditor,
     changeNote,
@@ -46,6 +48,7 @@ export function TableSurface({ controller }: TableSurfaceProps) {
       data-table-owner={ownerId}
       aria-busy={tableSave.isSaving}
       tabIndex={0}
+      onFocus={handleRootFocus}
       onKeyDown={handleRootKeyDown}
     >
       {Array.isArray(baseData) && baseData.length > 0 && (
@@ -65,6 +68,7 @@ export function TableSurface({ controller }: TableSurfaceProps) {
           onChooseValue={editing.chooseValue}
           onCommitEditor={commitEditorWithFocus}
           onCancelEditor={cancelEditorWithFocus}
+          onNavigateEditorByTab={navigateEditorByTab}
           onFocusTable={focusRoot}
           onCloseNote={closeNoteEditor}
           onNoteChange={changeNote}

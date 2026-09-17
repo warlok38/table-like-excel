@@ -12,6 +12,7 @@ type SelectValueEditorProps = {
   onChooseValue: (value: CellValue) => void
   onCommit: () => void
   onCancel: () => void
+  onNavigateByTab: (backward: boolean) => boolean
 }
 
 export function SelectValueEditor({
@@ -20,7 +21,8 @@ export function SelectValueEditor({
   tableOwnerId,
   onChooseValue,
   onCommit,
-  onCancel
+  onCancel,
+  onNavigateByTab
 }: SelectValueEditorProps) {
   const selectRef = useRef<HTMLSelectElement>(null)
   const editor = session.editor.type === 'select' ? session.editor : null
@@ -59,6 +61,15 @@ export function SelectValueEditor({
       onMouseDown={(event) => event.stopPropagation()}
       onPointerDown={(event) => event.stopPropagation()}
       onKeyDown={(event) => {
+        if (event.key === 'Tab') {
+          const didMove = onNavigateByTab(event.shiftKey)
+          if (didMove) {
+            event.preventDefault()
+          }
+          event.stopPropagation()
+          return
+        }
+
         event.stopPropagation()
         if (event.key === 'Escape') {
           event.preventDefault()

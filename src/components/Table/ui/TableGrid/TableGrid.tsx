@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, type ReactNode } from 'react'
+import { useCallback, useLayoutEffect, useRef, type ReactNode } from 'react'
 import cn from 'classnames'
 
 import { getTableCellKey } from '../../lib'
@@ -54,6 +54,7 @@ type TableGridProps = {
   onChooseValue: (value: string | number | null) => void
   onCommitEditor: () => void
   onCancelEditor: () => void
+  onNavigateEditorByTab: (backward: boolean) => boolean
   onFocusTable: () => void
   onCloseNote: () => void
   onNoteChange: (cellKey: string, value: string) => void
@@ -76,6 +77,7 @@ export function TableGrid({
   onChooseValue,
   onCommitEditor,
   onCancelEditor,
+  onNavigateEditorByTab,
   onFocusTable,
   onCloseNote,
   onNoteChange,
@@ -111,6 +113,35 @@ export function TableGrid({
     activeCellKey: selection.activeCellKey,
     onBeforeWindowChange: handleBeforeWindowChange
   })
+  useLayoutEffect(() => {
+    const activeCellKey = selection.activeCellKey
+    if (!activeCellKey) return
+
+    let frame: number | null = null
+    let attempts = 0
+
+    const revealActiveCell = () => {
+      const table = tableRef.current
+      const cell = Array.from(
+        table?.querySelectorAll<HTMLTableCellElement>('[data-cell-key]') ?? []
+      ).find((candidate) => candidate.dataset.cellKey === activeCellKey)
+
+      if (cell) {
+        cell.scrollIntoView({ block: 'nearest', inline: 'nearest' })
+        return
+      }
+
+      attempts += 1
+      if (attempts < 3) {
+        frame = requestAnimationFrame(revealActiveCell)
+      }
+    }
+
+    frame = requestAnimationFrame(revealActiveCell)
+    return () => {
+      if (frame !== null) cancelAnimationFrame(frame)
+    }
+  }, [selection.activeCellKey])
   useTableDragAutoScroll({
     viewportRef,
     isDragging: selection.isDragging,
@@ -180,6 +211,7 @@ export function TableGrid({
               onChooseValue={onChooseValue}
               onCommitEditor={onCommitEditor}
               onCancelEditor={onCancelEditor}
+              onNavigateEditorByTab={onNavigateEditorByTab}
               onFocusTable={onFocusTable}
               onCloseNote={onCloseNote}
               onNoteChange={onNoteChange}

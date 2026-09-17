@@ -44,6 +44,7 @@ type TableCellProps = {
   onChooseValue: (value: CellValue) => void
   onCommitEditor: () => void
   onCancelEditor: () => void
+  onNavigateEditorByTab: (backward: boolean) => boolean
   onFocusTable: () => void
   onCloseNote: () => void
   onNoteChange: (cellKey: string, value: string) => void
@@ -80,6 +81,7 @@ function TableCellComponent({
   onChooseValue,
   onCommitEditor,
   onCancelEditor,
+  onNavigateEditorByTab,
   onFocusTable,
   onCloseNote,
   onNoteChange,
@@ -219,6 +221,7 @@ function TableCellComponent({
             onChooseValue={onChooseValue}
             onCommit={onCommitEditor}
             onCancel={onCancelEditor}
+            onNavigateByTab={onNavigateEditorByTab}
           />
         )}
       </div>
@@ -248,6 +251,7 @@ function TableCellComponent({
           onChooseValue={onChooseValue}
           onCommit={onCommitEditor}
           onCancel={onCancelEditor}
+          onNavigateByTab={onNavigateEditorByTab}
         />
       )}
       {isValueChanged && <span className={styles.valueChangedMarker} />}

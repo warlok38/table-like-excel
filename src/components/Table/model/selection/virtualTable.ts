@@ -1,6 +1,7 @@
 import type { StructureCell } from '../data/tableStructure'
 
 export type KeyboardDirection = 'up' | 'down' | 'left' | 'right'
+export type LinearDirection = 'forward' | 'backward'
 
 export type VirtualTableCell = {
   key: string
@@ -134,6 +135,18 @@ export function getNextCellKey(
   }
 
   return currentKey
+}
+
+export function getNextLinearCellKey(
+  cellKeys: string[],
+  currentKey: string,
+  direction: LinearDirection
+): string | null {
+  const currentIndex = cellKeys.indexOf(currentKey)
+  if (currentIndex < 0) return null
+
+  const nextIndex = currentIndex + (direction === 'forward' ? 1 : -1)
+  return cellKeys[nextIndex] ?? null
 }
 
 export function getCellKeysInVirtualRange(

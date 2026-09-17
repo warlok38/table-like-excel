@@ -15,6 +15,7 @@ type DateValueEditorProps = {
   onChooseValue: (value: CellValue) => void
   onCommit: () => void
   onCancel: () => void
+  onNavigateByTab: (backward: boolean) => boolean
 }
 
 const weekDays = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
@@ -27,7 +28,8 @@ export function DateValueEditor({
   tableOwnerId,
   onChooseValue,
   onCommit,
-  onCancel
+  onCancel,
+  onNavigateByTab
 }: DateValueEditorProps) {
   const editor = session.editor.type === 'date' ? session.editor : null
   const [visibleMonth, setVisibleMonth] = useState<CalendarMonth>(() =>
@@ -38,6 +40,15 @@ export function DateValueEditor({
   if (!editor) return null
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Tab') {
+      const didMove = onNavigateByTab(event.shiftKey)
+      if (didMove) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      return
+    }
+
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()

@@ -81,7 +81,14 @@ export function useTableController({
     isBlockedRef: savingOpenRef
   })
   const { commitEditing, cancelEditing, startEditing } = editing
-  const { selectOnly, clearSelection, stopDragging } = selection
+  const {
+    activeCellKey,
+    selectOnly,
+    clearSelection,
+    stopDragging,
+    moveActiveCellLinear,
+    selectBoundaryCell
+  } = selection
   const {
     openNoteKey,
     contextMenu,
@@ -129,6 +136,39 @@ export function useTableController({
     cancelEditing()
     focusRoot()
   }, [cancelEditing, focusRoot])
+  const navigateEditorByTab = useCallback(
+    (backward: boolean) => {
+      if (savingOpenRef.current) return false
+
+      commitEditing()
+      closeNotes()
+      const didMove = moveActiveCellLinear(backward ? 'backward' : 'forward')
+
+      if (didMove) {
+        focusRoot()
+      } else {
+        clearSelection()
+      }
+
+      return didMove
+    },
+    [clearSelection, closeNotes, commitEditing, focusRoot, moveActiveCellLinear]
+  )
+  const handleRootFocus = useCallback(
+    (event: React.FocusEvent<HTMLDivElement>) => {
+      if (activeCellKey || !cellManagementEnabled || savingOpenRef.current) return
+
+      const previous = event.relatedTarget
+      const root = rootRef.current
+      const enteredBackward =
+        previous instanceof Node &&
+        root !== null &&
+        Boolean(root.compareDocumentPosition(previous) & Node.DOCUMENT_POSITION_FOLLOWING)
+
+      selectBoundaryCell(enteredBackward ? 'backward' : 'forward')
+    },
+    [activeCellKey, cellManagementEnabled, selectBoundaryCell]
+  )
   const openEditor = useCallback(
     (cellKey: string, start: EditStart) => {
       if (savingOpenRef.current) return
@@ -216,6 +256,7 @@ export function useTableController({
     ownerId,
     tableSave,
     handleRootKeyDown,
+    handleRootFocus,
     availableBackgroundColors,
     backgroundEditableSelectedCount,
     pendingSummary,
@@ -231,6 +272,7 @@ export function useTableController({
     openEditor,
     commitEditorWithFocus,
     cancelEditorWithFocus,
+    navigateEditorByTab,
     focusRoot,
     closeNoteEditor,
     changeNote,

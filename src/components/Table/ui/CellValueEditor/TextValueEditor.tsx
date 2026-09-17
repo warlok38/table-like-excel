@@ -11,6 +11,7 @@ type TextValueEditorProps = {
   onDraftChange: (draft: string) => void
   onCommit: () => void
   onCancel: () => void
+  onNavigateByTab: (backward: boolean) => boolean
 }
 
 export function TextValueEditor({
@@ -18,7 +19,8 @@ export function TextValueEditor({
   tableOwnerId,
   onDraftChange,
   onCommit,
-  onCancel
+  onCancel,
+  onNavigateByTab
 }: TextValueEditorProps) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
   const isComposingRef = useRef(false)
@@ -51,6 +53,15 @@ export function TextValueEditor({
   }
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    if (event.key === 'Tab') {
+      const didMove = onNavigateByTab(event.shiftKey)
+      if (didMove) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+      return
+    }
+
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()

@@ -97,6 +97,8 @@ Redux or backend adapters.
 
 The management flag disables selection/navigation and background/note actions, but does not disable value editors permitted by cell metadata. An active save blocks all mutation commands without dimming; wheel and Tab remain available. New local edits clear stale save messages. Save lifecycle guards tolerate Strict Mode and ignore completion from an unmounted lifecycle.
 
+Tab moves the active selection through cells in row/index order, while Shift+Tab moves backward. Moving from an open value editor commits its draft first. At the first or last cell, focus leaves the table through the normal page tab order; entering an unselected table selects the first cell, or the last cell when entering backward. Cells remain out of the DOM tab order so focus stays on the table surface during internal navigation.
+
 The incoming-prop observation ref is separate from accepted save data. An unchanged prop reference cannot undo the returned snapshot. Consumers must not replace the dataset during local work; conflict merging and deferred external updates are out of scope.
 
 ## Performance boundaries

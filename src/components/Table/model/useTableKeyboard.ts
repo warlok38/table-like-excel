@@ -45,6 +45,19 @@ export function useTableKeyboard({
       if (!cellManagementEnabled) return
       if (savingOpenRef.current) return
 
+      if (event.key === 'Tab') {
+        commitEditing()
+        closeNotes()
+
+        const didMove = selection.moveActiveCellLinear(event.shiftKey ? 'backward' : 'forward')
+        if (didMove) {
+          event.preventDefault()
+        } else {
+          selection.clearSelection()
+        }
+        return
+      }
+
       const direction = getKeyboardDirection(event.key)
       if (direction) {
         event.preventDefault()
