@@ -1,6 +1,7 @@
 'use client'
 
-import { useRef } from 'react'
+import { useCallback, useRef, type ReactNode } from 'react'
+import cn from 'classnames'
 
 import { getTableCellKey } from '../../lib'
 import {
@@ -21,7 +22,10 @@ import { SelectionOutline } from '../SelectionOutline/SelectionOutline'
 import { useSelectionGeometry } from '../SelectionOutline/useSelectionGeometry'
 import { TableCell } from '../TableCell/TableCell'
 import styles from './TableGrid.module.css'
-import { useCellLayout } from './useCellLayout'
+import { isRowRendered, VIRTUALIZATION_ROW_THRESHOLD, type VirtualRowWindow } from './tableLayout'
+import { useTableDragAutoScroll } from './useTableDragAutoScroll'
+import { useTableLayout } from './useTableLayout'
+import { useTableVirtualRows } from './useTableVirtualRows'
 
 const cellNumberFormat = new Intl.NumberFormat('ru-RU')
 
@@ -78,81 +82,194 @@ export function TableGrid({
   onContextMenu
 }: TableGridProps) {
   const tableRef = useRef<HTMLTableElement>(null)
-  const cellSizes = useCellLayout(tableRef, structure.key)
-  const selectionGeometry = useSelectionGeometry(tableRef, structure.key)
+  const surfaceRef = useRef<HTMLDivElement>(null)
+  const viewportRef = useRef<HTMLDivElement>(null)
+  const { model, snapshot, isMeasuring } = useTableLayout(tableRef, surfaceRef, structure)
+  const virtualizationEnabled = data.length >= VIRTUALIZATION_ROW_THRESHOLD && snapshot !== null
+  const handleBeforeWindowChange = useCallback(
+    (nextWindow: VirtualRowWindow) => {
+      if (session) {
+        const editorRow = snapshot?.rowByCellKey.get(session.cellKey)
+        if (editorRow !== undefined && !isRowRendered(nextWindow, editorRow)) {
+          onCommitEditor()
+        }
+      }
+
+      if (openNoteKey) {
+        const noteRow = snapshot?.rowByCellKey.get(openNoteKey)
+        if (noteRow !== undefined && !isRowRendered(nextWindow, noteRow)) {
+          onCloseNote()
+        }
+      }
+    },
+    [onCloseNote, onCommitEditor, openNoteKey, session, snapshot]
+  )
+  const virtualWindow = useTableVirtualRows({
+    viewportRef,
+    snapshot,
+    enabled: virtualizationEnabled,
+    activeCellKey: selection.activeCellKey,
+    onBeforeWindowChange: handleBeforeWindowChange
+  })
+  useTableDragAutoScroll({
+    viewportRef,
+    isDragging: selection.isDragging,
+    onExtendSelection: selection.extendRangeToCell
+  })
+  const isVirtualized = virtualizationEnabled && virtualWindow !== null
+  const selectionGeometry = useSelectionGeometry(
+    tableRef,
+    structure.key,
+    snapshot?.cellRects ?? null
+  )
+
+  const renderRow = (rowIndex: number) => {
+    const row = data[rowIndex]
+    return (
+      <tr
+        key={`row-${rowIndex + 1}`}
+        className={styles.tr}
+        data-table-row-index={rowIndex}
+        style={isVirtualized ? { height: snapshot.rowHeights[rowIndex] } : undefined}
+      >
+        {row.map((cell, cellIndex) => {
+          const cellKey = getTableCellKey(cell, rowIndex, cellIndex)
+          const capabilities = getCellCapabilities(cell, { dataStatusActionsEnabled })
+          const hasPendingValue = isValuePending(pendingChanges, cellKey)
+          const hasPendingBackground = isBackgroundPending(pendingChanges, cellKey)
+          const hasPendingNote = isNotePending(pendingChanges, cellKey)
+          const pendingBackground = getPendingBackground(pendingChanges, cellKey)
+          const value = getEffectiveValue(cellKey, cell, pendingChanges.values)
+          let displayValue = formatCellValue(cell.formatted_value)
+
+          if (hasPendingValue && cell.data.editor && cell.data.editor.type !== 'readonly') {
+            displayValue = formatPendingValue(value, cell.data.editor)
+          } else if (hasPendingValue) {
+            displayValue = String(value ?? '')
+          }
+
+          return (
+            <TableCell
+              key={cellKey}
+              cell={cell}
+              cellKey={cellKey}
+              rowIndex={rowIndex}
+              cellIndex={cellIndex}
+              displayValue={displayValue}
+              currentValue={value}
+              manualBackground={hasPendingBackground ? (pendingBackground ?? null) : undefined}
+              noteValue={getNoteValue(cellKey, cell)}
+              isNoteOpen={openNoteKey === cellKey}
+              isActive={selection.activeCellKey === cellKey}
+              isSelected={selection.selectedCellKeys.has(cellKey)}
+              isLocked={capabilities.isLocked}
+              contentSize={snapshot?.contentSizes.get(cellKey)}
+              registerCellRef={selectionGeometry.registerCellRef}
+              isValueChanged={hasPendingValue}
+              isCellChanged={hasPendingValue || hasPendingBackground || hasPendingNote}
+              canEditValue={capabilities.canEditValue}
+              canEditNote={capabilities.canEditNote}
+              canUseDataStatusActions={dataStatusActionsEnabled}
+              isSaving={isSaving}
+              session={session?.cellKey === cellKey ? session : null}
+              tableOwnerId={tableOwnerId}
+              onSelect={selection.selectCell}
+              onExtendSelection={selection.extendRangeToCell}
+              onOpenEditor={onOpenEditor}
+              onDraftChange={onDraftChange}
+              onChooseValue={onChooseValue}
+              onCommitEditor={onCommitEditor}
+              onCancelEditor={onCancelEditor}
+              onFocusTable={onFocusTable}
+              onCloseNote={onCloseNote}
+              onNoteChange={onNoteChange}
+              onContextMenu={onContextMenu}
+            />
+          )
+        })}
+      </tr>
+    )
+  }
+
+  const renderRows = () => {
+    if (!isVirtualized) return data.map((_, rowIndex) => renderRow(rowIndex))
+
+    const rows: ReactNode[] = []
+    for (let rowIndex = 0; rowIndex <= virtualWindow.pinnedRowEnd; rowIndex += 1) {
+      rows.push(renderRow(rowIndex))
+    }
+
+    if (virtualWindow.paddingTop > 0) {
+      rows.push(
+        <tr key="virtual-spacer-top" className={styles.spacerRow} aria-hidden="true">
+          <td
+            className={styles.spacerCell}
+            colSpan={snapshot.visualColumnCount}
+            style={{ height: virtualWindow.paddingTop }}
+          />
+        </tr>
+      )
+    }
+
+    for (let rowIndex = virtualWindow.start; rowIndex <= virtualWindow.end; rowIndex += 1) {
+      rows.push(renderRow(rowIndex))
+    }
+
+    if (virtualWindow.paddingBottom > 0) {
+      rows.push(
+        <tr key="virtual-spacer-bottom" className={styles.spacerRow} aria-hidden="true">
+          <td
+            className={styles.spacerCell}
+            colSpan={snapshot.visualColumnCount}
+            style={{ height: virtualWindow.paddingBottom }}
+          />
+        </tr>
+      )
+    }
+
+    return rows
+  }
 
   return (
-    <div className={styles.tableSurface}>
-      <table ref={tableRef} className={styles.table}>
-        <tbody className={styles.tbody}>
-          {data.map((row, rowIndex) => (
-            <tr key={`row-${rowIndex + 1}`} className={styles.tr}>
-              {row.map((cell, cellIndex) => {
-                const cellKey = getTableCellKey(cell, rowIndex, cellIndex)
-                const capabilities = getCellCapabilities(cell, { dataStatusActionsEnabled })
-                const hasPendingValue = isValuePending(pendingChanges, cellKey)
-                const hasPendingBackground = isBackgroundPending(pendingChanges, cellKey)
-                const hasPendingNote = isNotePending(pendingChanges, cellKey)
-                const pendingBackground = getPendingBackground(pendingChanges, cellKey)
-                const value = getEffectiveValue(cellKey, cell, pendingChanges.values)
-                let displayValue = formatCellValue(cell.formatted_value)
-
-                if (hasPendingValue && cell.data.editor && cell.data.editor.type !== 'readonly') {
-                  displayValue = formatPendingValue(value, cell.data.editor)
-                } else if (hasPendingValue) {
-                  displayValue = String(value ?? '')
-                }
-
-                return (
-                  <TableCell
-                    key={cellKey}
-                    cell={cell}
-                    cellKey={cellKey}
-                    rowIndex={rowIndex}
-                    cellIndex={cellIndex}
-                    displayValue={displayValue}
-                    currentValue={value}
-                    manualBackground={
-                      hasPendingBackground ? (pendingBackground ?? null) : undefined
-                    }
-                    noteValue={getNoteValue(cellKey, cell)}
-                    isNoteOpen={openNoteKey === cellKey}
-                    isActive={selection.activeCellKey === cellKey}
-                    isSelected={selection.selectedCellKeys.has(cellKey)}
-                    isLocked={capabilities.isLocked}
-                    contentSize={cellSizes?.get(cellKey)}
-                    registerCellRef={selectionGeometry.registerCellRef}
-                    isValueChanged={hasPendingValue}
-                    isCellChanged={hasPendingValue || hasPendingBackground || hasPendingNote}
-                    canEditValue={capabilities.canEditValue}
-                    canEditNote={capabilities.canEditNote}
-                    canUseDataStatusActions={dataStatusActionsEnabled}
-                    isSaving={isSaving}
-                    session={session?.cellKey === cellKey ? session : null}
-                    tableOwnerId={tableOwnerId}
-                    onSelect={selection.selectCell}
-                    onExtendSelection={selection.extendRangeToCell}
-                    onOpenEditor={onOpenEditor}
-                    onDraftChange={onDraftChange}
-                    onChooseValue={onChooseValue}
-                    onCommitEditor={onCommitEditor}
-                    onCancelEditor={onCancelEditor}
-                    onFocusTable={onFocusTable}
-                    onCloseNote={onCloseNote}
-                    onNoteChange={onNoteChange}
-                    onContextMenu={onContextMenu}
+    <div
+      ref={viewportRef}
+      className={cn(styles.tableViewport, { [styles.virtualViewport]: isVirtualized })}
+      data-virtualized={isVirtualized || undefined}
+    >
+      <div ref={surfaceRef} className={styles.tableSurface}>
+        <table
+          ref={tableRef}
+          className={cn(styles.table, { [styles.virtualTable]: isVirtualized })}
+          style={isVirtualized ? { width: snapshot.totalWidth } : undefined}
+        >
+          {snapshot && (
+            <colgroup>
+              {snapshot.columnWidths.map((width, columnIndex) => (
+                <col key={columnIndex} style={{ width }} />
+              ))}
+            </colgroup>
+          )}
+          <tbody className={styles.tbody}>
+            {renderRows()}
+            {isMeasuring && (
+              <tr className={styles.columnProbeRow} aria-hidden="true">
+                {Array.from({ length: model.visualColumnCount }, (_, columnIndex) => (
+                  <td
+                    key={columnIndex}
+                    className={styles.columnProbeCell}
+                    data-column-probe-cell={columnIndex}
                   />
-                )
-              })}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <SelectionOutline
-        rectsRef={selectionGeometry.rectsRef}
-        geometryVersion={selectionGeometry.version}
-        selectedCellKeys={selection.selectedCellKeys}
-      />
+                ))}
+              </tr>
+            )}
+          </tbody>
+        </table>
+        <SelectionOutline
+          rectsRef={selectionGeometry.rectsRef}
+          geometryVersion={selectionGeometry.version}
+          selectedCellKeys={selection.selectedCellKeys}
+        />
+      </div>
     </div>
   )
 }

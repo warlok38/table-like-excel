@@ -3,7 +3,8 @@ import {
   availableBackgroundColorsMock,
   editorModelDataMock,
   noDataStatusTableMock,
-  tableDataMock
+  tableDataMock,
+  virtualizedTableDataMock
 } from '@/mocks/table'
 
 export default function Home() {
@@ -24,6 +25,12 @@ export default function Home() {
         title="Таблица без DataStatus"
         description="Проверка режима, где DataStatus не пришёл ни для одной ячейки."
         data={noDataStatusTableMock}
+        availableBackgroundColors={availableBackgroundColorsMock}
+      />
+      <TableDemoClient
+        title="Большая таблица с вертикальной виртуализацией"
+        description="500 строк с переменной высотой и объединёнными ячейками в теле таблицы."
+        data={virtualizedTableDataMock}
         availableBackgroundColors={availableBackgroundColorsMock}
       />
     </main>

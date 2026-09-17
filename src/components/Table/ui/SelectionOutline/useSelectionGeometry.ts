@@ -9,10 +9,16 @@ import {
 
 import type { SelectionRect } from './makeSelectionOutline'
 
-export function useSelectionGeometry(tableRef: RefObject<HTMLTableElement>, structure: string) {
+export function useSelectionGeometry(
+  tableRef: RefObject<HTMLTableElement>,
+  structure: string,
+  baseRects: Map<string, SelectionRect> | null = null
+) {
   const cellRefsRef = useRef(new Map<string, HTMLTableCellElement>())
   const refCallbacksRef = useRef(new Map<string, RefCallback<HTMLTableCellElement>>())
   const rectsRef = useRef(new Map<string, SelectionRect>())
+  const baseRectsRef = useRef(baseRects)
+  const observerRef = useRef<ResizeObserver | null>(null)
   const frameRef = useRef<number | null>(null)
   const fullMeasureRef = useRef(false)
   const [version, setVersion] = useState(0)
@@ -24,7 +30,9 @@ export function useSelectionGeometry(tableRef: RefObject<HTMLTableElement>, stru
       if (!table || !wrapper) return
 
       const origin = wrapper.getBoundingClientRect()
-      const rects = stickyOnly ? new Map(rectsRef.current) : new Map<string, SelectionRect>()
+      const rects = stickyOnly
+        ? new Map(rectsRef.current)
+        : new Map(baseRectsRef.current ?? undefined)
 
       const cells = stickyOnly
         ? new Map(
@@ -87,9 +95,14 @@ export function useSelectionGeometry(tableRef: RefObject<HTMLTableElement>, stru
       const callback: RefCallback<HTMLTableCellElement> = (element) => {
         if (element) {
           cellRefsRef.current.set(cellKey, element)
+          observerRef.current?.observe(element)
         } else {
+          const previousElement = cellRefsRef.current.get(cellKey)
+          if (previousElement) observerRef.current?.unobserve(previousElement)
           cellRefsRef.current.delete(cellKey)
-          rectsRef.current.delete(cellKey)
+          const baseRect = baseRectsRef.current?.get(cellKey)
+          if (baseRect) rectsRef.current.set(cellKey, baseRect)
+          else rectsRef.current.delete(cellKey)
         }
 
         scheduleMeasure()
@@ -102,20 +115,22 @@ export function useSelectionGeometry(tableRef: RefObject<HTMLTableElement>, stru
   )
 
   useLayoutEffect(() => {
-    rectsRef.current = new Map()
+    baseRectsRef.current = baseRects
+    rectsRef.current = new Map(baseRects ?? undefined)
     refCallbacksRef.current.forEach((_, key) => {
       if (!cellRefsRef.current.has(key)) {
         refCallbacksRef.current.delete(key)
       }
     })
     scheduleMeasure()
-  }, [scheduleMeasure, structure])
+  }, [baseRects, scheduleMeasure, structure])
 
   useLayoutEffect(() => {
     const table = tableRef.current
     if (!table) return
 
     const observer = new ResizeObserver(scheduleMeasure)
+    observerRef.current = observer
     observer.observe(table)
     cellRefsRef.current.forEach((cell) => observer.observe(cell))
     window.addEventListener('resize', scheduleMeasure)
@@ -123,6 +138,7 @@ export function useSelectionGeometry(tableRef: RefObject<HTMLTableElement>, stru
     document.fonts?.addEventListener('loadingdone', scheduleMeasure)
 
     return () => {
+      observerRef.current = null
       observer.disconnect()
       window.removeEventListener('resize', scheduleMeasure)
       window.removeEventListener('scroll', scheduleStickyMeasure, true)

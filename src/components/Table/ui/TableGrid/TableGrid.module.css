@@ -8,6 +8,15 @@
   margin-bottom: 3rem;
 }
 
+.tableViewport {
+  width: 100%;
+}
+
+.virtualViewport {
+  max-height: 70vh;
+  overflow: auto;
+}
+
 .tr:nth-child(1) {
   position: sticky;
   top: 0;
@@ -21,6 +30,41 @@
   margin-bottom: 3rem;
 }
 
+.virtualViewport .tableSurface {
+  margin-bottom: 0;
+}
+
 .tableSurface .table {
   margin-bottom: 0;
+}
+
+.virtualTable {
+  table-layout: fixed;
+}
+
+.columnProbeRow,
+.columnProbeCell {
+  height: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  visibility: hidden;
+}
+
+.columnProbeCell {
+  line-height: 0;
+}
+
+.spacerRow,
+.spacerCell {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: none;
+}
+
+.spacerCell {
+  min-height: 0;
+  line-height: 0;
 }

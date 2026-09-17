@@ -6,7 +6,7 @@ import cn from 'classnames'
 import type { CellTable, CellValue, EditStart, EditingSession } from '../../model'
 import { CellValueEditor } from '../CellValueEditor/CellValueEditor'
 import { DataStatusNote } from '../DataStatusNote/DataStatusNote'
-import type { CellContentSize } from '../TableGrid/useCellLayout'
+import type { CellContentSize } from '../TableGrid/tableLayout'
 import { getCellStyle } from './cellStyle'
 import styles from './TableCell.module.css'
 
