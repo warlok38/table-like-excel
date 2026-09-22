@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
+
+import { FeatureNavigation } from './feature-navigation'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Table Like Excel',
-  description: 'Base Next.js project'
+  title: 'Testing features',
+  description: 'Экспериментальные реализации таблиц'
 }
 
 export default function RootLayout({
@@ -13,7 +15,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>
+        <FeatureNavigation />
+        {children}
+      </body>
     </html>
   )
 }

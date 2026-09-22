@@ -1,0 +1,93 @@
+.page {
+  width: min(72rem, 100%);
+  margin: 0 auto;
+  padding: 4rem 1.5rem;
+}
+
+.intro {
+  max-width: 42rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.75rem;
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.title {
+  margin: 0;
+  color: #111827;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+}
+
+.description {
+  margin: 1rem 0 0;
+  color: #4b5563;
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+.featureGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+  gap: 1rem;
+  margin-top: 2.5rem;
+}
+
+.featureCard {
+  display: flex;
+  min-height: 15rem;
+  flex-direction: column;
+  padding: 1.5rem;
+  border: 1px solid #dbe2ea;
+  border-radius: 0.875rem;
+  background: #ffffff;
+  color: inherit;
+  text-decoration: none;
+  transition:
+    border-color 160ms ease,
+    box-shadow 160ms ease,
+    transform 160ms ease;
+}
+
+.featureCard:hover {
+  border-color: #93c5fd;
+  box-shadow: 0 1rem 2.5rem rgb(15 23 42 / 10%);
+  transform: translateY(-2px);
+}
+
+.featureCard:focus-visible {
+  outline: 3px solid rgb(37 99 235 / 30%);
+  outline-offset: 3px;
+}
+
+.featureNumber {
+  color: #2563eb;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.featureTitle {
+  margin-top: 1rem;
+  color: #111827;
+  font-size: 1.375rem;
+}
+
+.featureDescription {
+  margin-top: 0.75rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.featureLink {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  color: #1d4ed8;
+  font-weight: 700;
+}
