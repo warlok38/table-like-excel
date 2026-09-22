@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import { AntdRegistry } from '@ant-design/nextjs-registry'
 
 import { FeatureNavigation } from './feature-navigation'
 import './globals.css'
@@ -16,8 +17,10 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body>
-        <FeatureNavigation />
-        {children}
+        <AntdRegistry>
+          <FeatureNavigation />
+          {children}
+        </AntdRegistry>
       </body>
     </html>
   )
