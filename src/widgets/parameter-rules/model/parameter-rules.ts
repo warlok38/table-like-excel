@@ -39,12 +39,15 @@ export interface ParameterRulesSnapshot {
   configurations: ParameterConfiguration[]
 }
 
-export interface ParameterRulesAdapter {
-  load(): Promise<ParameterRulesSnapshot>
-  save(
-    configuration: Pick<ParameterConfiguration, 'parameterId' | 'rules'>
-  ): Promise<ParameterRulesSnapshot>
-  delete(parameterId: number): Promise<ParameterRulesSnapshot>
+export type SaveParameterInput = Pick<ParameterConfiguration, 'parameterId' | 'rules'>
+
+export interface ParameterRow {
+  id: number
+  name: string
+  description: string
+  updatedAt: string
+  rulesCount: number
+  configuration: ParameterConfiguration
 }
 
 export const operatorLabels: Record<RuleOperator, string> = {
@@ -79,4 +82,24 @@ export function getRuleSummary(rule: FormattingRule): string {
 
 export function hasRuleStyle(style: RuleStyle): boolean {
   return Boolean(style.textColor || style.backgroundColor || style.fontWeight)
+}
+
+export function getParameterRows(snapshot: ParameterRulesSnapshot): ParameterRow[] {
+  const catalogById = new Map(snapshot.catalog.map((parameter) => [parameter.id, parameter]))
+
+  return snapshot.configurations.flatMap((configuration) => {
+    const parameter = catalogById.get(configuration.parameterId)
+    if (!parameter) return []
+
+    return [
+      {
+        id: parameter.id,
+        name: parameter.name,
+        description: parameter.description,
+        updatedAt: configuration.updatedAt,
+        rulesCount: configuration.rules.length,
+        configuration
+      }
+    ]
+  })
 }

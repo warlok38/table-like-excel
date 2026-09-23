@@ -1,5 +1,5 @@
-import { ParameterRulesPage } from './ui/ParameterRulesPage'
+import { ParameterRulesWidget } from '@/widgets/parameter-rules'
 
 export default function AntdTablePage() {
-  return <ParameterRulesPage />
+  return <ParameterRulesWidget />
 }

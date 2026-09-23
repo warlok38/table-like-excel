@@ -1,11 +1,6 @@
-import type {
-  ParameterCatalogItem,
-  ParameterConfiguration,
-  ParameterRulesAdapter,
-  ParameterRulesSnapshot
-} from '../model/parameter-rules'
+import type { ParameterCatalogItem, ParameterConfiguration } from '../../model/parameter-rules'
 
-const catalog: ParameterCatalogItem[] = [
+export const parameterCatalogMock: readonly ParameterCatalogItem[] = [
   {
     id: 101,
     name: 'Температура подшипника',
@@ -28,7 +23,7 @@ const catalog: ParameterCatalogItem[] = [
   }
 ]
 
-let configurations: ParameterConfiguration[] = [
+export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
   {
     parameterId: 101,
     updatedAt: '2026-09-21T07:32:00.000Z',
@@ -92,57 +87,3 @@ let configurations: ParameterConfiguration[] = [
     ]
   }
 ]
-
-const pause = () => new Promise((resolve) => setTimeout(resolve, 350))
-
-const cloneSnapshot = (): ParameterRulesSnapshot => ({
-  catalog: catalog.map((parameter) => ({ ...parameter })),
-  configurations: configurations.map((configuration) => ({
-    ...configuration,
-    rules: configuration.rules.map((rule) => ({
-      ...rule,
-      condition: rule.condition ? { ...rule.condition } : undefined,
-      style: { ...rule.style }
-    }))
-  }))
-})
-
-export function createParameterRulesMockAdapter(): ParameterRulesAdapter {
-  return {
-    async load() {
-      await pause()
-      return cloneSnapshot()
-    },
-    async save(configuration) {
-      await pause()
-      const savedConfiguration: ParameterConfiguration = {
-        ...configuration,
-        updatedAt: new Date().toISOString(),
-        rules: configuration.rules.map((rule) => ({
-          ...rule,
-          description: rule.description?.trim() || undefined,
-          condition: rule.isDefault ? undefined : rule.condition,
-          style: { ...rule.style }
-        }))
-      }
-      const existingIndex = configurations.findIndex(
-        (item) => item.parameterId === configuration.parameterId
-      )
-
-      if (existingIndex === -1) {
-        configurations = [savedConfiguration, ...configurations]
-      } else {
-        configurations = configurations.map((item, index) =>
-          index === existingIndex ? savedConfiguration : item
-        )
-      }
-
-      return cloneSnapshot()
-    },
-    async delete(parameterId) {
-      await pause()
-      configurations = configurations.filter((item) => item.parameterId !== parameterId)
-      return cloneSnapshot()
-    }
-  }
-}

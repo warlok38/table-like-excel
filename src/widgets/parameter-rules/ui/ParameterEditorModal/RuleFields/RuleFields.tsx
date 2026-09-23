@@ -2,24 +2,24 @@
 
 import { Checkbox, Flex, Form, Input, InputNumber, Select } from 'antd'
 
-import type { DraftRule, RuleErrors } from '../model/parameter-rule-draft'
+import type { DraftRule, RuleErrors } from '../../../model/parameter-rule-draft'
 import {
   fontWeightLabels,
   operatorLabels,
   type FontWeight,
   type RuleOperator,
   type RuleStyle
-} from '../model/parameter-rules'
-import styles from './parameter-rules.module.css'
+} from '../../../model/parameter-rules'
+import styles from './RuleFields.module.css'
 
 interface RuleFieldsProps {
   errors: RuleErrors
   rule: DraftRule
-  saving: boolean
+  disabled: boolean
   onChange(errorField: keyof RuleErrors | undefined, update: (rule: DraftRule) => DraftRule): void
 }
 
-export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) {
+export function RuleFields({ errors, rule, disabled, onChange }: RuleFieldsProps) {
   const updateStyle = (update: Partial<RuleStyle>) => {
     onChange('style', (current) => ({
       ...current,
@@ -36,7 +36,7 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
         validateStatus={errors.name ? 'error' : undefined}
       >
         <Input
-          disabled={saving}
+          disabled={disabled}
           maxLength={120}
           placeholder="Например, Критическое значение"
           value={rule.name}
@@ -47,7 +47,7 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
       </Form.Item>
       <Form.Item label="Описание">
         <Input
-          disabled={saving}
+          disabled={disabled}
           maxLength={300}
           placeholder="Необязательно"
           value={rule.description}
@@ -62,7 +62,7 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
       <Checkbox
         className={styles.defaultRuleCheckbox}
         checked={rule.isDefault}
-        disabled={saving}
+        disabled={disabled}
         onChange={(event) =>
           onChange('condition', (current) => ({
             ...current,
@@ -82,9 +82,8 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
         >
           <Flex className={styles.conditionControls} gap={8}>
             <Select<RuleOperator>
-              aria-label="Оператор условия"
               className={styles.conditionOperator}
-              disabled={saving}
+              disabled={disabled}
               options={(Object.keys(operatorLabels) as RuleOperator[]).map((operator) => ({
                 value: operator,
                 label: operatorLabels[operator]
@@ -99,10 +98,9 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
               }
             />
             <InputNumber
-              aria-label="Значение условия"
               className={styles.conditionValue}
               controls={false}
-              disabled={saving}
+              disabled={disabled}
               placeholder="Введите значение"
               value={rule.condition?.value}
               onChange={(value) =>
@@ -128,7 +126,7 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
           <div className={styles.styleControl}>
             <Checkbox
               checked={Boolean(rule.style.textColor)}
-              disabled={saving}
+              disabled={disabled}
               onChange={(event) =>
                 updateStyle({ textColor: event.target.checked ? '#000000' : undefined })
               }
@@ -136,7 +134,7 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
               Цвет текста
             </Checkbox>
             <Input
-              disabled={saving || !rule.style.textColor}
+              disabled={disabled || !rule.style.textColor}
               placeholder="Пусто"
               value={rule.style.textColor}
               onChange={(event) => updateStyle({ textColor: event.target.value || undefined })}
@@ -145,7 +143,7 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
           <div className={styles.styleControl}>
             <Checkbox
               checked={Boolean(rule.style.backgroundColor)}
-              disabled={saving}
+              disabled={disabled}
               onChange={(event) =>
                 updateStyle({ backgroundColor: event.target.checked ? '#FFFFFF' : undefined })
               }
@@ -153,7 +151,7 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
               Цвет фона
             </Checkbox>
             <Input
-              disabled={saving || !rule.style.backgroundColor}
+              disabled={disabled || !rule.style.backgroundColor}
               placeholder="Пусто"
               value={rule.style.backgroundColor}
               onChange={(event) =>
@@ -164,7 +162,7 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
           <div className={styles.styleControl}>
             <Checkbox
               checked={Boolean(rule.style.fontWeight)}
-              disabled={saving}
+              disabled={disabled}
               onChange={(event) =>
                 updateStyle({ fontWeight: event.target.checked ? 'regular' : undefined })
               }
@@ -172,9 +170,8 @@ export function RuleFields({ errors, rule, saving, onChange }: RuleFieldsProps) 
               Начертание текста
             </Checkbox>
             <Select<FontWeight>
-              aria-label="Начертание текста"
               allowClear
-              disabled={saving || !rule.style.fontWeight}
+              disabled={disabled || !rule.style.fontWeight}
               options={(Object.keys(fontWeightLabels) as FontWeight[]).map((weight) => ({
                 value: weight,
                 label: fontWeightLabels[weight]
