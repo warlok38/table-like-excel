@@ -93,10 +93,23 @@
   margin-top: 0.25rem;
 }
 
+.rulesHeaderEmpty {
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
 .rulesHeader h4 {
   margin: 0 0 0.2rem !important;
   font-size: 1.125rem !important;
   line-height: 1.625rem !important;
+}
+
+.addRuleButton {
+  transform-origin: top left;
+}
+
+.addRuleButtonEmpty {
+  min-width: 12rem;
 }
 
 .rulesError {
@@ -178,12 +191,6 @@
 .styleControl :global(.ant-select),
 .styleControl :global(.ant-input) {
   width: 100%;
-}
-
-.addRuleButton {
-  border-style: dashed;
-  border-color: #d9ad00;
-  color: #806600;
 }
 
 .modalFooter {

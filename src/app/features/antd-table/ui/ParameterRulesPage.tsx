@@ -184,7 +184,7 @@ function ParameterRulesContent() {
           </Button>
         </div>
 
-        {status === 'error' && <Alert message={error} showIcon type="error" />}
+        {status === 'error' && <Alert title={error} showIcon type="error" />}
         {status !== 'error' && (
           <Table<ParameterRow>
             columns={columns}
@@ -206,6 +206,7 @@ function ParameterRulesContent() {
             pagination={false}
             rowKey="id"
             scroll={{ x: 900 }}
+            size="small"
           />
         )}
       </section>

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import {
   App,
   Button,
@@ -59,6 +59,7 @@ export function ParameterEditorModal({
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const parameterFieldRef = useRef<HTMLDivElement>(null)
   const addRuleButtonRef = useRef<HTMLButtonElement>(null)
+  const addRuleButtonPreviousRect = useRef<DOMRect | null>(null)
   const ruleRefs = useRef(new Map<string, HTMLDivElement>())
   const [draft, setDraft] = useState<EditorDraft>({ rules: [] })
   const [initialDraft, setInitialDraft] = useState<EditorDraft>({ rules: [] })
@@ -88,6 +89,7 @@ export function ParameterEditorModal({
     [initialDraft.rules]
   )
   const isDirty = JSON.stringify(draft) !== JSON.stringify(initialDraft)
+  const hasRules = draft.rules.length > 0
   let modalTitle = 'Добавление параметра'
   if (isEditing) {
     modalTitle = selectedParameter
@@ -129,6 +131,36 @@ export function ParameterEditorModal({
     })
   }
 
+  const captureAddRuleButtonPosition = () => {
+    addRuleButtonPreviousRect.current = addRuleButtonRef.current?.getBoundingClientRect() ?? null
+  }
+
+  useLayoutEffect(() => {
+    const button = addRuleButtonRef.current
+    const previousRect = addRuleButtonPreviousRect.current
+    addRuleButtonPreviousRect.current = null
+
+    if (!button || !previousRect) return
+
+    const nextRect = button.getBoundingClientRect()
+    const offsetX = previousRect.left - nextRect.left
+    const offsetY = previousRect.top - nextRect.top
+    const scaleX = previousRect.width / nextRect.width
+    const scaleY = previousRect.height / nextRect.height
+    const animation = button.animate(
+      [
+        { transform: `translate(${offsetX}px, ${offsetY}px) scale(${scaleX}, ${scaleY})` },
+        { transform: 'translate(0, 0) scale(1, 1)' }
+      ],
+      {
+        duration: 280,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
+      }
+    )
+
+    return () => animation.cancel()
+  }, [hasRules])
+
   const updateRule = (
     uiKey: string,
     errorField: keyof DraftErrors['byRule'][string] | undefined,
@@ -156,6 +188,9 @@ export function ParameterEditorModal({
   }
 
   const addRule = () => {
+    if (!hasRules) {
+      captureAddRuleButtonPosition()
+    }
     const uiKey = `new-${nextRuleKey.current++}`
     setDraft((current) => ({ ...current, rules: [createEmptyRule(uiKey), ...current.rules] }))
     setActiveRuleKeys([uiKey])
@@ -164,6 +199,9 @@ export function ParameterEditorModal({
   }
 
   const removeRule = (uiKey: string) => {
+    if (draft.rules.length === 1) {
+      captureAddRuleButtonPosition()
+    }
     setDraft((current) => ({
       ...current,
       rules: current.rules.filter((rule) => rule.uiKey !== uiKey)
@@ -360,14 +398,14 @@ export function ParameterEditorModal({
             </div>
           )}
 
-          <div className={styles.rulesHeader}>
+          <div className={`${styles.rulesHeader} ${!hasRules ? styles.rulesHeaderEmpty : ''}`}>
             <Typography.Title level={4}>Правила:</Typography.Title>
             <Button
               ref={addRuleButtonRef}
-              className={styles.addRuleButton}
+              className={`${styles.addRuleButton} ${!hasRules ? styles.addRuleButtonEmpty : ''}`}
               disabled={saving}
               icon={<PlusOutlined />}
-              size="small"
+              size={hasRules ? 'small' : 'middle'}
               onClick={addRule}
             >
               Добавить правило
