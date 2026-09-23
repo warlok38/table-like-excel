@@ -19,6 +19,7 @@ import {
   createEmptyRule,
   emptyDraftErrors,
   getDraftRuleSummary,
+  isDraftRuleChanged,
   makeEditorDraft,
   toFormattingRules,
   validateEditorDraft,
@@ -60,7 +61,7 @@ export function ParameterEditorModal({
   const addRuleButtonRef = useRef<HTMLButtonElement>(null)
   const ruleRefs = useRef(new Map<string, HTMLDivElement>())
   const [draft, setDraft] = useState<EditorDraft>({ rules: [] })
-  const [initialDraft, setInitialDraft] = useState('')
+  const [initialDraft, setInitialDraft] = useState<EditorDraft>({ rules: [] })
   const [activeRuleKeys, setActiveRuleKeys] = useState<string[]>([])
   const [errors, setErrors] = useState<DraftErrors>(emptyDraftErrors)
   const isEditing = Boolean(configuration)
@@ -69,7 +70,7 @@ export function ParameterEditorModal({
     if (!open) return
     const nextDraft = makeEditorDraft(configuration)
     setDraft(nextDraft)
-    setInitialDraft(JSON.stringify(nextDraft))
+    setInitialDraft(nextDraft)
     setActiveRuleKeys([])
     setErrors(emptyDraftErrors)
   }, [configuration, open])
@@ -82,7 +83,11 @@ export function ParameterEditorModal({
     () => new Set(configurations.map((item) => item.parameterId)),
     [configurations]
   )
-  const isDirty = JSON.stringify(draft) !== initialDraft
+  const initialRulesByKey = useMemo(
+    () => new Map(initialDraft.rules.map((rule) => [rule.uiKey, rule])),
+    [initialDraft.rules]
+  )
+  const isDirty = JSON.stringify(draft) !== JSON.stringify(initialDraft)
   let modalTitle = 'Добавление параметра'
   if (isEditing) {
     modalTitle = selectedParameter
@@ -172,6 +177,8 @@ export function ParameterEditorModal({
   }
 
   const handleSave = async () => {
+    if (!isDirty || saving) return
+
     const nextErrors = validateEditorDraft(draft)
     setErrors(nextErrors)
     const firstInvalidRuleKey = draft.rules.find((rule) => nextErrors.byRule[rule.uiKey])?.uiKey
@@ -208,6 +215,7 @@ export function ParameterEditorModal({
       okText: 'Закрыть',
       cancelText: 'Продолжить редактирование',
       okButtonProps: { danger: true },
+      centered: true,
       onOk: onClose
     })
   }
@@ -220,22 +228,28 @@ export function ParameterEditorModal({
       okText: 'Удалить параметр',
       cancelText: 'Отмена',
       okButtonProps: { danger: true },
+      centered: true,
       onOk: () => onDelete(configuration)
     })
   }
 
   const collapseItems: CollapseProps['items'] = draft.rules.map((rule) => {
     const ruleErrors = errors.byRule[rule.uiKey] ?? {}
+    const initialRule = initialRulesByKey.get(rule.uiKey)
+    const ruleChanged = isDraftRuleChanged(rule, initialRule)
+    const headingRule = initialRule ?? rule
+
     return {
       key: rule.uiKey,
+      className: ruleChanged ? styles.changedRule : undefined,
       label: (
         <div className={styles.ruleHeading}>
           <span className={styles.ruleHeadingText}>
             <span className={styles.ruleTitleRow}>
-              <strong>{rule.name.trim() || 'Новое правило'}</strong>
-              {rule.id !== undefined && <span className={styles.entityId}>#{rule.id}</span>}
+              <strong>{headingRule.name.trim() || 'Новое правило'}</strong>
+              {ruleChanged && <span className={styles.ruleChangeIndicator}>Изменено</span>}
             </span>
-            <span>{getDraftRuleSummary(rule)}</span>
+            <span>{getDraftRuleSummary(headingRule)}</span>
           </span>
         </div>
       ),
@@ -294,7 +308,13 @@ export function ParameterEditorModal({
             <Button disabled={saving} onClick={requestClose}>
               Отмена
             </Button>
-            <Button form={editorFormId} htmlType="submit" loading={saving} type="primary">
+            <Button
+              disabled={!isDirty || saving}
+              form={editorFormId}
+              htmlType="submit"
+              loading={saving}
+              type="primary"
+            >
               {isEditing ? 'Сохранить' : 'Добавить'}
             </Button>
           </Flex>

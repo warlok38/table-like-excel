@@ -46,6 +46,7 @@ export const makeEditorDraft = (configuration?: ParameterConfiguration): EditorD
   rules:
     configuration?.rules.map((rule, index) => ({
       ...rule,
+      description: rule.description ?? '',
       condition: rule.condition ? { ...rule.condition } : undefined,
       style: { ...rule.style },
       uiKey: `saved-${index}`
@@ -67,6 +68,15 @@ export const toFormattingRules = (rules: DraftRule[]): FormattingRule[] =>
       style: { ...rule.style }
     }
   })
+
+export const isDraftRuleChanged = (rule: DraftRule, initialRule?: DraftRule): boolean => {
+  if (!initialRule) return true
+
+  const { uiKey: _ruleUiKey, ...ruleValues } = rule
+  const { uiKey: _initialUiKey, ...initialRuleValues } = initialRule
+
+  return JSON.stringify(ruleValues) !== JSON.stringify(initialRuleValues)
+}
 
 export const getDraftRuleSummary = (rule: DraftRule) => {
   const condition =

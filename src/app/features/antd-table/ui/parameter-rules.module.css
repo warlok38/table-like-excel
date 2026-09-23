@@ -39,7 +39,7 @@
 .editorModal:global(.ant-modal) :global(.ant-modal-body) {
   min-height: 0;
   flex: 1 1 auto;
-  padding: 1.5rem;
+  padding: 1rem 1.5rem;
   overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -74,11 +74,15 @@
   min-width: 0;
 }
 
-.entityId {
+.ruleChangeIndicator {
   flex: none;
-  color: #667085;
-  font-size: 0.8125rem;
-  font-weight: 500;
+  padding: 0.1rem 0.4rem;
+  border-radius: 999px;
+  background: #fff8cc;
+  color: #806600;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.125rem;
 }
 
 .rulesHeader {
@@ -105,8 +109,7 @@
   background: #fff;
 }
 
-.rulesCollapse :global(.ant-collapse-item-active) {
-  border-color: #f5c400;
+.rulesCollapse :global(.ant-collapse-item).changedRule {
   box-shadow: inset 3px 0 0 #f5c400;
 }
 
@@ -135,7 +138,6 @@
 .ruleFields {
   display: grid;
   gap: 1rem;
-  padding-top: 0.25rem;
 }
 
 .ruleFields :global(.ant-form-item) {
