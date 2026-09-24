@@ -1,35 +1,13 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import {
-  App,
-  Button,
-  Collapse,
-  Flex,
-  Form,
-  Modal,
-  Select,
-  Tooltip,
-  Typography,
-  type CollapseProps
-} from 'antd'
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
+import { useMemo } from 'react'
+import { DeleteOutlined } from '@ant-design/icons'
+import { App, Button, Flex, Modal, Typography } from 'antd'
 
-import {
-  createEmptyRule,
-  emptyDraftErrors,
-  getDraftRuleSummary,
-  isDraftRuleChanged,
-  makeEditorDraft,
-  toFormattingRules,
-  validateEditorDraft,
-  type DraftErrors,
-  type DraftRule,
-  type EditorDraft
-} from '../../model/parameter-rule-draft'
+import { useParameterEditorController } from '../../model/use-parameter-editor-controller'
 import { type ParameterCatalogItem, type ParameterConfiguration } from '../../model/parameter-rules'
+import { ParameterEditorForm } from './ParameterEditorForm'
 import styles from './ParameterEditorModal.module.css'
-import { RuleFields } from './RuleFields'
 
 interface ParameterEditorModalProps {
   catalog: ParameterCatalogItem[]
@@ -57,41 +35,18 @@ export function ParameterEditorModal({
   onSave
 }: ParameterEditorModalProps) {
   const { modal } = App.useApp()
-  const nextRuleKey = useRef(0)
-  const editorBodyRef = useRef<HTMLDivElement>(null)
-  const parameterFieldRef = useRef<HTMLDivElement>(null)
-  const addRuleButtonRef = useRef<HTMLButtonElement>(null)
-  const addRuleButtonPreviousRect = useRef<DOMRect | null>(null)
-  const ruleRefs = useRef(new Map<string, HTMLDivElement>())
-  const [draft, setDraft] = useState<EditorDraft>({ rules: [] })
-  const [initialDraft, setInitialDraft] = useState<EditorDraft>({ rules: [] })
-  const [activeRuleKeys, setActiveRuleKeys] = useState<string[]>([])
-  const [errors, setErrors] = useState<DraftErrors>(emptyDraftErrors)
+  const controller = useParameterEditorController({
+    configuration,
+    open,
+    isInteractionDisabled,
+    onSave
+  })
   const isEditing = Boolean(configuration)
 
-  useEffect(() => {
-    if (!open) return
-    const nextDraft = makeEditorDraft(configuration)
-    setDraft(nextDraft)
-    setInitialDraft(nextDraft)
-    setActiveRuleKeys([])
-    setErrors(emptyDraftErrors)
-  }, [configuration, open])
-
   const selectedParameter = useMemo(
-    () => catalog.find((parameter) => parameter.id === draft.parameterId),
-    [catalog, draft.parameterId]
+    () => catalog.find((parameter) => parameter.id === controller.draft.parameterId),
+    [catalog, controller.draft.parameterId]
   )
-  const usedParameterIds = useMemo(
-    () => new Set(configurations.map((item) => item.parameterId)),
-    [configurations]
-  )
-  const initialRulesByKey = useMemo(
-    () => new Map(initialDraft.rules.map((rule) => [rule.uiKey, rule])),
-    [initialDraft.rules]
-  )
-  const isDirty = JSON.stringify(draft) !== JSON.stringify(initialDraft)
-  const hasRules = draft.rules.length > 0
   let modalTitle = 'Добавление параметра'
   if (isEditing) {
     modalTitle = selectedParameter
@@ -99,158 +54,9 @@ export function ParameterEditorModal({
       : 'Редактирование параметра'
   }
 
-  const scrollTargetIntoBody = (target: HTMLElement) => {
-    const body = editorBodyRef.current?.parentElement
-    if (!body) return
-
-    const bodyRect = body.getBoundingClientRect()
-    const targetRect = target.getBoundingClientRect()
-    const targetIsVisible = targetRect.top >= bodyRect.top && targetRect.bottom <= bodyRect.bottom
-
-    if (!targetIsVisible) {
-      body.scrollTo({
-        behavior: 'smooth',
-        top: body.scrollTop + targetRect.top - bodyRect.top - 16
-      })
-    }
-  }
-
-  const revealTarget = (target: () => HTMLElement | null, focusInvalidField = false) => {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => {
-        const element = target()
-        if (!element) return
-
-        scrollTargetIntoBody(element)
-        const focusTarget = focusInvalidField
-          ? element.querySelector<HTMLElement>(
-              '.ant-form-item-has-error input:not([disabled]), .ant-form-item-has-error button:not([disabled]), .ant-form-item-has-error [tabindex]:not([tabindex="-1"])'
-            )
-          : element
-
-        focusTarget?.focus({ preventScroll: true })
-      })
-    })
-  }
-
-  const captureAddRuleButtonPosition = () => {
-    addRuleButtonPreviousRect.current = addRuleButtonRef.current?.getBoundingClientRect() ?? null
-  }
-
-  useLayoutEffect(() => {
-    const button = addRuleButtonRef.current
-    const previousRect = addRuleButtonPreviousRect.current
-    addRuleButtonPreviousRect.current = null
-
-    if (!button || !previousRect) return
-
-    const nextRect = button.getBoundingClientRect()
-    const offsetX = previousRect.left - nextRect.left
-    const offsetY = previousRect.top - nextRect.top
-    const scaleX = previousRect.width / nextRect.width
-    const scaleY = previousRect.height / nextRect.height
-    const animation = button.animate(
-      [
-        { transform: `translate(${offsetX}px, ${offsetY}px) scale(${scaleX}, ${scaleY})` },
-        { transform: 'translate(0, 0) scale(1, 1)' }
-      ],
-      {
-        duration: 280,
-        easing: 'cubic-bezier(0.22, 1, 0.36, 1)'
-      }
-    )
-
-    return () => animation.cancel()
-  }, [hasRules])
-
-  const updateRule = (
-    uiKey: string,
-    errorField: keyof DraftErrors['byRule'][string] | undefined,
-    update: (rule: DraftRule) => DraftRule
-  ) => {
-    if (isInteractionDisabled) return
-
-    setDraft((current) => ({
-      ...current,
-      rules: current.rules.map((rule) => (rule.uiKey === uiKey ? update(rule) : rule))
-    }))
-    if (!errorField) return
-
-    setErrors((current) => {
-      const nextRuleErrors = { ...current.byRule[uiKey] }
-      delete nextRuleErrors[errorField]
-      const nextByRule = { ...current.byRule }
-
-      if (Object.keys(nextRuleErrors).length === 0) {
-        delete nextByRule[uiKey]
-      } else {
-        nextByRule[uiKey] = nextRuleErrors
-      }
-
-      return { ...current, byRule: nextByRule }
-    })
-  }
-
-  const addRule = () => {
-    if (isInteractionDisabled) return
-
-    if (!hasRules) {
-      captureAddRuleButtonPosition()
-    }
-    const uiKey = `new-${nextRuleKey.current++}`
-    setDraft((current) => ({ ...current, rules: [createEmptyRule(uiKey), ...current.rules] }))
-    setActiveRuleKeys([uiKey])
-    setErrors((current) => ({ ...current, rules: undefined }))
-    revealTarget(() => ruleRefs.current.get(uiKey) ?? null)
-  }
-
-  const removeRule = (uiKey: string) => {
-    if (isInteractionDisabled) return
-
-    if (draft.rules.length === 1) {
-      captureAddRuleButtonPosition()
-    }
-    setDraft((current) => ({
-      ...current,
-      rules: current.rules.filter((rule) => rule.uiKey !== uiKey)
-    }))
-    setActiveRuleKeys((current) => current.filter((key) => key !== uiKey))
-    setErrors((current) => {
-      const nextByRule = { ...current.byRule }
-      delete nextByRule[uiKey]
-      return { ...current, byRule: nextByRule }
-    })
-  }
-
-  const handleSave = async () => {
-    if (!isDirty || isInteractionDisabled) return
-
-    const nextErrors = validateEditorDraft(draft)
-    setErrors(nextErrors)
-    const firstInvalidRuleKey = draft.rules.find((rule) => nextErrors.byRule[rule.uiKey])?.uiKey
-
-    if (nextErrors.parameter) {
-      revealTarget(() => parameterFieldRef.current, true)
-      return
-    }
-
-    if (nextErrors.rules) {
-      revealTarget(() => addRuleButtonRef.current)
-      return
-    }
-
-    if (firstInvalidRuleKey) {
-      setActiveRuleKeys([firstInvalidRuleKey])
-      revealTarget(() => ruleRefs.current.get(firstInvalidRuleKey) ?? null, true)
-      return
-    }
-
-    await onSave({ parameterId: draft.parameterId!, rules: toFormattingRules(draft.rules) })
-  }
-
   const requestClose = () => {
     if (isMutationPending) return
-    if (!isDirty) {
+    if (!controller.isDirty) {
       onClose()
       return
     }
@@ -279,61 +85,6 @@ export function ParameterEditorModal({
     })
   }
 
-  const collapseItems: CollapseProps['items'] = draft.rules.map((rule) => {
-    const ruleErrors = errors.byRule[rule.uiKey] ?? {}
-    const initialRule = initialRulesByKey.get(rule.uiKey)
-    const ruleChanged = isDraftRuleChanged(rule, initialRule)
-    const headingRule = initialRule ?? rule
-
-    return {
-      key: rule.uiKey,
-      className: ruleChanged ? styles.changedRule : undefined,
-      label: (
-        <div className={styles.ruleHeading}>
-          <span className={styles.ruleHeadingText}>
-            <span className={styles.ruleTitleRow}>
-              <strong>{headingRule.name.trim() || 'Новое правило'}</strong>
-              {ruleChanged && <span className={styles.ruleChangeIndicator}>Изменено</span>}
-            </span>
-            <span>{getDraftRuleSummary(headingRule)}</span>
-          </span>
-        </div>
-      ),
-      extra: (
-        <Tooltip title="Удалить правило">
-          <Button
-            danger
-            disabled={isInteractionDisabled}
-            icon={<DeleteOutlined />}
-            onClick={(event) => {
-              event.stopPropagation()
-              removeRule(rule.uiKey)
-            }}
-            type="text"
-          />
-        </Tooltip>
-      ),
-      children: (
-        <div
-          ref={(node) => {
-            if (node) {
-              ruleRefs.current.set(rule.uiKey, node)
-            } else {
-              ruleRefs.current.delete(rule.uiKey)
-            }
-          }}
-        >
-          <RuleFields
-            errors={ruleErrors}
-            rule={rule}
-            disabled={isInteractionDisabled}
-            onChange={(errorField, update) => updateRule(rule.uiKey, errorField, update)}
-          />
-        </div>
-      )
-    }
-  })
-
   return (
     <Modal
       className={styles.editorModal}
@@ -359,7 +110,7 @@ export function ParameterEditorModal({
               Отмена
             </Button>
             <Button
-              disabled={!isDirty || isInteractionDisabled}
+              disabled={!controller.isDirty || isInteractionDisabled}
               form={editorFormId}
               htmlType="submit"
               loading={isMutationPending}
@@ -377,67 +128,15 @@ export function ParameterEditorModal({
       width={880}
       onCancel={requestClose}
     >
-      <div ref={editorBodyRef} className={styles.editorBody}>
-        <Form
-          className={styles.editorForm}
-          id={editorFormId}
-          layout="vertical"
-          onFinish={handleSave}
-        >
-          {!isEditing && (
-            <div ref={parameterFieldRef}>
-              <Form.Item
-                help={errors.parameter}
-                label="Параметр"
-                required
-                validateStatus={errors.parameter ? 'error' : undefined}
-              >
-                <Select<number>
-                  disabled={isInteractionDisabled}
-                  options={catalog.map((parameter) => ({
-                    value: parameter.id,
-                    label: parameter.name,
-                    disabled: usedParameterIds.has(parameter.id)
-                  }))}
-                  placeholder="Выберите параметр из справочника"
-                  value={draft.parameterId}
-                  onChange={(parameterId) => {
-                    setDraft((current) => ({ ...current, parameterId }))
-                    setErrors((current) => ({ ...current, parameter: undefined }))
-                  }}
-                />
-              </Form.Item>
-            </div>
-          )}
-
-          <div className={`${styles.rulesHeader} ${!hasRules ? styles.rulesHeaderEmpty : ''}`}>
-            <Typography.Title level={5}>Правила:</Typography.Title>
-            <Button
-              ref={addRuleButtonRef}
-              className={`${styles.addRuleButton} ${!hasRules ? styles.addRuleButtonEmpty : ''}`}
-              disabled={isInteractionDisabled}
-              icon={<PlusOutlined />}
-              size={hasRules ? 'small' : 'middle'}
-              onClick={addRule}
-            >
-              Добавить правило
-            </Button>
-          </div>
-
-          {errors.rules && <div className={styles.rulesError}>{errors.rules}</div>}
-          {collapseItems.length > 0 && (
-            <Collapse
-              activeKey={activeRuleKeys}
-              className={styles.rulesCollapse}
-              collapsible={isInteractionDisabled ? 'disabled' : 'header'}
-              items={collapseItems}
-              onChange={(keys) =>
-                setActiveRuleKeys(Array.isArray(keys) ? keys.map(String) : [String(keys)])
-              }
-            />
-          )}
-        </Form>
-      </div>
+      <ParameterEditorForm
+        catalog={catalog}
+        configuration={configuration}
+        configurations={configurations}
+        controller={controller}
+        formId={editorFormId}
+        isInteractionDisabled={isInteractionDisabled}
+        open={open}
+      />
     </Modal>
   )
 }
