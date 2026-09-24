@@ -30,6 +30,7 @@ type TableCellProps = {
   contentSize?: CellContentSize
   registerCellRef: (cellKey: string) => RefCallback<HTMLTableCellElement>
   isValueChanged: boolean
+  isNoteChanged: boolean
   isCellChanged: boolean
   canEditValue: boolean
   canEditNote: boolean
@@ -67,6 +68,7 @@ function TableCellComponent({
   contentSize,
   registerCellRef,
   isValueChanged,
+  isNoteChanged,
   isCellChanged,
   canEditValue,
   canEditNote,
@@ -184,6 +186,7 @@ function TableCellComponent({
         [styles.lockedCell]: isLocked,
         [styles.selectedLockedCell]: isSelected && isLocked,
         [styles.noteCell]: hasNote,
+        [styles.pendingNoteCell]: isNoteChanged,
         [styles.pendingCell]: isCellChanged
       })}
       colSpan={cell.data.colspan}

@@ -9,6 +9,8 @@ type TableContextMenuProps = {
   y: number
   hasNote: boolean
   canEditNote: boolean
+  canDeleteNote: boolean
+  deleteNoteTitle?: string
   showUnavailableActions: boolean
   onAddNote: () => void
   onEditNote: () => void
@@ -21,6 +23,8 @@ export function TableContextMenu({
   y,
   hasNote,
   canEditNote,
+  canDeleteNote,
+  deleteNoteTitle,
   showUnavailableActions,
   onAddNote,
   onEditNote,
@@ -75,7 +79,8 @@ export function TableContextMenu({
           type="button"
           className={styles.contextMenuItem}
           role="menuitem"
-          disabled={!canEditNote}
+          disabled={!canDeleteNote}
+          title={deleteNoteTitle}
           onClick={onDeleteNote}
         >
           Удалить примечание

@@ -46,6 +46,7 @@ export type CellTable = {
 export type DataStatus = {
   data_statuses_tech_id?: string
   background?: BackgroundDataStatusItem[] | null
+  requiresNoteAfterValueChange?: boolean
   note?: {
     alias: string
     value: string

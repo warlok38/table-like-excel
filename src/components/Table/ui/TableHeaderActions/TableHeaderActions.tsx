@@ -24,6 +24,7 @@ export function TableHeaderActions({ model }: TableHeaderActionsProps) {
     canCancel,
     isSaving,
     saveStatus,
+    validationMessage,
     applyBackground,
     save,
     cancel
@@ -54,6 +55,11 @@ export function TableHeaderActions({ model }: TableHeaderActionsProps) {
         </div>
       )}
       <div className={styles.saveActions} aria-label="Сохранение изменений">
+        {validationMessage && (
+          <span className={styles.validationMessage} role="alert">
+            {validationMessage}
+          </span>
+        )}
         <button type="button" className={styles.saveButton} disabled={!canSave} onClick={save}>
           <span aria-live="polite">{saveLabels[saveStatus]}</span>
         </button>

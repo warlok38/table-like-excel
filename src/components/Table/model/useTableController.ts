@@ -25,6 +25,7 @@ export type TableHeaderActionsModel = {
   canCancel: boolean
   isSaving: boolean
   saveStatus: TableSaveStatus
+  validationMessage: string | null
   applyBackground: (color: string | null) => void
   save: () => Promise<void>
   cancel: () => void
@@ -98,7 +99,7 @@ export function useTableController({
     deleteNote,
     openNoteEditor,
     closeNoteEditor,
-    openContextMenu,
+    openContextMenu: openNoteContextMenu,
     closeContextMenu,
     closeNotes
   } = useTableNotes({
@@ -128,6 +129,15 @@ export function useTableController({
       }
     })
   }, [])
+  const openContextMenu = useCallback(
+    (cellKey: string, position: { x: number; y: number }) => {
+      if (!selectOnly(cellKey)) return
+
+      openNoteContextMenu(cellKey, position)
+      focusRoot()
+    },
+    [focusRoot, openNoteContextMenu, selectOnly]
+  )
   const commitEditorWithFocus = useCallback(() => {
     commitEditing()
     focusRoot()
@@ -243,6 +253,7 @@ export function useTableController({
     canCancel: hasPendingActions && !tableSave.isSaving,
     isSaving: tableSave.isSaving,
     saveStatus: tableSave.saveStatus,
+    validationMessage: tableSave.validationMessage,
     applyBackground,
     save: tableSave.save,
     cancel: handleCancelChanges
