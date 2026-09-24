@@ -3,6 +3,7 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Collapse, Form, Select, Tooltip, Typography, type CollapseProps } from 'antd'
+import cn from 'classnames'
 
 import type { ParameterEditorController } from '../../../model/use-parameter-editor-controller'
 import { getDraftRuleSummary, isDraftRuleChanged } from '../../../model/parameter-rule-draft'
@@ -236,12 +237,16 @@ export function ParameterEditorForm({
         )}
 
         <div
-          className={`${styles.rulesHeader} ${!controller.hasRules ? styles.rulesHeaderEmpty : ''}`}
+          className={cn(styles.rulesHeader, {
+            [styles.rulesHeaderEmpty]: !controller.hasRules
+          })}
         >
           <Typography.Title level={5}>Правила:</Typography.Title>
           <Button
             ref={addRuleButtonRef}
-            className={`${styles.addRuleButton} ${!controller.hasRules ? styles.addRuleButtonEmpty : ''}`}
+            className={cn(styles.addRuleButton, {
+              [styles.addRuleButtonEmpty]: !controller.hasRules
+            })}
             disabled={isInteractionDisabled}
             icon={<PlusOutlined />}
             size={controller.hasRules ? 'small' : 'middle'}
