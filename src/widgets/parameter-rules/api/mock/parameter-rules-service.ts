@@ -6,17 +6,29 @@ import type {
 import { parameterCatalogMock, parameterConfigurationsMock } from './parameter-rules-data'
 
 const requestDelayMs = 350
+const failGetParameters = false
+const failSaveParameter = false
+const failDeleteParameter = false
 
 let configurations = cloneConfigurations(parameterConfigurationsMock)
 
 export const parameterRulesMockService = {
   async getParameters(): Promise<ParameterRulesSnapshot> {
     await pause()
+
+    if (failGetParameters) {
+      throw new Error('Тестовая ошибка загрузки параметров')
+    }
+
     return cloneSnapshot()
   },
 
   async saveParameter(configuration: SaveParameterInput): Promise<ParameterConfiguration> {
     await pause()
+
+    if (failSaveParameter) {
+      throw new Error('Тестовая ошибка сохранения параметра')
+    }
 
     const savedConfiguration: ParameterConfiguration = {
       ...configuration,
@@ -45,6 +57,11 @@ export const parameterRulesMockService = {
 
   async deleteParameter(parameterId: number): Promise<null> {
     await pause()
+
+    if (failDeleteParameter) {
+      throw new Error('Тестовая ошибка удаления параметра')
+    }
+
     configurations = configurations.filter((item) => item.parameterId !== parameterId)
     return null
   }

@@ -1,14 +1,20 @@
+import './globals.css'
 import type { Metadata } from 'next'
 import { AntdRegistry } from '@ant-design/nextjs-registry'
-
+import { Montserrat } from 'next/font/google'
 import { FeatureNavigation } from './feature-navigation'
-import { StoreProvider } from './providers/store-provider'
-import './globals.css'
+import { Providers } from './providers'
 
 export const metadata: Metadata = {
   title: 'Testing features',
   description: 'Экспериментальные реализации таблиц'
 }
+
+const montserrat = Montserrat({
+  subsets: ['latin', 'cyrillic'],
+  variable: '--font-montserrat',
+  display: 'swap'
+})
 
 export default function RootLayout({
   children
@@ -17,12 +23,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body>
+      <body className={montserrat.className}>
         <AntdRegistry>
-          <StoreProvider>
+          <Providers>
             <FeatureNavigation />
             {children}
-          </StoreProvider>
+          </Providers>
         </AntdRegistry>
       </body>
     </html>
