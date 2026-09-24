@@ -36,8 +36,8 @@ interface ParameterEditorModalProps {
   configurations: ParameterConfiguration[]
   configuration?: ParameterConfiguration
   open: boolean
-  blocked: boolean
-  saving: boolean
+  isInteractionDisabled: boolean
+  isMutationPending: boolean
   onClose(): void
   onDelete(configuration: ParameterConfiguration): Promise<void>
   onSave(configuration: Pick<ParameterConfiguration, 'parameterId' | 'rules'>): Promise<void>
@@ -50,8 +50,8 @@ export function ParameterEditorModal({
   configurations,
   configuration,
   open,
-  blocked,
-  saving,
+  isInteractionDisabled,
+  isMutationPending,
   onClose,
   onDelete,
   onSave
@@ -168,7 +168,7 @@ export function ParameterEditorModal({
     errorField: keyof DraftErrors['byRule'][string] | undefined,
     update: (rule: DraftRule) => DraftRule
   ) => {
-    if (blocked) return
+    if (isInteractionDisabled) return
 
     setDraft((current) => ({
       ...current,
@@ -192,7 +192,7 @@ export function ParameterEditorModal({
   }
 
   const addRule = () => {
-    if (blocked) return
+    if (isInteractionDisabled) return
 
     if (!hasRules) {
       captureAddRuleButtonPosition()
@@ -205,7 +205,7 @@ export function ParameterEditorModal({
   }
 
   const removeRule = (uiKey: string) => {
-    if (blocked) return
+    if (isInteractionDisabled) return
 
     if (draft.rules.length === 1) {
       captureAddRuleButtonPosition()
@@ -223,7 +223,7 @@ export function ParameterEditorModal({
   }
 
   const handleSave = async () => {
-    if (!isDirty || blocked) return
+    if (!isDirty || isInteractionDisabled) return
 
     const nextErrors = validateEditorDraft(draft)
     setErrors(nextErrors)
@@ -249,7 +249,7 @@ export function ParameterEditorModal({
   }
 
   const requestClose = () => {
-    if (saving) return
+    if (isMutationPending) return
     if (!isDirty) {
       onClose()
       return
@@ -267,7 +267,7 @@ export function ParameterEditorModal({
   }
 
   const requestDelete = () => {
-    if (blocked || !configuration || !selectedParameter) return
+    if (isInteractionDisabled || !configuration || !selectedParameter) return
     modal.confirm({
       title: `Удалить параметр «${selectedParameter.name}»?`,
       content: `Будут удалены все правила: ${configuration.rules.length}. Это действие нельзя отменить.`,
@@ -303,7 +303,7 @@ export function ParameterEditorModal({
         <Tooltip title="Удалить правило">
           <Button
             danger
-            disabled={blocked}
+            disabled={isInteractionDisabled}
             icon={<DeleteOutlined />}
             onClick={(event) => {
               event.stopPropagation()
@@ -326,7 +326,7 @@ export function ParameterEditorModal({
           <RuleFields
             errors={ruleErrors}
             rule={rule}
-            disabled={blocked}
+            disabled={isInteractionDisabled}
             onChange={(errorField, update) => updateRule(rule.uiKey, errorField, update)}
           />
         </div>
@@ -337,27 +337,32 @@ export function ParameterEditorModal({
   return (
     <Modal
       className={styles.editorModal}
-      closable={!saving}
+      closable={!isMutationPending}
       centered
       destroyOnHidden
       footer={
         <div className={styles.modalFooter}>
           <div>
             {isEditing && (
-              <Button danger disabled={blocked} icon={<DeleteOutlined />} onClick={requestDelete}>
+              <Button
+                danger
+                disabled={isInteractionDisabled}
+                icon={<DeleteOutlined />}
+                onClick={requestDelete}
+              >
                 Удалить параметр
               </Button>
             )}
           </div>
           <Flex gap={8}>
-            <Button disabled={saving} onClick={requestClose}>
+            <Button disabled={isMutationPending} onClick={requestClose}>
               Отмена
             </Button>
             <Button
-              disabled={!isDirty || blocked}
+              disabled={!isDirty || isInteractionDisabled}
               form={editorFormId}
               htmlType="submit"
-              loading={saving}
+              loading={isMutationPending}
               type="primary"
             >
               {isEditing ? 'Сохранить' : 'Добавить'}
@@ -366,7 +371,7 @@ export function ParameterEditorModal({
         </div>
       }
       mask={{ closable: false }}
-      keyboard={!saving}
+      keyboard={!isMutationPending}
       open={open}
       title={<Typography.Title level={4}>{modalTitle}</Typography.Title>}
       width={880}
@@ -388,7 +393,7 @@ export function ParameterEditorModal({
                 validateStatus={errors.parameter ? 'error' : undefined}
               >
                 <Select<number>
-                  disabled={blocked}
+                  disabled={isInteractionDisabled}
                   options={catalog.map((parameter) => ({
                     value: parameter.id,
                     label: parameter.name,
@@ -410,7 +415,7 @@ export function ParameterEditorModal({
             <Button
               ref={addRuleButtonRef}
               className={`${styles.addRuleButton} ${!hasRules ? styles.addRuleButtonEmpty : ''}`}
-              disabled={blocked}
+              disabled={isInteractionDisabled}
               icon={<PlusOutlined />}
               size={hasRules ? 'small' : 'middle'}
               onClick={addRule}
@@ -424,7 +429,7 @@ export function ParameterEditorModal({
             <Collapse
               activeKey={activeRuleKeys}
               className={styles.rulesCollapse}
-              collapsible={blocked ? 'disabled' : 'header'}
+              collapsible={isInteractionDisabled ? 'disabled' : 'header'}
               items={collapseItems}
               onChange={(keys) =>
                 setActiveRuleKeys(Array.isArray(keys) ? keys.map(String) : [String(keys)])

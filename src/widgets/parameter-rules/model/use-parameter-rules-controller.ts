@@ -23,64 +23,64 @@ export function useParameterRulesController(notifier: ParameterRulesNotifier) {
   const { refetch } = parametersQuery
   const [saveParameter, saveState] = useSaveParameterMutation()
   const [deleteParameter, deleteState] = useDeleteParameterMutation()
-  const [editorOpen, setEditorOpen] = useState(false)
+  const [isEditorOpen, setIsEditorOpen] = useState(false)
   const [editingConfiguration, setEditingConfiguration] = useState<ParameterConfiguration>()
   const snapshot = parametersQuery.currentData
 
   const rows = useMemo(() => (snapshot ? getParameterRows(snapshot) : []), [snapshot])
-  const saving = saveState.isLoading || deleteState.isLoading
-  const actionsBlocked = saving || parametersQuery.isFetching
-  const initialError = parametersQuery.isError && !snapshot
-  const refreshError = parametersQuery.isError && Boolean(snapshot)
+  const isMutationPending = saveState.isLoading || deleteState.isLoading
+  const isInteractionDisabled = isMutationPending || parametersQuery.isFetching
+  const hasInitialLoadError = parametersQuery.isError && !snapshot
+  const hasRefreshError = parametersQuery.isError && Boolean(snapshot)
 
   const openCreate = useCallback(() => {
-    if (actionsBlocked) return
+    if (isInteractionDisabled) return
     setEditingConfiguration(undefined)
-    setEditorOpen(true)
-  }, [actionsBlocked])
+    setIsEditorOpen(true)
+  }, [isInteractionDisabled])
 
   const openEdit = useCallback(
     (configuration: ParameterConfiguration) => {
-      if (actionsBlocked) return
+      if (isInteractionDisabled) return
       setEditingConfiguration(configuration)
-      setEditorOpen(true)
+      setIsEditorOpen(true)
     },
-    [actionsBlocked]
+    [isInteractionDisabled]
   )
 
   const closeEditor = useCallback(() => {
-    setEditorOpen(false)
+    setIsEditorOpen(false)
   }, [])
 
   const saveConfiguration = useCallback(
     async (configuration: SaveParameterInput) => {
-      if (actionsBlocked) return
+      if (isInteractionDisabled) return
 
       try {
         await saveParameter(configuration).unwrap()
-        setEditorOpen(false)
+        setIsEditorOpen(false)
         notifier.success(editingConfiguration ? 'Изменения сохранены' : 'Параметр добавлен')
       } catch {
         notifier.error('Не удалось сохранить параметр. Изменения остались в форме.')
       }
     },
-    [actionsBlocked, editingConfiguration, notifier, saveParameter]
+    [editingConfiguration, isInteractionDisabled, notifier, saveParameter]
   )
 
   const deleteConfiguration = useCallback(
     async (configuration: ParameterConfiguration) => {
-      if (actionsBlocked) return
+      if (isInteractionDisabled) return
 
       try {
         await deleteParameter(configuration.parameterId).unwrap()
-        setEditorOpen(false)
+        setIsEditorOpen(false)
         notifier.success('Параметр удалён')
       } catch (error) {
         notifier.error('Не удалось удалить параметр. Попробуйте ещё раз.')
         throw error
       }
     },
-    [actionsBlocked, deleteParameter, notifier]
+    [deleteParameter, isInteractionDisabled, notifier]
   )
 
   const retry = useCallback(() => {
@@ -91,14 +91,14 @@ export function useParameterRulesController(notifier: ParameterRulesNotifier) {
     rows,
     catalog: snapshot?.catalog ?? [],
     configurations: snapshot?.configurations ?? [],
-    isLoading: parametersQuery.isLoading,
-    initialError,
-    refreshError,
-    actionsBlocked,
-    canCreate: Boolean(snapshot) && !actionsBlocked,
-    editorOpen,
+    isInitialLoading: parametersQuery.isLoading,
+    hasInitialLoadError,
+    hasRefreshError,
+    isInteractionDisabled,
+    canCreate: Boolean(snapshot) && !isInteractionDisabled,
+    isEditorOpen,
     editingConfiguration,
-    saving,
+    isMutationPending,
     openCreate,
     openEdit,
     closeEditor,

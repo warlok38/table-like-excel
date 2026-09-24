@@ -9,11 +9,11 @@ import styles from './RulesWorkspace.module.css'
 
 type RulesWorkspaceProps = {
   rows: ParameterRow[]
-  isLoading: boolean
-  initialError: boolean
-  refreshError: boolean
+  isInitialLoading: boolean
+  hasInitialLoadError: boolean
+  hasRefreshError: boolean
   canCreate: boolean
-  actionsBlocked: boolean
+  isInteractionDisabled: boolean
   onCreate(): void
   onEdit(configuration: ParameterConfiguration): void
   onRetry(): void
@@ -21,17 +21,17 @@ type RulesWorkspaceProps = {
 
 export function RulesWorkspace({
   rows,
-  isLoading,
-  initialError,
-  refreshError,
+  isInitialLoading,
+  hasInitialLoadError,
+  hasRefreshError,
   canCreate,
-  actionsBlocked,
+  isInteractionDisabled,
   onCreate,
   onEdit,
   onRetry
 }: RulesWorkspaceProps) {
   const retryAction = (
-    <Button disabled={actionsBlocked} size="small" onClick={onRetry}>
+    <Button disabled={isInteractionDisabled} size="small" onClick={onRetry}>
       Повторить
     </Button>
   )
@@ -57,7 +57,7 @@ export function RulesWorkspace({
           </Button>
         </div>
 
-        {initialError && (
+        {hasInitialLoadError && (
           <Alert
             className={styles.statusAlert}
             action={retryAction}
@@ -66,7 +66,7 @@ export function RulesWorkspace({
             type="error"
           />
         )}
-        {refreshError && (
+        {hasRefreshError && (
           <Alert
             className={styles.statusAlert}
             action={retryAction}
@@ -75,10 +75,10 @@ export function RulesWorkspace({
             type="warning"
           />
         )}
-        {!initialError && (
+        {!hasInitialLoadError && (
           <ParametersTable
-            actionsBlocked={actionsBlocked}
-            isLoading={isLoading}
+            isInteractionDisabled={isInteractionDisabled}
+            isLoading={isInitialLoading}
             rows={rows}
             onEdit={onEdit}
           />

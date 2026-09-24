@@ -15,11 +15,11 @@ function ParameterRulesContent() {
     <>
       <RulesWorkspace
         rows={controller.rows}
-        isLoading={controller.isLoading}
-        initialError={controller.initialError}
-        refreshError={controller.refreshError}
+        isInitialLoading={controller.isInitialLoading}
+        hasInitialLoadError={controller.hasInitialLoadError}
+        hasRefreshError={controller.hasRefreshError}
         canCreate={controller.canCreate}
-        actionsBlocked={controller.actionsBlocked}
+        isInteractionDisabled={controller.isInteractionDisabled}
         onCreate={controller.openCreate}
         onEdit={controller.openEdit}
         onRetry={controller.retry}
@@ -28,9 +28,9 @@ function ParameterRulesContent() {
         catalog={controller.catalog}
         configuration={controller.editingConfiguration}
         configurations={controller.configurations}
-        open={controller.editorOpen}
-        blocked={controller.actionsBlocked}
-        saving={controller.saving}
+        open={controller.isEditorOpen}
+        isInteractionDisabled={controller.isInteractionDisabled}
+        isMutationPending={controller.isMutationPending}
         onClose={controller.closeEditor}
         onDelete={controller.deleteConfiguration}
         onSave={controller.saveConfiguration}

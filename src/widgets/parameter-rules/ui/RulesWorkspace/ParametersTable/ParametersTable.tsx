@@ -10,11 +10,16 @@ import type { ParameterConfiguration, ParameterRow } from '../../../model/parame
 type ParametersTableProps = {
   rows: ParameterRow[]
   isLoading: boolean
-  actionsBlocked: boolean
+  isInteractionDisabled: boolean
   onEdit(configuration: ParameterConfiguration): void
 }
 
-export function ParametersTable({ rows, isLoading, actionsBlocked, onEdit }: ParametersTableProps) {
+export function ParametersTable({
+  rows,
+  isLoading,
+  isInteractionDisabled,
+  onEdit
+}: ParametersTableProps) {
   const columns: ColumnsType<ParameterRow> = [
     { title: 'ID', dataIndex: 'id', width: 88 },
     { title: 'Название', dataIndex: 'name', width: 220 },
@@ -39,7 +44,7 @@ export function ParametersTable({ rows, isLoading, actionsBlocked, onEdit }: Par
       render: (_, row) => (
         <Tooltip title="Редактировать">
           <Button
-            disabled={actionsBlocked}
+            disabled={isInteractionDisabled}
             icon={<EditOutlined />}
             onClick={() => onEdit(row.configuration)}
           />
