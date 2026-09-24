@@ -39,6 +39,10 @@
   gap: 1rem;
 }
 
+.editorForm :global(.ant-form-item-label > label) {
+  font-weight: 600;
+}
+
 .editorForm > :global(.ant-form-item),
 .editorForm > div > :global(.ant-form-item) {
   margin-bottom: 0;
@@ -64,7 +68,7 @@
 
 .rulesHeader {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 1rem;
   margin-top: 0.25rem;
@@ -73,12 +77,6 @@
 .rulesHeaderEmpty {
   flex-direction: column;
   gap: 0.65rem;
-}
-
-.rulesHeader h4 {
-  margin: 0 0 0.2rem !important;
-  font-size: 1.125rem !important;
-  line-height: 1.625rem !important;
 }
 
 .addRuleButton {
@@ -92,11 +90,6 @@
 .rulesError {
   margin-top: -1rem;
   color: #d92d20;
-}
-
-.rulesCollapse {
-  border-color: #d0d5dd;
-  background: #fff;
 }
 
 .rulesCollapse :global(.ant-collapse-item).changedRule {
@@ -118,7 +111,7 @@
 
 .ruleHeadingText > span:last-child {
   overflow: hidden;
-  color: #667085;
+  color: #797979;
   font-size: 0.8125rem;
   line-height: 1.125rem;
   text-overflow: ellipsis;

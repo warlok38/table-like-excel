@@ -42,7 +42,8 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
         description: 'Показать приближение к критическому значению',
         isDefault: false,
         condition: { operator: '>=', value: 80 },
-        style: { textColor: '#B54708', backgroundColor: '#FFFAEB', fontWeight: 'medium' }
+        style: { textColor: '#B54708', backgroundColor: '#FFFAEB', fontWeight: 'medium' },
+        notificationText: 'Температура приближается к критическому значению'
       },
       {
         id: 1001,

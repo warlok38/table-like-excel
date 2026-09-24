@@ -411,7 +411,7 @@ export function ParameterEditorModal({
           )}
 
           <div className={`${styles.rulesHeader} ${!hasRules ? styles.rulesHeaderEmpty : ''}`}>
-            <Typography.Title level={4}>Правила:</Typography.Title>
+            <Typography.Title level={5}>Правила:</Typography.Title>
             <Button
               ref={addRuleButtonRef}
               className={`${styles.addRuleButton} ${!hasRules ? styles.addRuleButtonEmpty : ''}`}

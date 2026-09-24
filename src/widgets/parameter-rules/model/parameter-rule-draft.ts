@@ -1,6 +1,6 @@
 import {
   getRuleSummary,
-  hasRuleStyle,
+  hasRuleResult,
   type FormattingRule,
   type ParameterConfiguration,
   type RuleOperator
@@ -22,7 +22,7 @@ export interface EditorDraft {
 export interface RuleErrors {
   name?: string
   condition?: string
-  style?: string
+  result?: string
 }
 
 export interface DraftErrors {
@@ -64,6 +64,7 @@ export const toFormattingRules = (rules: DraftRule[]): FormattingRule[] =>
       ...rule,
       name: rule.name.trim(),
       description: rule.description?.trim() || undefined,
+      notificationText: rule.notificationText?.trim() || undefined,
       condition,
       style: { ...rule.style }
     }
@@ -98,8 +99,15 @@ export const validateEditorDraft = (draft: EditorDraft): DraftErrors => {
     if (!rule.isDefault && (!rule.condition?.operator || rule.condition.value === undefined)) {
       ruleErrors.condition = 'Укажите условие и значение'
     }
-    if (!hasRuleStyle(rule.style)) {
-      ruleErrors.style = 'Выберите хотя бы одно свойство оформления'
+    const isBlank = (value: string | undefined) => value !== undefined && !value.trim()
+    const hasEmptyResult =
+      isBlank(rule.style.textColor) ||
+      isBlank(rule.style.backgroundColor) ||
+      isBlank(rule.notificationText)
+    if (hasEmptyResult) {
+      ruleErrors.result = 'Заполните добавленные свойства'
+    } else if (!hasRuleResult(rule)) {
+      ruleErrors.result = 'Добавьте хотя бы один результат правила'
     }
     if (Object.keys(ruleErrors).length > 0) errors.byRule[rule.uiKey] = ruleErrors
   })

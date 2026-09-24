@@ -24,7 +24,7 @@ export default function RootLayout({
   return (
     <html lang="ru">
       <body className={montserrat.className}>
-        <AntdRegistry>
+        <AntdRegistry layer>
           <Providers>
             <FeatureNavigation />
             {children}

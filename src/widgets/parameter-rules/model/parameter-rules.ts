@@ -20,6 +20,7 @@ export interface FormattingRule {
   isDefault: boolean
   condition?: RuleCondition
   style: RuleStyle
+  notificationText?: string
 }
 
 export interface ParameterCatalogItem {
@@ -74,14 +75,20 @@ export function getRuleSummary(rule: FormattingRule): string {
   const styles = [
     rule.style.textColor ? 'цвет текста' : null,
     rule.style.backgroundColor ? 'цвет фона' : null,
-    rule.style.fontWeight ? fontWeightLabels[rule.style.fontWeight] : null
+    rule.style.fontWeight ? fontWeightLabels[rule.style.fontWeight] : null,
+    rule.notificationText ? 'уведомление' : null
   ].filter(Boolean)
 
-  return `${condition} → ${styles.length > 0 ? styles.join(', ') : 'оформление не задано'}`
+  return `${condition} → ${styles.length > 0 ? styles.join(', ') : 'результат не задан'}`
 }
 
-export function hasRuleStyle(style: RuleStyle): boolean {
-  return Boolean(style.textColor || style.backgroundColor || style.fontWeight)
+export function hasRuleResult(rule: Pick<FormattingRule, 'style' | 'notificationText'>): boolean {
+  return Boolean(
+    rule.style.textColor ||
+    rule.style.backgroundColor ||
+    rule.style.fontWeight ||
+    rule.notificationText?.trim()
+  )
 }
 
 export function getParameterRows(snapshot: ParameterRulesSnapshot): ParameterRow[] {
