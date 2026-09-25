@@ -8,7 +8,7 @@ export function getCellCapabilities(
   cell: CellTable,
   { dataStatusActionsEnabled = true }: CellCapabilitiesOptions = {}
 ): CellCapabilities {
-  const allowed = cell.data.editable !== false
+  const allowed = cell.data.editable !== false && cell.data.shift_approved !== true
   const dataStatusActionsAllowed = dataStatusActionsEnabled && allowed
   const permissions = cell.data.permissions
   const editor = cell.data.editor
