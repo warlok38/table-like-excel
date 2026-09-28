@@ -4,6 +4,7 @@ export type BackendFiltersCell = Record<string, string | number | boolean | null
 
 export type BackendDataStatus = {
   data_statuses_tech_id?: string
+  requiresNoteAfterValueChange?: boolean
   background?: Array<{
     alias: string | null
     value: string | null

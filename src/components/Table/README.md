@@ -64,6 +64,11 @@ visible for three seconds and then return to `Сохранить`. On failure, p
 markers remain available for retry. On success, the returned snapshot becomes the new base and pending
 changes are cleared. A new local change resets the status immediately.
 
+When `cell.data_status.requiresNoteAfterValueChange` is `true`, every pending value change requires
+a new non-empty pending note for the same cell. An unchanged loaded note does not satisfy the rule,
+and notes on these cells cannot be deleted. Validation runs before `onSaveChanges`, so rejected
+drafts remain visible and editable.
+
 ## Integration Boundary
 
 The core table changeset uses only `{ cellKey, row, col }` targets. Backend identifiers belong outside

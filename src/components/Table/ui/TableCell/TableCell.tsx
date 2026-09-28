@@ -30,6 +30,7 @@ type TableCellProps = {
   contentSize?: CellContentSize
   registerCellRef: (cellKey: string) => RefCallback<HTMLTableCellElement>
   isValueChanged: boolean
+  isNoteChanged: boolean
   isCellChanged: boolean
   canEditValue: boolean
   canEditNote: boolean
@@ -67,6 +68,7 @@ function TableCellComponent({
   contentSize,
   registerCellRef,
   isValueChanged,
+  isNoteChanged,
   isCellChanged,
   canEditValue,
   canEditNote,
@@ -104,6 +106,12 @@ function TableCellComponent({
   }, [isSaving])
 
   const style = useMemo(() => getCellStyle(cell, manualBackground), [cell, manualBackground])
+  const contentStyle = contentSize
+    ? {
+        width: contentSize.width,
+        ...(contentSize.height > 0 ? { height: contentSize.height } : {})
+      }
+    : undefined
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLTableCellElement>) => {
       if (event.button !== 0) return
@@ -184,6 +192,7 @@ function TableCellComponent({
         [styles.lockedCell]: isLocked,
         [styles.selectedLockedCell]: isSelected && isLocked,
         [styles.noteCell]: hasNote,
+        [styles.pendingNoteCell]: isNoteChanged,
         [styles.pendingCell]: isCellChanged
       })}
       colSpan={cell.data.colspan}
@@ -203,7 +212,7 @@ function TableCellComponent({
     >
       <div
         data-cell-content={cellKey}
-        style={contentSize}
+        style={contentStyle}
         title={hasNote || session ? undefined : displayValue}
         className={cn(styles.constCell, {
           [styles.nowrap]: isNumericCellValue(cell.formatted_value),

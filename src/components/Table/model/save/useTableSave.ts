@@ -4,6 +4,7 @@ import type { CellTable, TableSaveChangeset } from '../table'
 import { makeSaveChangeset } from './saveChangeset'
 import type { TableCellEntry } from '../data/tableIndex'
 import { hasPendingChanges, type PendingChanges } from '../changes/pendingChanges'
+import { validateRequiredNotes } from './requiredNoteAfterValueChange'
 
 export type TableSaveStatus = 'idle' | 'saving' | 'success' | 'failure'
 
@@ -32,6 +33,7 @@ export function useTableSave({
   const lifecycleRef = useRef(0)
   const [isSaving, setIsSaving] = useState(false)
   const [saveStatus, setSaveStatus] = useState<TableSaveStatus>('idle')
+  const [validationMessage, setValidationMessage] = useState<string | null>(null)
 
   useEffect(() => {
     mountedRef.current = true
@@ -39,6 +41,7 @@ export function useTableSave({
     isSavingRef.current = false
     setIsSaving(false)
     setSaveStatus('idle')
+    setValidationMessage(null)
     return () => {
       mountedRef.current = false
       lifecycleRef.current += 1
@@ -61,6 +64,7 @@ export function useTableSave({
   const clearSaveStatus = useCallback(() => {
     if (!mountedRef.current || isSavingRef.current) return
     setSaveStatus('idle')
+    setValidationMessage(null)
   }, [isSavingRef])
 
   const save = useCallback(async () => {
@@ -70,6 +74,15 @@ export function useTableSave({
 
     const snapshot = pendingRef.current
     if (!hasPendingChanges(snapshot)) return
+
+    const nextValidationMessage = validateRequiredNotes(snapshot, entriesByKey)
+    if (nextValidationMessage) {
+      setSaveStatus('idle')
+      setValidationMessage(nextValidationMessage)
+      return
+    }
+
+    setValidationMessage(null)
 
     let changeset: TableSaveChangeset
     try {
@@ -117,6 +130,7 @@ export function useTableSave({
     isSaving,
     isSavingRef,
     saveStatus,
+    validationMessage,
     clearSaveStatus
   }
 }

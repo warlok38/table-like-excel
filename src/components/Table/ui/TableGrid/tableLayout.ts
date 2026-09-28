@@ -92,7 +92,10 @@ export function measureTableLayout(
     const cellKey = content.dataset.cellContent
     if (!cellKey) return
     const rect = content.getBoundingClientRect()
-    contentSizes.set(cellKey, { width: rect.width, height: rect.height })
+    contentSizes.set(cellKey, {
+      width: rect.width,
+      height: rect.height > 0 ? rect.height : content.scrollHeight
+    })
   })
 
   table.querySelectorAll<HTMLTableCellElement>('[data-cell-key]').forEach((cell) => {

@@ -10,7 +10,11 @@ import {
   type CellTable
 } from '@/components/Table'
 import { useTableDataAdapter } from '@/integrations/table/use-table-data-adapter'
-import { availableBackgroundColorsMock, virtualizedTableDataMock } from '@/mocks/table'
+import {
+  addRequiredNoteAfterValueChangeMock,
+  availableBackgroundColorsMock,
+  virtualizedTableDataMock
+} from '@/mocks/table'
 import { createMockTableDataAdapter } from '@/mocks/table/mock-table-data-adapter'
 
 import styles from './page.module.css'
@@ -30,14 +34,15 @@ export default function CustomTablePage() {
   const tableState = useTableDataAdapter(adapter)
   const isReady = tableState.status === 'ready'
   const data = isReady ? tableState.snapshot.data : emptyTableData
+  const dataWithMockRequirements = useMemo(() => addRequiredNoteAfterValueChangeMock(data), [data])
   const availableBackgroundColors = isReady
     ? tableState.snapshot.availableBackgroundColors
     : emptyBackgroundColors
-  const cellManagementEnabled = data.some((row) =>
+  const cellManagementEnabled = dataWithMockRequirements.some((row) =>
     row.some((cell) => cell.data_status !== null && cell.data_status !== undefined)
   )
   const table = useTableController({
-    data,
+    data: dataWithMockRequirements,
     availableBackgroundColors,
     cellManagementEnabled,
     onSaveChanges: tableState.saveChanges

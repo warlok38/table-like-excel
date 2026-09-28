@@ -31,6 +31,7 @@ function makeLargeTableCell(
     permissions?: CellTable['data']['permissions']
     dataStatus?: DataStatus | null
     color?: string | null
+    shiftApproved?: boolean
   } = {}
 ): CellTable {
   return {
@@ -48,7 +49,8 @@ function makeLargeTableCell(
       catalogs_id: null,
       editable: options.editable ?? true,
       editor: options.editor ?? { type: 'text' },
-      permissions: options.permissions
+      permissions: options.permissions,
+      shift_approved: options.shiftApproved
     },
     value,
     formatted_value: value,
@@ -79,22 +81,34 @@ function makeBodyRow(rowIndex: number): CellTable[] {
     const multiline = col === 2 && rowIndex % 23 === 0
     let value: CellValue = `R${row} C${col}`
     let dataStatus: DataStatus | null = null
+    let editor: CellEditor = multiline ? { type: 'textarea' } : { type: 'text' }
+    let shiftApproved: boolean | undefined
 
     if (multiline) {
       value = `Показатель ${row}\nДополнительная строка для проверки высоты`
     }
 
     if (!isValueOnlyRow && rowIndex === 3 && col === 2) {
+      value = 'approved'
       dataStatus = attentionStatus
+      editor = {
+        type: 'select',
+        options: [
+          { value: 'approved', label: 'Утверждено' },
+          { value: 'review', label: 'На проверке' }
+        ]
+      }
+      shiftApproved = true
     }
 
     cells.push(
       makeLargeTableCell(row, col, value, {
         editable: true,
-        editor: multiline ? { type: 'textarea' } : { type: 'text' },
+        editor,
         permissions: isValueOnlyRow ? { value: true, background: false, note: false } : undefined,
         dataStatus,
-        color: rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb'
+        color: rowIndex % 2 === 0 ? '#ffffff' : '#f9fafb',
+        shiftApproved
       })
     )
   }

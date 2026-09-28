@@ -38,6 +38,14 @@ export function TableSurface({ controller }: TableSurfaceProps) {
     deleteNote,
     closeContextMenu
   } = controller
+  const contextMenuCapabilities = contextMenuEntry
+    ? getCellCapabilities(contextMenuEntry.cell, {
+        dataStatusActionsEnabled: cellManagementEnabled
+      })
+    : null
+  const noteDeletionBlocked = Boolean(
+    contextMenuEntry?.cell.data_status?.requiresNoteAfterValueChange
+  )
 
   return (
     <div
@@ -80,16 +88,10 @@ export function TableSurface({ controller }: TableSurfaceProps) {
           x={contextMenu.x}
           y={contextMenu.y}
           hasNote={Boolean(getNoteValue(contextMenu.cellKey, contextMenuEntry.cell)?.trim())}
-          canEditNote={
-            getCellCapabilities(contextMenuEntry.cell, {
-              dataStatusActionsEnabled: cellManagementEnabled
-            }).canEditNote
-          }
-          showUnavailableActions={
-            getCellCapabilities(contextMenuEntry.cell, {
-              dataStatusActionsEnabled: cellManagementEnabled
-            }).isLocked
-          }
+          canEditNote={contextMenuCapabilities?.canEditNote ?? false}
+          canDeleteNote={Boolean(contextMenuCapabilities?.canEditNote) && !noteDeletionBlocked}
+          deleteNoteTitle={noteDeletionBlocked ? 'Примечание обязательно' : undefined}
+          showUnavailableActions={contextMenuCapabilities?.isLocked ?? true}
           onAddNote={() => openNoteEditor(contextMenu.cellKey)}
           onEditNote={() => openNoteEditor(contextMenu.cellKey)}
           onDeleteNote={() => deleteNote(contextMenu.cellKey)}

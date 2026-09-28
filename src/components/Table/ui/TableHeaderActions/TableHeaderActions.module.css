@@ -13,6 +13,14 @@
   gap: 0.35rem;
 }
 
+.validationMessage {
+  max-width: 20rem;
+  color: #b91c1c;
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
 .backgroundButton,
 .emptyBackgroundButton {
   width: 1.35rem;

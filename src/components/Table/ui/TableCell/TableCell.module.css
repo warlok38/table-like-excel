@@ -29,7 +29,8 @@
   pointer-events: none;
 }
 
-[data-table-owner] .noteCell::before {
+[data-table-owner] .noteCell::before,
+[data-table-owner] .pendingNoteCell::before {
   position: absolute;
   top: 0;
   right: 0;
@@ -40,6 +41,10 @@
   border-left: 0.45rem solid transparent;
   content: '';
   pointer-events: none;
+}
+
+[data-table-owner] .pendingNoteCell::before {
+  border-top-color: #f59e0b;
 }
 
 [data-table-owner] .selectedCell::after {

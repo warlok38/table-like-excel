@@ -67,6 +67,7 @@ export function useTableNotes({
 
       if (
         !entry ||
+        entry.cell.data_status?.requiresNoteAfterValueChange ||
         !getCellCapabilities(entry.cell, { dataStatusActionsEnabled: cellManagementEnabled })
           .canEditNote
       ) {

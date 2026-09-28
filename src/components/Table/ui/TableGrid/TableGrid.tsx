@@ -197,6 +197,7 @@ export function TableGrid({
               contentSize={snapshot?.contentSizes.get(cellKey)}
               registerCellRef={selectionGeometry.registerCellRef}
               isValueChanged={hasPendingValue}
+              isNoteChanged={hasPendingNote}
               isCellChanged={hasPendingValue || hasPendingBackground || hasPendingNote}
               canEditValue={capabilities.canEditValue}
               canEditNote={capabilities.canEditNote}
