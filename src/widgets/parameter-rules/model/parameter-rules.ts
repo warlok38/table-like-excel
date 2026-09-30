@@ -13,14 +13,35 @@ export interface RuleStyle {
   fontWeight?: FontWeight
 }
 
-export interface FormattingRule {
+export interface RuleBase {
   id?: number
   name: string
   description?: string
-  isDefault: boolean
-  condition?: RuleCondition
-  style: RuleStyle
-  notificationText?: string
+  aggregationLevelId: string
+  aggregationRuleId: string
+  planTypeId: string
+}
+
+export type FormattingRule = RuleBase &
+  (
+    | { isDefault: true; defaultValue: number }
+    | { isDefault: false; condition: RuleCondition; style: RuleStyle; notificationText?: string }
+  )
+
+export interface RuleCatalogs {
+  aggregationLevels: { id: string; name: string }[]
+  aggregationRules: { id: string; name: string }[]
+  planTypes: { id: string; name: string }[]
+  textColors: string[]
+  backgroundColors: string[]
+}
+
+export const emptyRuleCatalogs: RuleCatalogs = {
+  aggregationLevels: [],
+  aggregationRules: [],
+  planTypes: [],
+  textColors: [],
+  backgroundColors: []
 }
 
 export interface ParameterCatalogItem {
@@ -36,6 +57,7 @@ export interface ParameterConfiguration {
 }
 
 export interface ParameterRulesSnapshot {
+  ruleCatalogs: RuleCatalogs
   catalog: ParameterCatalogItem[]
   configurations: ParameterConfiguration[]
 }
@@ -68,7 +90,7 @@ export const fontWeightLabels: Record<FontWeight, string> = {
 export function getRuleSummary(rule: FormattingRule): string {
   let condition = 'Условие не задано'
   if (rule.isDefault) {
-    condition = 'По умолчанию'
+    return `По умолчанию: ${rule.defaultValue}`
   } else if (rule.condition) {
     condition = `Значение ${operatorLabels[rule.condition.operator]} ${rule.condition.value}`
   }
@@ -82,7 +104,7 @@ export function getRuleSummary(rule: FormattingRule): string {
   return `${condition} → ${styles.length > 0 ? styles.join(', ') : 'результат не задан'}`
 }
 
-export function hasRuleResult(rule: Pick<FormattingRule, 'style' | 'notificationText'>): boolean {
+export function hasRuleResult(rule: { style: RuleStyle; notificationText?: string }): boolean {
   return Boolean(
     rule.style.textColor ||
     rule.style.backgroundColor ||

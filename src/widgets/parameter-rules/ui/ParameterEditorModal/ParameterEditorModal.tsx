@@ -5,13 +5,19 @@ import { DeleteOutlined } from '@ant-design/icons'
 import { App, Button, Flex, Modal, Typography } from 'antd'
 
 import { useParameterEditorController } from '../../model/use-parameter-editor-controller'
-import { type ParameterCatalogItem, type ParameterConfiguration } from '../../model/parameter-rules'
+import {
+  type RuleCatalogs,
+  type ParameterCatalogItem,
+  type ParameterConfiguration
+} from '../../model/parameter-rules'
 import { ParameterEditorForm } from './ParameterEditorForm'
 import styles from './ParameterEditorModal.module.css'
 
 interface ParameterEditorModalProps {
+  ruleCatalogs: RuleCatalogs
   catalog: ParameterCatalogItem[]
-  configurations: ParameterConfiguration[]
+  parameterId: number
+  onBack?: () => void
   configuration?: ParameterConfiguration
   open: boolean
   isInteractionDisabled: boolean
@@ -24,8 +30,10 @@ interface ParameterEditorModalProps {
 const editorFormId = 'parameter-editor-form'
 
 export function ParameterEditorModal({
+  ruleCatalogs,
   catalog,
-  configurations,
+  parameterId,
+  onBack,
   configuration,
   open,
   isInteractionDisabled,
@@ -36,6 +44,8 @@ export function ParameterEditorModal({
 }: ParameterEditorModalProps) {
   const { modal } = App.useApp()
   const controller = useParameterEditorController({
+    parameterId,
+    ruleCatalogs,
     configuration,
     open,
     isInteractionDisabled,
@@ -44,40 +54,35 @@ export function ParameterEditorModal({
   const isEditing = Boolean(configuration)
 
   const selectedParameter = useMemo(
-    () => catalog.find((parameter) => parameter.id === controller.draft.parameterId),
-    [catalog, controller.draft.parameterId]
+    () => catalog.find((parameter) => parameter.id === parameterId),
+    [catalog, parameterId]
   )
-  let modalTitle = 'Добавление параметра'
-  if (isEditing) {
-    modalTitle = selectedParameter
-      ? `Редактирование параметра "${selectedParameter.name}"`
-      : 'Редактирование параметра'
-  }
+  const modalTitle = `Правила параметра «${selectedParameter?.name ?? parameterId}»`
 
-  const requestClose = () => {
+  const requestLeave = (leave: () => void) => {
     if (isMutationPending) return
     if (!controller.isDirty) {
-      onClose()
+      leave()
       return
     }
 
     modal.confirm({
       title: 'Закрыть без сохранения?',
-      content: 'Все изменения в параметре будут потеряны.',
+      content: 'Все изменения в правилах будут потеряны.',
       okText: 'Закрыть',
       cancelText: 'Продолжить редактирование',
       okButtonProps: { danger: true },
       centered: true,
-      onOk: onClose
+      onOk: leave
     })
   }
 
   const requestDelete = () => {
     if (isInteractionDisabled || !configuration || !selectedParameter) return
     modal.confirm({
-      title: `Удалить параметр «${selectedParameter.name}»?`,
-      content: `Будут удалены все правила: ${configuration.rules.length}. Это действие нельзя отменить.`,
-      okText: 'Удалить параметр',
+      title: `Удалить все правила параметра «${selectedParameter.name}»?`,
+      content: `Будут удалены все правила: ${configuration.rules.length}. Параметр останется в справочнике. Это действие нельзя отменить.`,
+      okText: 'Удалить все правила',
       cancelText: 'Отмена',
       okButtonProps: { danger: true },
       centered: true,
@@ -101,12 +106,17 @@ export function ParameterEditorModal({
                 icon={<DeleteOutlined />}
                 onClick={requestDelete}
               >
-                Удалить параметр
+                Удалить все правила
               </Button>
             )}
           </div>
           <Flex gap={8}>
-            <Button disabled={isMutationPending} onClick={requestClose}>
+            {onBack && (
+              <Button disabled={isMutationPending} onClick={() => requestLeave(onBack)}>
+                Назад
+              </Button>
+            )}
+            <Button disabled={isMutationPending} onClick={() => requestLeave(onClose)}>
               Отмена
             </Button>
             <Button
@@ -116,7 +126,7 @@ export function ParameterEditorModal({
               loading={isMutationPending}
               type="primary"
             >
-              {isEditing ? 'Сохранить' : 'Добавить'}
+              Сохранить
             </Button>
           </Flex>
         </div>
@@ -126,12 +136,11 @@ export function ParameterEditorModal({
       open={open}
       title={<Typography.Title level={4}>{modalTitle}</Typography.Title>}
       width={880}
-      onCancel={requestClose}
+      onCancel={() => requestLeave(onClose)}
     >
       <ParameterEditorForm
-        catalog={catalog}
+        ruleCatalogs={ruleCatalogs}
         configuration={configuration}
-        configurations={configurations}
         controller={controller}
         formId={editorFormId}
         isInteractionDisabled={isInteractionDisabled}

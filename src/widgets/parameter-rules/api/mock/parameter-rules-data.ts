@@ -1,4 +1,8 @@
-import type { ParameterCatalogItem, ParameterConfiguration } from '../../model/parameter-rules'
+import type {
+  ParameterCatalogItem,
+  ParameterConfiguration,
+  RuleCatalogs
+} from '../../model/parameter-rules'
 
 export const parameterCatalogMock: readonly ParameterCatalogItem[] = [
   {
@@ -29,7 +33,19 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
     updatedAt: '2026-09-21T07:32:00.000Z',
     rules: [
       {
+        id: 1004,
+        name: 'Значение за месяц',
+        aggregationLevelId: 'month',
+        aggregationRuleId: 'average',
+        planTypeId: 'actual',
+        isDefault: true,
+        defaultValue: 100
+      },
+      {
         id: 1003,
+        aggregationLevelId: 'day',
+        aggregationRuleId: 'average',
+        planTypeId: 'actual',
         name: 'Критическое значение',
         description: 'Подсветить значение при превышении допустимого порога',
         isDefault: false,
@@ -38,6 +54,9 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
       },
       {
         id: 1002,
+        aggregationLevelId: 'day',
+        aggregationRuleId: 'average',
+        planTypeId: 'actual',
         name: 'Предупреждение',
         description: 'Показать приближение к критическому значению',
         isDefault: false,
@@ -47,10 +66,13 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
       },
       {
         id: 1001,
+        aggregationLevelId: 'day',
+        aggregationRuleId: 'average',
+        planTypeId: 'actual',
         name: 'Обычное значение',
-        description: 'Базовое оформление показателя',
+        description: 'Значение показателя по умолчанию',
         isDefault: true,
-        style: { textColor: '#067647' }
+        defaultValue: 0
       }
     ]
   },
@@ -60,6 +82,9 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
     rules: [
       {
         id: 2002,
+        aggregationLevelId: 'day',
+        aggregationRuleId: 'average',
+        planTypeId: 'actual',
         name: 'Высокая вибрация',
         isDefault: false,
         condition: { operator: '>', value: 7.1 },
@@ -67,9 +92,12 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
       },
       {
         id: 2001,
+        aggregationLevelId: 'day',
+        aggregationRuleId: 'average',
+        planTypeId: 'actual',
         name: 'Нормальная вибрация',
         isDefault: true,
-        style: { textColor: '#067647' }
+        defaultValue: 0
       }
     ]
   },
@@ -79,6 +107,9 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
     rules: [
       {
         id: 3001,
+        aggregationLevelId: 'month',
+        aggregationRuleId: 'average',
+        planTypeId: 'actual',
         name: 'Низкое давление',
         description: 'Обратить внимание оператора на падение давления',
         isDefault: false,
@@ -88,3 +119,20 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
     ]
   }
 ]
+
+export const ruleCatalogsMock: RuleCatalogs = {
+  aggregationLevels: [
+    { id: 'day', name: 'Сутки' },
+    { id: 'month', name: 'Месяц' }
+  ],
+  aggregationRules: [
+    { id: 'average', name: 'Среднее' },
+    { id: 'sum', name: 'Сумма' }
+  ],
+  planTypes: [
+    { id: 'actual', name: 'Факт' },
+    { id: 'plan', name: 'План' }
+  ],
+  textColors: [],
+  backgroundColors: []
+}

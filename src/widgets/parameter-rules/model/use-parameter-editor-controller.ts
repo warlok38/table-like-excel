@@ -12,9 +12,11 @@ import {
   type DraftRule,
   type EditorDraft
 } from './parameter-rule-draft'
-import type { ParameterConfiguration } from './parameter-rules'
+import type { ParameterConfiguration, RuleCatalogs } from './parameter-rules'
 
 interface UseParameterEditorControllerOptions {
+  parameterId: number
+  ruleCatalogs: RuleCatalogs
   configuration?: ParameterConfiguration
   open: boolean
   isInteractionDisabled: boolean
@@ -25,7 +27,9 @@ export type ParameterEditorValidationTarget =
   { type: 'parameter' } | { type: 'rules' } | { type: 'rule'; uiKey: string }
 
 export function useParameterEditorController({
+  parameterId,
   configuration,
+  ruleCatalogs,
   open,
   isInteractionDisabled,
   onSave
@@ -38,25 +42,28 @@ export function useParameterEditorController({
   useEffect(() => {
     if (!open) return
 
-    const nextDraft = makeEditorDraft(configuration)
+    const nextDraft = configuration
+      ? makeEditorDraft(configuration)
+      : { parameterId, rules: [createEmptyRule('first-new')] }
     setDraft(nextDraft)
     setInitialDraft(nextDraft)
     setErrors(emptyDraftErrors)
-  }, [configuration, open])
+  }, [configuration, open, parameterId])
 
   const initialRulesByKey = useMemo(
-    () => new Map(initialDraft.rules.map((rule) => [rule.uiKey, rule])),
-    [initialDraft.rules]
+    () => new Map((configuration ? initialDraft.rules : []).map((rule) => [rule.uiKey, rule])),
+    [configuration, initialDraft.rules]
   )
+  useEffect(() => {
+    setErrors((current) =>
+      current.parameter || current.rules || Object.keys(current.byRule).length
+        ? validateEditorDraft(draft, ruleCatalogs)
+        : current
+    )
+  }, [draft, ruleCatalogs])
+
   const isDirty = JSON.stringify(draft) !== JSON.stringify(initialDraft)
   const hasRules = draft.rules.length > 0
-
-  const setParameterId = (parameterId: number) => {
-    if (isInteractionDisabled) return
-
-    setDraft((current) => ({ ...current, parameterId }))
-    setErrors((current) => ({ ...current, parameter: undefined }))
-  }
 
   const updateRule = (
     uiKey: string,
@@ -67,7 +74,20 @@ export function useParameterEditorController({
 
     setDraft((current) => ({
       ...current,
-      rules: current.rules.map((rule) => (rule.uiKey === uiKey ? update(rule) : rule))
+      rules: current.rules.map((rule) => {
+        if (rule.uiKey !== uiKey) return rule
+        const next = update(rule)
+        const initial = initialRulesByKey.get(uiKey)
+        if (!initial) return next
+        return {
+          ...next,
+          isDefault: initial.isDefault,
+          aggregationLevelId: initial.aggregationLevelId,
+          aggregationRuleId: initial.aggregationRuleId,
+          planTypeId: initial.planTypeId,
+          condition: initial.condition ? { ...initial.condition } : undefined
+        }
+      })
     }))
     if (!errorField) return
 
@@ -112,7 +132,7 @@ export function useParameterEditorController({
   const validateAndSave = async (): Promise<ParameterEditorValidationTarget | undefined> => {
     if (!isDirty || isInteractionDisabled) return undefined
 
-    const nextErrors = validateEditorDraft(draft)
+    const nextErrors = validateEditorDraft(draft, ruleCatalogs)
     setErrors(nextErrors)
     const firstInvalidRuleKey = draft.rules.find((rule) => nextErrors.byRule[rule.uiKey])?.uiKey
 
@@ -130,7 +150,6 @@ export function useParameterEditorController({
     hasRules,
     initialRulesByKey,
     isDirty,
-    setParameterId,
     updateRule,
     addRule,
     removeRule,

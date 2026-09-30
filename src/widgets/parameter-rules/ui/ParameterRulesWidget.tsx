@@ -5,6 +5,7 @@ import { App } from 'antd'
 import { useParameterRulesController } from '../model/use-parameter-rules-controller'
 import { ParameterEditorModal } from './ParameterEditorModal'
 import { RulesWorkspace } from './RulesWorkspace'
+import { ParameterSelectionModal } from './ParameterSelectionModal'
 
 export function ParameterRulesWidget() {
   const { message } = App.useApp()
@@ -23,17 +24,31 @@ export function ParameterRulesWidget() {
         onEdit={controller.openEdit}
         onRetry={controller.retry}
       />
-      <ParameterEditorModal
-        catalog={controller.catalog}
-        configuration={controller.editingConfiguration}
-        configurations={controller.configurations}
-        open={controller.isEditorOpen}
-        isInteractionDisabled={controller.isInteractionDisabled}
-        isMutationPending={controller.isMutationPending}
-        onClose={controller.closeEditor}
-        onDelete={controller.deleteConfiguration}
-        onSave={controller.saveConfiguration}
-      />
+      {controller.view.type === 'selection' && (
+        <ParameterSelectionModal
+          catalog={controller.catalog}
+          configurations={controller.configurations}
+          disabled={controller.isInteractionDisabled}
+          onSelect={controller.selectParameter}
+          onClose={controller.closeEditor}
+        />
+      )}
+      {controller.view.type === 'editor' && (
+        <ParameterEditorModal
+          key={controller.view.parameterId}
+          parameterId={controller.view.parameterId}
+          onBack={controller.view.source === 'selection' ? controller.openCreate : undefined}
+          ruleCatalogs={controller.ruleCatalogs}
+          catalog={controller.catalog}
+          configuration={controller.view.configuration}
+          open
+          isInteractionDisabled={controller.isInteractionDisabled}
+          isMutationPending={controller.isMutationPending}
+          onClose={controller.closeEditor}
+          onDelete={controller.deleteConfiguration}
+          onSave={controller.saveConfiguration}
+        />
+      )}
     </>
   )
 }

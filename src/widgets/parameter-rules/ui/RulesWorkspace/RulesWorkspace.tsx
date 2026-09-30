@@ -41,9 +41,9 @@ export function RulesWorkspace({
       <section className={styles.workspace}>
         <div className={styles.pageHeader}>
           <div>
-            <Typography.Title>Настройка параметров</Typography.Title>
+            <Typography.Title>Правила параметров</Typography.Title>
             <Typography.Text type="secondary">
-              Настройте правила отображения значений параметров.
+              Настройте правила отображения и значения по умолчанию для параметров.
             </Typography.Text>
           </div>
           <Button
@@ -53,7 +53,7 @@ export function RulesWorkspace({
             type="primary"
             onClick={onCreate}
           >
-            Добавить параметр
+            Настроить параметр
           </Button>
         </div>
 

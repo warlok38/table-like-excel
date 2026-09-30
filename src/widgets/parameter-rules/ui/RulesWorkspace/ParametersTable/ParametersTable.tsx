@@ -63,7 +63,6 @@ export function ParametersTable({
           <Empty
             description={
               <div>
-                <strong>Нет настроенных параметров</strong>
                 <span>Добавьте первый параметр, чтобы настроить правила отображения.</span>
               </div>
             }

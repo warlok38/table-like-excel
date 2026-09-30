@@ -1,9 +1,19 @@
+import {
+  makeEditorDraft,
+  validateEditorDraft,
+  toFormattingRules
+} from '../../model/parameter-rule-draft'
+
 import type {
   ParameterConfiguration,
   ParameterRulesSnapshot,
   SaveParameterInput
 } from '../../model/parameter-rules'
-import { parameterCatalogMock, parameterConfigurationsMock } from './parameter-rules-data'
+import {
+  parameterCatalogMock,
+  parameterConfigurationsMock,
+  ruleCatalogsMock
+} from './parameter-rules-data'
 
 const requestDelayMs = 350
 const failGetParameters = false
@@ -30,15 +40,20 @@ export const parameterRulesMockService = {
       throw new Error('Тестовая ошибка сохранения параметра')
     }
 
+    const draft = makeEditorDraft({ ...configuration, updatedAt: '' })
+    const errors = validateEditorDraft(draft, ruleCatalogsMock)
+    if (
+      !parameterCatalogMock.some((item) => item.id === configuration.parameterId) ||
+      errors.parameter ||
+      errors.rules ||
+      Object.keys(errors.byRule).length
+    ) {
+      throw new Error('Проверьте заполнение и уникальность правил')
+    }
     const savedConfiguration: ParameterConfiguration = {
       ...configuration,
       updatedAt: new Date().toISOString(),
-      rules: configuration.rules.map((rule) => ({
-        ...rule,
-        description: rule.description?.trim() || undefined,
-        condition: rule.isDefault || !rule.condition ? undefined : { ...rule.condition },
-        style: { ...rule.style }
-      }))
+      rules: toFormattingRules(draft.rules)
     }
     const existingIndex = configurations.findIndex(
       (item) => item.parameterId === configuration.parameterId
@@ -73,6 +88,7 @@ function pause(): Promise<void> {
 
 function cloneSnapshot(): ParameterRulesSnapshot {
   return {
+    ruleCatalogs: structuredClone(ruleCatalogsMock),
     catalog: parameterCatalogMock.map((parameter) => ({ ...parameter })),
     configurations: cloneConfigurations(configurations)
   }
@@ -85,10 +101,6 @@ function cloneConfigurations(source: readonly ParameterConfiguration[]): Paramet
 function cloneConfiguration(configuration: ParameterConfiguration): ParameterConfiguration {
   return {
     ...configuration,
-    rules: configuration.rules.map((rule) => ({
-      ...rule,
-      condition: rule.condition ? { ...rule.condition } : undefined,
-      style: { ...rule.style }
-    }))
+    rules: structuredClone(configuration.rules)
   }
 }

@@ -1,20 +1,20 @@
 'use client'
 
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { DeleteOutlined, PlusOutlined } from '@ant-design/icons'
-import { Button, Collapse, Form, Select, Tooltip, Typography, type CollapseProps } from 'antd'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
+import { Button, Collapse, Form, Input, Tooltip, type CollapseProps } from 'antd'
 import cn from 'classnames'
 
 import type { ParameterEditorController } from '../../../model/use-parameter-editor-controller'
+import { matchesRuleSearch } from '../../../model/rule-search'
 import { getDraftRuleSummary, isDraftRuleChanged } from '../../../model/parameter-rule-draft'
-import type { ParameterCatalogItem, ParameterConfiguration } from '../../../model/parameter-rules'
+import type { RuleCatalogs, ParameterConfiguration } from '../../../model/parameter-rules'
 import { RuleFields } from '../RuleFields'
 import styles from './ParameterEditorForm.module.css'
 
 interface ParameterEditorFormProps {
-  catalog: ParameterCatalogItem[]
+  ruleCatalogs: RuleCatalogs
   configuration?: ParameterConfiguration
-  configurations: ParameterConfiguration[]
   controller: ParameterEditorController
   formId: string
   isInteractionDisabled: boolean
@@ -22,31 +22,33 @@ interface ParameterEditorFormProps {
 }
 
 export function ParameterEditorForm({
-  catalog,
+  ruleCatalogs,
   configuration,
-  configurations,
   controller,
   formId,
   isInteractionDisabled,
   open
 }: ParameterEditorFormProps) {
   const editorBodyRef = useRef<HTMLDivElement>(null)
-  const parameterFieldRef = useRef<HTMLDivElement>(null)
   const addRuleButtonRef = useRef<HTMLButtonElement>(null)
   const addRuleButtonPreviousRect = useRef<DOMRect | null>(null)
   const ruleRefs = useRef(new Map<string, HTMLDivElement>())
   const [activeRuleKeys, setActiveRuleKeys] = useState<string[]>([])
-  const isEditing = Boolean(configuration)
+  const [searchQuery, setSearchQuery] = useState('')
+  const visibleRules = controller.draft.rules.filter((rule) =>
+    matchesRuleSearch(
+      controller.initialRulesByKey.get(rule.uiKey) ?? rule,
+      ruleCatalogs,
+      searchQuery
+    )
+  )
+  const visibleRuleKeys = new Set(visibleRules.map((rule) => rule.uiKey))
 
   useEffect(() => {
     if (!open) return
-    setActiveRuleKeys([])
+    setSearchQuery('')
+    setActiveRuleKeys(configuration ? [] : ['first-new'])
   }, [configuration, open])
-
-  const usedParameterIds = useMemo(
-    () => new Set(configurations.map((item) => item.parameterId)),
-    [configurations]
-  )
 
   const scrollTargetIntoBody = (target: HTMLElement) => {
     const body = editorBodyRef.current?.parentElement
@@ -122,6 +124,7 @@ export function ParameterEditorForm({
     const uiKey = controller.addRule()
     if (!uiKey) return
 
+    setSearchQuery('')
     setActiveRuleKeys([uiKey])
     revealTarget(() => ruleRefs.current.get(uiKey) ?? null)
   }
@@ -131,6 +134,7 @@ export function ParameterEditorForm({
 
     if (controller.draft.rules.length === 1) {
       captureAddRuleButtonPosition()
+      setSearchQuery('')
     }
 
     controller.removeRule(uiKey)
@@ -141,21 +145,19 @@ export function ParameterEditorForm({
     const validationTarget = await controller.validateAndSave()
     if (!validationTarget) return
 
-    if (validationTarget.type === 'parameter') {
-      revealTarget(() => parameterFieldRef.current, true)
-      return
-    }
+    if (validationTarget.type === 'parameter') return
 
     if (validationTarget.type === 'rules') {
       revealTarget(() => addRuleButtonRef.current)
       return
     }
 
+    if (!visibleRuleKeys.has(validationTarget.uiKey)) setSearchQuery('')
     setActiveRuleKeys([validationTarget.uiKey])
     revealTarget(() => ruleRefs.current.get(validationTarget.uiKey) ?? null, true)
   }
 
-  const collapseItems: CollapseProps['items'] = controller.draft.rules.map((rule) => {
+  const collapseItems: CollapseProps['items'] = visibleRules.map((rule) => {
     const ruleErrors = controller.errors.byRule[rule.uiKey] ?? {}
     const initialRule = controller.initialRulesByKey.get(rule.uiKey)
     const ruleChanged = isDraftRuleChanged(rule, initialRule)
@@ -171,7 +173,7 @@ export function ParameterEditorForm({
               <strong>{headingRule.name.trim() || 'Новое правило'}</strong>
               {ruleChanged && <span className={styles.ruleChangeIndicator}>Изменено</span>}
             </span>
-            <span>{getDraftRuleSummary(headingRule)}</span>
+            <span>{getDraftRuleSummary(headingRule, ruleCatalogs)}</span>
           </span>
         </div>
       ),
@@ -200,6 +202,8 @@ export function ParameterEditorForm({
           }}
         >
           <RuleFields
+            catalogs={ruleCatalogs}
+            identityLocked={Boolean(initialRule)}
             disabled={isInteractionDisabled}
             errors={ruleErrors}
             rule={rule}
@@ -213,35 +217,23 @@ export function ParameterEditorForm({
   return (
     <div ref={editorBodyRef} className={styles.editorBody}>
       <Form className={styles.editorForm} id={formId} layout="vertical" onFinish={handleSave}>
-        {!isEditing && (
-          <div ref={parameterFieldRef}>
-            <Form.Item
-              help={controller.errors.parameter}
-              label="Параметр"
-              required
-              validateStatus={controller.errors.parameter ? 'error' : undefined}
-            >
-              <Select<number>
-                disabled={isInteractionDisabled}
-                options={catalog.map((parameter) => ({
-                  value: parameter.id,
-                  label: parameter.name,
-                  disabled: usedParameterIds.has(parameter.id)
-                }))}
-                placeholder="Выберите параметр из справочника"
-                value={controller.draft.parameterId}
-                onChange={controller.setParameterId}
-              />
-            </Form.Item>
-          </div>
-        )}
-
         <div
           className={cn(styles.rulesHeader, {
             [styles.rulesHeaderEmpty]: !controller.hasRules
           })}
         >
-          <Typography.Title level={5}>Правила:</Typography.Title>
+          {controller.hasRules && (
+            <Input
+              allowClear
+              className={styles.ruleSearch}
+              disabled={isInteractionDisabled}
+              placeholder="Поиск по названию или агрегации…"
+              prefix={<SearchOutlined />}
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              onPressEnter={(event) => event.preventDefault()}
+            />
+          )}
           <Button
             ref={addRuleButtonRef}
             className={cn(styles.addRuleButton, {
@@ -259,15 +251,27 @@ export function ParameterEditorForm({
         {controller.errors.rules && (
           <div className={styles.rulesError}>{controller.errors.rules}</div>
         )}
+        {controller.hasRules && collapseItems.length === 0 && (
+          <div className={styles.searchEmpty}>
+            <span>Правила не найдены</span>
+            <Button disabled={isInteractionDisabled} onClick={() => setSearchQuery('')} type="link">
+              Сбросить поиск
+            </Button>
+          </div>
+        )}
         {collapseItems.length > 0 && (
           <Collapse
-            activeKey={activeRuleKeys}
+            activeKey={activeRuleKeys.filter((key) => visibleRuleKeys.has(key))}
             className={styles.rulesCollapse}
             collapsible={isInteractionDisabled ? 'disabled' : 'header'}
             items={collapseItems}
-            onChange={(keys) =>
-              setActiveRuleKeys(Array.isArray(keys) ? keys.map(String) : [String(keys)])
-            }
+            onChange={(keys) => {
+              const nextKeys = Array.isArray(keys) ? keys.map(String) : [String(keys)]
+              setActiveRuleKeys((current) => [
+                ...current.filter((key) => !visibleRuleKeys.has(key)),
+                ...nextKeys
+              ])
+            }}
           />
         )}
       </Form>

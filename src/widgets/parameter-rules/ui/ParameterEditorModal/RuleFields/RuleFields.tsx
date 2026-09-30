@@ -7,13 +7,17 @@ import type { DraftRule, RuleErrors } from '../../../model/parameter-rule-draft'
 import {
   fontWeightLabels,
   operatorLabels,
+  type RuleCatalogs,
   type FontWeight,
   type RuleOperator,
   type RuleStyle
 } from '../../../model/parameter-rules'
+import { ColorValueSelect } from './ColorValueSelect'
 import styles from './RuleFields.module.css'
 
 interface RuleFieldsProps {
+  catalogs: RuleCatalogs
+  identityLocked: boolean
   errors: RuleErrors
   rule: DraftRule
   disabled: boolean
@@ -31,7 +35,14 @@ const resultPropertyLabels: Record<ResultProperty, string> = {
 
 const resultProperties = Object.keys(resultPropertyLabels) as ResultProperty[]
 
-export function RuleFields({ errors, rule, disabled, onChange }: RuleFieldsProps) {
+export function RuleFields({
+  errors,
+  rule,
+  disabled,
+  onChange,
+  catalogs,
+  identityLocked
+}: RuleFieldsProps) {
   const updateStyle = (update: Partial<RuleStyle>) => {
     onChange('result', (current) => ({
       ...current,
@@ -51,8 +62,8 @@ export function RuleFields({ errors, rule, disabled, onChange }: RuleFieldsProps
     }
 
     const defaults: Required<RuleStyle> = {
-      textColor: '#000000',
-      backgroundColor: '#FFFFFF',
+      textColor: '',
+      backgroundColor: '',
       fontWeight: 'regular'
     }
     updateStyle({ [property]: defaults[property] })
@@ -104,10 +115,36 @@ export function RuleFields({ errors, rule, disabled, onChange }: RuleFieldsProps
           }
         />
       </Form.Item>
+      {(
+        [
+          ['aggregationLevelId', 'Уровень агрегации', catalogs.aggregationLevels],
+          ['aggregationRuleId', 'Правило агрегации', catalogs.aggregationRules],
+          ['planTypeId', 'Тип плана', catalogs.planTypes]
+        ] as const
+      ).map(([field, label, options]) => (
+        <Form.Item
+          key={field}
+          label={label}
+          required
+          help={errors[field]}
+          validateStatus={errors[field] ? 'error' : undefined}
+        >
+          <Select
+            disabled={disabled || identityLocked}
+            placeholder={label}
+            value={rule[field]}
+            options={options.map((item) => ({ value: item.id, label: item.name }))}
+            onChange={(value: string) =>
+              onChange(field, (current) => ({ ...current, [field]: value }))
+            }
+          />
+        </Form.Item>
+      ))}
+      {errors.duplicate && <Form.Item validateStatus="error" help={errors.duplicate} />}
       <Checkbox
         className={styles.defaultRuleCheckbox}
         checked={rule.isDefault}
-        disabled={disabled}
+        disabled={disabled || identityLocked}
         onChange={(event) =>
           onChange('condition', (current) => ({
             ...current,
@@ -115,9 +152,30 @@ export function RuleFields({ errors, rule, disabled, onChange }: RuleFieldsProps
           }))
         }
       >
-        Использовать по умолчанию (без условия)
+        Значение по умолчанию
       </Checkbox>
 
+      {rule.isDefault && (
+        <Form.Item
+          label="Значение по умолчанию"
+          required
+          help={errors.defaultValue}
+          validateStatus={errors.defaultValue ? 'error' : undefined}
+        >
+          <InputNumber
+            controls={false}
+            disabled={disabled}
+            placeholder="Введите значение"
+            value={rule.defaultValue}
+            onChange={(value) =>
+              onChange('defaultValue', (current) => ({
+                ...current,
+                defaultValue: value ?? undefined
+              }))
+            }
+          />
+        </Form.Item>
+      )}
       {!rule.isDefault && (
         <Form.Item
           help={errors.condition}
@@ -128,7 +186,7 @@ export function RuleFields({ errors, rule, disabled, onChange }: RuleFieldsProps
           <Flex className={styles.conditionControls} gap={8}>
             <Select<RuleOperator>
               className={styles.conditionOperator}
-              disabled={disabled}
+              disabled={disabled || identityLocked}
               options={(Object.keys(operatorLabels) as RuleOperator[]).map((operator) => ({
                 value: operator,
                 label: operatorLabels[operator]
@@ -145,7 +203,7 @@ export function RuleFields({ errors, rule, disabled, onChange }: RuleFieldsProps
             <InputNumber
               className={styles.conditionValue}
               controls={false}
-              disabled={disabled}
+              disabled={disabled || identityLocked}
               placeholder="Введите значение"
               value={rule.condition?.value}
               onChange={(value) =>
@@ -161,100 +219,102 @@ export function RuleFields({ errors, rule, disabled, onChange }: RuleFieldsProps
         </Form.Item>
       )}
 
-      <Form.Item
-        help={errors.result}
-        label="Результат правила"
-        required
-        validateStatus={errors.result ? 'error' : undefined}
-      >
-        <div className={styles.resultEditor}>
-          {hasSelectedResultProperties && (
-            <div className={styles.resultProperties}>
-              {hasResultProperty('textColor') && (
-                <ResultPropertyRow
-                  disabled={disabled}
-                  label={resultPropertyLabels.textColor}
-                  onRemove={() => removeResultProperty('textColor')}
-                >
-                  <Input
+      {!rule.isDefault && (
+        <Form.Item
+          help={errors.result}
+          label="Результат правила"
+          required
+          validateStatus={errors.result ? 'error' : undefined}
+        >
+          <div className={styles.resultEditor}>
+            {hasSelectedResultProperties && (
+              <div className={styles.resultProperties}>
+                {hasResultProperty('textColor') && (
+                  <ResultPropertyRow
                     disabled={disabled}
-                    placeholder="Введите цвет"
-                    value={rule.style.textColor}
-                    onChange={(event) => updateStyle({ textColor: event.target.value })}
-                  />
-                </ResultPropertyRow>
-              )}
-              {hasResultProperty('backgroundColor') && (
-                <ResultPropertyRow
-                  disabled={disabled}
-                  label={resultPropertyLabels.backgroundColor}
-                  onRemove={() => removeResultProperty('backgroundColor')}
-                >
-                  <Input
+                    label={resultPropertyLabels.textColor}
+                    onRemove={() => removeResultProperty('textColor')}
+                  >
+                    <ColorValueSelect
+                      disabled={disabled}
+                      options={catalogs.textColors}
+                      value={rule.style.textColor}
+                      onChange={(value) => updateStyle({ textColor: value })}
+                    />
+                  </ResultPropertyRow>
+                )}
+                {hasResultProperty('backgroundColor') && (
+                  <ResultPropertyRow
                     disabled={disabled}
-                    placeholder="Введите цвет"
-                    value={rule.style.backgroundColor}
-                    onChange={(event) => updateStyle({ backgroundColor: event.target.value })}
-                  />
-                </ResultPropertyRow>
-              )}
-              {hasResultProperty('fontWeight') && (
-                <ResultPropertyRow
-                  disabled={disabled}
-                  label={resultPropertyLabels.fontWeight}
-                  onRemove={() => removeResultProperty('fontWeight')}
-                >
-                  <Select<FontWeight>
+                    label={resultPropertyLabels.backgroundColor}
+                    onRemove={() => removeResultProperty('backgroundColor')}
+                  >
+                    <ColorValueSelect
+                      disabled={disabled}
+                      options={catalogs.backgroundColors}
+                      value={rule.style.backgroundColor}
+                      onChange={(value) => updateStyle({ backgroundColor: value })}
+                    />
+                  </ResultPropertyRow>
+                )}
+                {hasResultProperty('fontWeight') && (
+                  <ResultPropertyRow
                     disabled={disabled}
-                    options={(Object.keys(fontWeightLabels) as FontWeight[]).map((weight) => ({
-                      value: weight,
-                      label: fontWeightLabels[weight]
-                    }))}
-                    value={rule.style.fontWeight}
-                    onChange={(fontWeight) => updateStyle({ fontWeight })}
-                  />
-                </ResultPropertyRow>
-              )}
-              {hasResultProperty('notificationText') && (
-                <ResultPropertyRow
-                  disabled={disabled}
-                  label={resultPropertyLabels.notificationText}
-                  onRemove={() => removeResultProperty('notificationText')}
-                >
-                  <Input
+                    label={resultPropertyLabels.fontWeight}
+                    onRemove={() => removeResultProperty('fontWeight')}
+                  >
+                    <Select<FontWeight>
+                      disabled={disabled}
+                      options={(Object.keys(fontWeightLabels) as FontWeight[]).map((weight) => ({
+                        value: weight,
+                        label: fontWeightLabels[weight]
+                      }))}
+                      value={rule.style.fontWeight}
+                      onChange={(fontWeight) => updateStyle({ fontWeight })}
+                    />
+                  </ResultPropertyRow>
+                )}
+                {hasResultProperty('notificationText') && (
+                  <ResultPropertyRow
                     disabled={disabled}
-                    placeholder="Введите текст уведомления"
-                    value={rule.notificationText}
-                    onChange={(event) =>
-                      onChange('result', (current) => ({
-                        ...current,
-                        notificationText: event.target.value
-                      }))
-                    }
-                  />
-                </ResultPropertyRow>
-              )}
-            </div>
-          )}
-          <Select<ResultProperty>
-            className={styles.addResultPropertySelect}
-            disabled={disabled || availableResultProperties.length === 0}
-            listHeight={256}
-            notFoundContent="Свойства не найдены"
-            optionFilterProp="label"
-            options={availableResultProperties.map((property) => ({
-              value: property,
-              label: resultPropertyLabels[property]
-            }))}
-            placeholder="Найти свойство"
-            showSearch
-            size="small"
-            title={availableResultProperties.length === 0 ? 'Нет доступных свойств' : undefined}
-            value={null}
-            onChange={addResultProperty}
-          />
-        </div>
-      </Form.Item>
+                    label={resultPropertyLabels.notificationText}
+                    onRemove={() => removeResultProperty('notificationText')}
+                  >
+                    <Input
+                      disabled={disabled}
+                      placeholder="Введите текст уведомления"
+                      value={rule.notificationText}
+                      onChange={(event) =>
+                        onChange('result', (current) => ({
+                          ...current,
+                          notificationText: event.target.value
+                        }))
+                      }
+                    />
+                  </ResultPropertyRow>
+                )}
+              </div>
+            )}
+            <Select<ResultProperty>
+              className={styles.addResultPropertySelect}
+              disabled={disabled || availableResultProperties.length === 0}
+              listHeight={256}
+              notFoundContent="Свойства не найдены"
+              optionFilterProp="label"
+              options={availableResultProperties.map((property) => ({
+                value: property,
+                label: resultPropertyLabels[property]
+              }))}
+              placeholder="Найти свойство"
+              showSearch
+              size="small"
+              title={availableResultProperties.length === 0 ? 'Нет доступных свойств' : undefined}
+              value={null}
+              onChange={addResultProperty}
+            />
+          </div>
+        </Form.Item>
+      )}
     </div>
   )
 }

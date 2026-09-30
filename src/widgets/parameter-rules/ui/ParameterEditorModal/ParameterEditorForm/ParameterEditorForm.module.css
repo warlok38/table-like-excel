@@ -43,12 +43,27 @@
 }
 
 .rulesHeaderEmpty {
+  align-items: stretch;
   flex-direction: column;
   gap: 0.65rem;
 }
 
 .addRuleButton {
+  flex: none;
   transform-origin: top left;
+}
+
+.ruleSearch {
+  flex: 1;
+  min-width: 0;
+}
+
+.searchEmpty {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  padding: 2rem 1rem;
+  color: #797979;
 }
 
 .addRuleButtonEmpty {

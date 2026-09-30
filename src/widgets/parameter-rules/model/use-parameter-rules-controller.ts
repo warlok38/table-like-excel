@@ -9,6 +9,7 @@ import {
 } from '../api/parameter-rules-api'
 import {
   getParameterRows,
+  emptyRuleCatalogs,
   type ParameterConfiguration,
   type SaveParameterInput
 } from './parameter-rules'
@@ -18,13 +19,22 @@ type ParameterRulesNotifier = {
   error(message: string): unknown
 }
 
+type WorkspaceView =
+  | { type: 'closed' }
+  | { type: 'selection' }
+  | {
+      type: 'editor'
+      parameterId: number
+      source: 'selection' | 'table'
+      configuration?: ParameterConfiguration
+    }
+
 export function useParameterRulesController(notifier: ParameterRulesNotifier) {
   const parametersQuery = useGetParametersQuery()
   const { refetch } = parametersQuery
   const [saveParameter, saveState] = useSaveParameterMutation()
   const [deleteParameter, deleteState] = useDeleteParameterMutation()
-  const [isEditorOpen, setIsEditorOpen] = useState(false)
-  const [editingConfiguration, setEditingConfiguration] = useState<ParameterConfiguration>()
+  const [view, setView] = useState<WorkspaceView>({ type: 'closed' })
   const snapshot = parametersQuery.currentData
 
   const rows = useMemo(() => (snapshot ? getParameterRows(snapshot) : []), [snapshot])
@@ -35,22 +45,35 @@ export function useParameterRulesController(notifier: ParameterRulesNotifier) {
 
   const openCreate = useCallback(() => {
     if (isInteractionDisabled) return
-    setEditingConfiguration(undefined)
-    setIsEditorOpen(true)
+    setView({ type: 'selection' })
   }, [isInteractionDisabled])
 
   const openEdit = useCallback(
     (configuration: ParameterConfiguration) => {
       if (isInteractionDisabled) return
-      setEditingConfiguration(configuration)
-      setIsEditorOpen(true)
+      setView({
+        type: 'editor',
+        parameterId: configuration.parameterId,
+        source: 'table',
+        configuration
+      })
     },
     [isInteractionDisabled]
   )
 
   const closeEditor = useCallback(() => {
-    setIsEditorOpen(false)
-  }, [])
+    if (!isMutationPending) setView({ type: 'closed' })
+  }, [isMutationPending])
+
+  const selectParameter = (parameterId: number) => {
+    if (isInteractionDisabled || !snapshot?.catalog.some((item) => item.id === parameterId)) return
+    setView({
+      type: 'editor',
+      parameterId,
+      source: 'selection',
+      configuration: snapshot.configurations.find((item) => item.parameterId === parameterId)
+    })
+  }
 
   const saveConfiguration = useCallback(
     async (configuration: SaveParameterInput) => {
@@ -58,13 +81,13 @@ export function useParameterRulesController(notifier: ParameterRulesNotifier) {
 
       try {
         await saveParameter(configuration).unwrap()
-        setIsEditorOpen(false)
-        notifier.success(editingConfiguration ? 'Изменения сохранены' : 'Параметр добавлен')
+        setView({ type: 'closed' })
+        notifier.success('Правила сохранены')
       } catch {
-        notifier.error('Не удалось сохранить параметр. Изменения остались в форме.')
+        notifier.error('Не удалось сохранить правила. Изменения остались в форме.')
       }
     },
-    [editingConfiguration, isInteractionDisabled, notifier, saveParameter]
+    [isInteractionDisabled, notifier, saveParameter]
   )
 
   const deleteConfiguration = useCallback(
@@ -73,10 +96,10 @@ export function useParameterRulesController(notifier: ParameterRulesNotifier) {
 
       try {
         await deleteParameter(configuration.parameterId).unwrap()
-        setIsEditorOpen(false)
-        notifier.success('Параметр удалён')
+        setView({ type: 'closed' })
+        notifier.success('Все правила параметра удалены')
       } catch (error) {
-        notifier.error('Не удалось удалить параметр. Попробуйте ещё раз.')
+        notifier.error('Не удалось удалить правила. Попробуйте ещё раз.')
         throw error
       }
     },
@@ -90,14 +113,15 @@ export function useParameterRulesController(notifier: ParameterRulesNotifier) {
   return {
     rows,
     catalog: snapshot?.catalog ?? [],
+    ruleCatalogs: snapshot?.ruleCatalogs ?? emptyRuleCatalogs,
     configurations: snapshot?.configurations ?? [],
     isInitialLoading: parametersQuery.isLoading,
     hasInitialLoadError,
     hasRefreshError,
     isInteractionDisabled,
     canCreate: Boolean(snapshot) && !isInteractionDisabled,
-    isEditorOpen,
-    editingConfiguration,
+    view,
+    selectParameter,
     isMutationPending,
     openCreate,
     openEdit,
