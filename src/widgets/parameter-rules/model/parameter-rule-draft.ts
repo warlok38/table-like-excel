@@ -12,20 +12,17 @@ import { findDuplicateRuleIndexes } from './rule-uniqueness'
 
 export interface DraftRule extends Omit<
   RuleBase,
-  'aggregationLevelId' | 'aggregationRuleId' | 'planTypeId'
+  'aggregationLevelId' | 'aggregationRuleId' | 'planTypeId' | 'value'
 > {
   aggregationLevelId?: string
   aggregationRuleId?: string
   planTypeId?: string
   isDefault: boolean
-  defaultValue?: number
+  value?: number
+  operator?: RuleOperator
   style: RuleStyle
   notificationText?: string
   uiKey: string
-  condition?: {
-    operator?: RuleOperator
-    value?: number
-  }
 }
 
 export interface EditorDraft {
@@ -37,7 +34,7 @@ export interface RuleErrors {
   aggregationLevelId?: string
   aggregationRuleId?: string
   planTypeId?: string
-  defaultValue?: string
+  value?: string
   duplicate?: string
   name?: string
   condition?: string
@@ -66,7 +63,6 @@ export const makeEditorDraft = (configuration?: ParameterConfiguration): EditorD
     configuration?.rules.map((rule, index) => ({
       ...rule,
       description: rule.description ?? '',
-      condition: !rule.isDefault ? { ...rule.condition } : undefined,
       style: !rule.isDefault ? { ...rule.style } : {},
       uiKey: `saved-${index}`
     })) ?? []
@@ -80,14 +76,15 @@ export const toFormattingRules = (rules: DraftRule[]): FormattingRule[] =>
       description: rule.description?.trim() || undefined,
       aggregationLevelId: rule.aggregationLevelId!,
       aggregationRuleId: rule.aggregationRuleId!,
-      planTypeId: rule.planTypeId!
+      planTypeId: rule.planTypeId!,
+      value: rule.value!
     }
     return rule.isDefault
-      ? { ...base, isDefault: true, defaultValue: rule.defaultValue! }
+      ? { ...base, isDefault: true }
       : {
           ...base,
           isDefault: false,
-          condition: { operator: rule.condition!.operator!, value: rule.condition!.value! },
+          operator: rule.operator!,
           style: { ...rule.style },
           notificationText: rule.notificationText?.trim() || undefined
         }
@@ -111,9 +108,9 @@ export const getDraftRuleSummary = (rule: DraftRule, catalogs: RuleCatalogs) => 
     .filter(Boolean)
     .join(' / ')
   let summary = rule.isDefault
-    ? 'По умолчанию: ' + (rule.defaultValue ?? 'не задано')
+    ? 'По умолчанию: ' + (rule.value ?? 'не задано')
     : 'Условие не задано'
-  if (!rule.isDefault && rule.condition?.operator && Number.isFinite(rule.condition.value)) {
+  if (!rule.isDefault && rule.operator && Number.isFinite(rule.value)) {
     summary = getRuleSummary(toFormattingRules([rule])[0])
   }
   return [context, summary].filter(Boolean).join(' · ')
@@ -136,11 +133,11 @@ export const validateEditorDraft = (draft: EditorDraft, catalogs: RuleCatalogs):
       ruleErrors.planTypeId = 'Выберите тип плана'
     if (duplicates.has(index))
       ruleErrors.duplicate = 'Правило с таким сочетанием агрегаций и условием уже существует'
-    if (rule.isDefault && !Number.isFinite(rule.defaultValue))
-      ruleErrors.defaultValue = 'Введите значение по умолчанию'
+    if (!Number.isFinite(rule.value))
+      ruleErrors.value = rule.isDefault ? 'Введите значение по умолчанию' : 'Укажите значение'
     if (!rule.name.trim()) ruleErrors.name = 'Введите название правила'
-    if (!rule.isDefault && (!rule.condition?.operator || !Number.isFinite(rule.condition.value))) {
-      ruleErrors.condition = 'Укажите условие и значение'
+    if (!rule.isDefault && !rule.operator) {
+      ruleErrors.condition = 'Выберите оператор условия'
     }
     const isBlank = (value: string | undefined) => value !== undefined && !value.trim()
     const hasEmptyResult =

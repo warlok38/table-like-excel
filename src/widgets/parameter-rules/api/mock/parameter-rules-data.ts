@@ -39,7 +39,7 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
         aggregationRuleId: 'average',
         planTypeId: 'actual',
         isDefault: true,
-        defaultValue: 100
+        value: 100
       },
       {
         id: 1003,
@@ -49,7 +49,8 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
         name: 'Критическое значение',
         description: 'Подсветить значение при превышении допустимого порога',
         isDefault: false,
-        condition: { operator: '>=', value: 90 },
+        operator: '>=',
+        value: 90,
         style: { textColor: '#D92D20', fontWeight: 'bold' }
       },
       {
@@ -60,7 +61,8 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
         name: 'Предупреждение',
         description: 'Показать приближение к критическому значению',
         isDefault: false,
-        condition: { operator: '>=', value: 80 },
+        operator: '>=',
+        value: 80,
         style: { textColor: '#B54708', backgroundColor: '#FFFAEB', fontWeight: 'medium' },
         notificationText: 'Температура приближается к критическому значению'
       },
@@ -72,7 +74,7 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
         name: 'Обычное значение',
         description: 'Значение показателя по умолчанию',
         isDefault: true,
-        defaultValue: 0
+        value: 0
       }
     ]
   },
@@ -87,7 +89,8 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
         planTypeId: 'actual',
         name: 'Высокая вибрация',
         isDefault: false,
-        condition: { operator: '>', value: 7.1 },
+        operator: '>',
+        value: 7.1,
         style: { textColor: '#D92D20', fontWeight: 'bold' }
       },
       {
@@ -97,7 +100,7 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
         planTypeId: 'actual',
         name: 'Нормальная вибрация',
         isDefault: true,
-        defaultValue: 0
+        value: 0
       }
     ]
   },
@@ -113,7 +116,8 @@ export const parameterConfigurationsMock: readonly ParameterConfiguration[] = [
         name: 'Низкое давление',
         description: 'Обратить внимание оператора на падение давления',
         isDefault: false,
-        condition: { operator: '<=', value: 45 },
+        operator: '<=',
+        value: 45,
         style: { backgroundColor: '#FEF3F2', textColor: '#B42318', fontWeight: 'medium' }
       }
     ]

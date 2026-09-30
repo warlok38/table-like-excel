@@ -2,11 +2,6 @@ export type RuleOperator = '<' | '<=' | '>' | '>=' | '='
 
 export type FontWeight = 'regular' | 'medium' | 'bold'
 
-export interface RuleCondition {
-  operator: RuleOperator
-  value: number
-}
-
 export interface RuleStyle {
   textColor?: string
   backgroundColor?: string
@@ -20,12 +15,13 @@ export interface RuleBase {
   aggregationLevelId: string
   aggregationRuleId: string
   planTypeId: string
+  value: number
 }
 
 export type FormattingRule = RuleBase &
   (
-    | { isDefault: true; defaultValue: number }
-    | { isDefault: false; condition: RuleCondition; style: RuleStyle; notificationText?: string }
+    | { isDefault: true }
+    | { isDefault: false; operator: RuleOperator; style: RuleStyle; notificationText?: string }
   )
 
 export interface RuleCatalogs {
@@ -90,9 +86,9 @@ export const fontWeightLabels: Record<FontWeight, string> = {
 export function getRuleSummary(rule: FormattingRule): string {
   let condition = 'Условие не задано'
   if (rule.isDefault) {
-    return `По умолчанию: ${rule.defaultValue}`
-  } else if (rule.condition) {
-    condition = `Значение ${operatorLabels[rule.condition.operator]} ${rule.condition.value}`
+    return `По умолчанию: ${rule.value}`
+  } else {
+    condition = `Значение ${operatorLabels[rule.operator]} ${rule.value}`
   }
   const styles = [
     rule.style.textColor ? 'цвет текста' : null,

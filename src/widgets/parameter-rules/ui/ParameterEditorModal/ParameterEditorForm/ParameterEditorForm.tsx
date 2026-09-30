@@ -241,7 +241,6 @@ export function ParameterEditorForm({
             })}
             disabled={isInteractionDisabled}
             icon={<PlusOutlined />}
-            size={controller.hasRules ? 'small' : 'middle'}
             onClick={addRule}
           >
             Добавить правило

@@ -85,7 +85,8 @@ export function useParameterEditorController({
           aggregationLevelId: initial.aggregationLevelId,
           aggregationRuleId: initial.aggregationRuleId,
           planTypeId: initial.planTypeId,
-          condition: initial.condition ? { ...initial.condition } : undefined
+          operator: initial.isDefault ? next.operator : initial.operator,
+          value: initial.isDefault ? next.value : initial.value
         }
       })
     }))

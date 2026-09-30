@@ -159,18 +159,18 @@ export function RuleFields({
         <Form.Item
           label="Значение по умолчанию"
           required
-          help={errors.defaultValue}
-          validateStatus={errors.defaultValue ? 'error' : undefined}
+          help={errors.value}
+          validateStatus={errors.value ? 'error' : undefined}
         >
           <InputNumber
             controls={false}
             disabled={disabled}
             placeholder="Введите значение"
-            value={rule.defaultValue}
+            value={rule.value}
             onChange={(value) =>
-              onChange('defaultValue', (current) => ({
+              onChange('value', (current) => ({
                 ...current,
-                defaultValue: value ?? undefined
+                value: value ?? undefined
               }))
             }
           />
@@ -178,10 +178,10 @@ export function RuleFields({
       )}
       {!rule.isDefault && (
         <Form.Item
-          help={errors.condition}
+          help={errors.condition ?? errors.value}
           label="Условие"
           required
-          validateStatus={errors.condition ? 'error' : undefined}
+          validateStatus={errors.condition || errors.value ? 'error' : undefined}
         >
           <Flex className={styles.conditionControls} gap={8}>
             <Select<RuleOperator>
@@ -192,11 +192,11 @@ export function RuleFields({
                 label: operatorLabels[operator]
               }))}
               placeholder="Знак"
-              value={rule.condition?.operator}
+              value={rule.operator}
               onChange={(operator) =>
                 onChange('condition', (current) => ({
                   ...current,
-                  condition: { operator, value: current.condition?.value }
+                  operator
                 }))
               }
             />
@@ -205,13 +205,11 @@ export function RuleFields({
               controls={false}
               disabled={disabled || identityLocked}
               placeholder="Введите значение"
-              value={rule.condition?.value}
+              value={rule.value}
               onChange={(value) =>
-                onChange('condition', (current) => ({
+                onChange('value', (current) => ({
                   ...current,
-                  condition: current.condition
-                    ? { ...current.condition, value: value ?? undefined }
-                    : { value: value ?? undefined }
+                  value: value ?? undefined
                 }))
               }
             />

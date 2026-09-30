@@ -5,7 +5,8 @@ interface RuleIdentity {
   aggregationRuleId?: string
   planTypeId?: string
   isDefault: boolean
-  condition?: { operator?: RuleOperator; value?: number }
+  operator?: RuleOperator
+  value?: number
 }
 
 export function findDuplicateRuleIndexes(parameterId: number | undefined, rules: RuleIdentity[]) {
@@ -13,15 +14,14 @@ export function findDuplicateRuleIndexes(parameterId: number | undefined, rules:
   rules.forEach((rule, index) => {
     if (!parameterId || !rule.aggregationLevelId || !rule.aggregationRuleId || !rule.planTypeId)
       return
-    if (!rule.isDefault && (!rule.condition?.operator || !Number.isFinite(rule.condition.value)))
-      return
+    if (!rule.isDefault && (!rule.operator || !Number.isFinite(rule.value))) return
     const key = JSON.stringify([
       parameterId,
       rule.aggregationLevelId,
       rule.aggregationRuleId,
       rule.planTypeId,
       rule.isDefault,
-      ...(rule.isDefault ? [] : [rule.condition!.operator, rule.condition!.value])
+      ...(rule.isDefault ? [] : [rule.operator, rule.value])
     ])
     const group = groups.get(key) ?? []
     group.push(index)
