@@ -15,6 +15,7 @@ export function ParameterRulesWidget() {
     <>
       <RulesWorkspace
         rows={controller.rows}
+        isRefreshing={controller.isRefreshing}
         isInitialLoading={controller.isInitialLoading}
         hasInitialLoadError={controller.hasInitialLoadError}
         hasRefreshError={controller.hasRefreshError}
@@ -43,10 +44,10 @@ export function ParameterRulesWidget() {
           configuration={controller.view.configuration}
           open
           isInteractionDisabled={controller.isInteractionDisabled}
-          isMutationPending={controller.isMutationPending}
+
           onClose={controller.closeEditor}
-          onDelete={controller.deleteConfiguration}
-          onSave={controller.saveConfiguration}
+          reload={controller.reload}
+          onSaved={controller.saved}
         />
       )}
     </>

@@ -8,7 +8,7 @@ interface ParameterSelectionModalProps {
   catalog: ParameterCatalogItem[]
   configurations: ParameterConfiguration[]
   disabled: boolean
-  onSelect(parameterId: number): void
+  onSelect(parameterId: string): void
   onClose(): void
 }
 
@@ -21,7 +21,7 @@ export function ParameterSelectionModal({
 }: ParameterSelectionModalProps) {
   return (
     <Modal open centered title="Выбор параметра" footer={null} onCancel={onClose}>
-      <Select<number>
+      <Select<string>
         style={{ width: '100%' }}
         showSearch
         disabled={disabled}

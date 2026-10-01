@@ -61,3 +61,13 @@
 .removeResultPropertyButton:not(:disabled):hover {
   background: #f2f4f7;
 }
+
+.addResultPropertySelect {
+  width: 100%;
+}
+
+.resultPropertyError {
+  padding-left: calc((100% - 3.5rem) / 3.5);
+  color: #ff4d4f;
+  font-size: 0.875rem;
+}

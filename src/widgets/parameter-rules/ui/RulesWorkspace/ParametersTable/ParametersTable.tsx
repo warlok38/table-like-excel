@@ -4,7 +4,7 @@ import { EditOutlined } from '@ant-design/icons'
 import { Button, Empty, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 
-import { formatParameterUpdatedAt, formatRulesLabel } from '../../../lib/parameter-rules-format'
+import { formatRulesLabel } from '../../../lib/parameter-rules-format'
 import type { ParameterConfiguration, ParameterRow } from '../../../model/parameter-rules'
 
 type ParametersTableProps = {
@@ -21,15 +21,9 @@ export function ParametersTable({
   onEdit
 }: ParametersTableProps) {
   const columns: ColumnsType<ParameterRow> = [
-    { title: 'ID', dataIndex: 'id', width: 88 },
+    { title: 'ID', dataIndex: 'id', width: 160, ellipsis: true },
     { title: 'Название', dataIndex: 'name', width: 220 },
     { title: 'Описание', dataIndex: 'description' },
-    {
-      title: 'Дата обновления',
-      dataIndex: 'updatedAt',
-      width: 180,
-      render: (value: string) => formatParameterUpdatedAt(value)
-    },
     {
       title: 'Правила',
       dataIndex: 'rulesCount',

@@ -1,34 +1,28 @@
 'use client'
-
-import { useMemo } from 'react'
 import { DeleteOutlined } from '@ant-design/icons'
-import { App, Button, Flex, Modal, Typography } from 'antd'
-
+import { Alert, App, Button, Flex, Modal, Typography } from 'antd'
 import { useParameterEditorController } from '../../model/use-parameter-editor-controller'
-import {
-  type RuleCatalogs,
-  type ParameterCatalogItem,
-  type ParameterConfiguration
+import type {
+  RuleCatalogs,
+  ParameterCatalogItem,
+  ParameterConfiguration,
+  ParameterRulesSnapshot
 } from '../../model/parameter-rules'
 import { ParameterEditorForm } from './ParameterEditorForm'
 import styles from './ParameterEditorModal.module.css'
-
-interface ParameterEditorModalProps {
+interface Props {
   ruleCatalogs: RuleCatalogs
   catalog: ParameterCatalogItem[]
-  parameterId: number
+  parameterId: string
   onBack?: () => void
   configuration?: ParameterConfiguration
   open: boolean
   isInteractionDisabled: boolean
-  isMutationPending: boolean
   onClose(): void
-  onDelete(configuration: ParameterConfiguration): Promise<void>
-  onSave(configuration: Pick<ParameterConfiguration, 'parameterId' | 'rules'>): Promise<void>
+  reload(): Promise<ParameterRulesSnapshot>
+  onSaved(): void
 }
-
 const editorFormId = 'parameter-editor-form'
-
 export function ParameterEditorModal({
   ruleCatalogs,
   catalog,
@@ -37,72 +31,62 @@ export function ParameterEditorModal({
   configuration,
   open,
   isInteractionDisabled,
-  isMutationPending,
   onClose,
-  onDelete,
-  onSave
-}: ParameterEditorModalProps) {
+  reload,
+  onSaved
+}: Props) {
   const { modal } = App.useApp()
   const controller = useParameterEditorController({
     parameterId,
-    ruleCatalogs,
     configuration,
+    ruleCatalogs,
     open,
     isInteractionDisabled,
-    onSave
+    reload,
+    onSaved
   })
-  const isEditing = Boolean(configuration)
-
-  const selectedParameter = useMemo(
-    () => catalog.find((parameter) => parameter.id === parameterId),
-    [catalog, parameterId]
-  )
-  const modalTitle = `Правила параметра «${selectedParameter?.name ?? parameterId}»`
-
+  const parameter = catalog.find((item) => item.id === parameterId)
   const requestLeave = (leave: () => void) => {
-    if (isMutationPending) return
-    if (!controller.isDirty) {
+    if (controller.busy) return
+    if (!controller.isDirty && !controller.syncRequired && !controller.uncertain) {
       leave()
       return
     }
-
     modal.confirm({
-      title: 'Закрыть без сохранения?',
-      content: 'Все изменения в правилах будут потеряны.',
+      title: 'Закрыть форму?',
+      content: 'Несохранённые изменения будут потеряны. Уже сохранённые изменения останутся.',
       okText: 'Закрыть',
       cancelText: 'Продолжить редактирование',
-      okButtonProps: { danger: true },
       centered: true,
       onOk: leave
     })
   }
-
   const requestDelete = () => {
-    if (isInteractionDisabled || !configuration || !selectedParameter) return
+    if (controller.disabled) return
     modal.confirm({
-      title: `Удалить все правила параметра «${selectedParameter.name}»?`,
-      content: `Будут удалены все правила: ${configuration.rules.length}. Параметр останется в справочнике. Это действие нельзя отменить.`,
+      title: 'Удалить все правила параметра «' + (parameter?.name ?? parameterId) + '»?',
+      content:
+        'Связанные оформление и уведомления тоже будут удалены. Параметр останется в справочнике.',
       okText: 'Удалить все правила',
       cancelText: 'Отмена',
       okButtonProps: { danger: true },
       centered: true,
-      onOk: () => onDelete(configuration)
+      onOk: controller.deleteAll
     })
   }
-
   return (
     <Modal
       className={styles.editorModal}
-      closable={!isMutationPending}
+      closable={!controller.busy}
       centered
       destroyOnHidden
       footer={
         <div className={styles.modalFooter}>
           <div>
-            {isEditing && (
+            {controller.initialRulesByKey.size > 0 && (
               <Button
                 danger
-                disabled={isInteractionDisabled}
+                disabled={controller.disabled}
                 icon={<DeleteOutlined />}
                 onClick={requestDelete}
               >
@@ -112,18 +96,18 @@ export function ParameterEditorModal({
           </div>
           <Flex gap={8}>
             {onBack && (
-              <Button disabled={isMutationPending} onClick={() => requestLeave(onBack)}>
+              <Button disabled={controller.busy} onClick={() => requestLeave(onBack)}>
                 Назад
               </Button>
             )}
-            <Button disabled={isMutationPending} onClick={() => requestLeave(onClose)}>
+            <Button disabled={controller.busy} onClick={() => requestLeave(onClose)}>
               Отмена
             </Button>
             <Button
-              disabled={!controller.isDirty || isInteractionDisabled}
+              disabled={!controller.isDirty || controller.disabled}
               form={editorFormId}
               htmlType="submit"
-              loading={isMutationPending}
+              loading={controller.busy}
               type="primary"
             >
               Сохранить
@@ -132,18 +116,53 @@ export function ParameterEditorModal({
         </div>
       }
       mask={{ closable: false }}
-      keyboard={!isMutationPending}
+      keyboard={!controller.busy}
       open={open}
-      title={<Typography.Title level={4}>{modalTitle}</Typography.Title>}
       width={880}
+      title={
+        <Typography.Title level={4}>
+          Правила параметра «{parameter?.name ?? parameterId}»
+        </Typography.Title>
+      }
       onCancel={() => requestLeave(onClose)}
     >
+      {controller.status && (
+        <Alert
+          type="warning"
+          title={controller.status}
+          action={
+            controller.syncRequired ? (
+              <Button loading={controller.busy} onClick={controller.retry}>
+                Повторить загрузку
+              </Button>
+            ) : undefined
+          }
+        />
+      )}
+      {controller.removed.length > 0 && (
+        <Alert
+          type="info"
+          title="Ожидают удаления"
+          description={
+            <div>
+              {controller.removed.map((item) => (
+                <div key={item.key}>
+                  {item.label}{' '}
+                  <Button type="link" disabled={controller.disabled} onClick={item.restore}>
+                    Отменить удаление
+                  </Button>
+                </div>
+              ))}
+            </div>
+          }
+        />
+      )}
       <ParameterEditorForm
         ruleCatalogs={ruleCatalogs}
         configuration={configuration}
         controller={controller}
         formId={editorFormId}
-        isInteractionDisabled={isInteractionDisabled}
+        isInteractionDisabled={controller.disabled}
         open={open}
       />
     </Modal>

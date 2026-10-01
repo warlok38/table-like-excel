@@ -9,6 +9,7 @@ import styles from './RulesWorkspace.module.css'
 
 type RulesWorkspaceProps = {
   rows: ParameterRow[]
+  isRefreshing: boolean
   isInitialLoading: boolean
   hasInitialLoadError: boolean
   hasRefreshError: boolean
@@ -21,6 +22,7 @@ type RulesWorkspaceProps = {
 
 export function RulesWorkspace({
   rows,
+  isRefreshing,
   isInitialLoading,
   hasInitialLoadError,
   hasRefreshError,
@@ -31,7 +33,7 @@ export function RulesWorkspace({
   onRetry
 }: RulesWorkspaceProps) {
   const retryAction = (
-    <Button disabled={isInteractionDisabled} size="small" onClick={onRetry}>
+    <Button disabled={isRefreshing} size="small" onClick={onRetry}>
       Повторить
     </Button>
   )

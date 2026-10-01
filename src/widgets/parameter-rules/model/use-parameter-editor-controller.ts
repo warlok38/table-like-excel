@@ -1,83 +1,84 @@
 'use client'
-
-import { useEffect, useMemo, useRef, useState } from 'react'
-
+import { useMemo, useRef, useState } from 'react'
 import {
   createEmptyRule,
-  emptyDraftErrors,
   makeEditorDraft,
-  toFormattingRules,
   validateEditorDraft,
+  toFormattingRules,
   type DraftErrors,
   type DraftRule,
   type EditorDraft
 } from './parameter-rule-draft'
-import type { ParameterConfiguration, RuleCatalogs } from './parameter-rules'
-
-interface UseParameterEditorControllerOptions {
-  parameterId: number
+import type {
+  ParameterConfiguration,
+  ParameterRulesSnapshot,
+  RuleCatalogs
+} from './parameter-rules'
+import { useRulesSaveSession, type SaveResolution } from './use-rules-save-session'
+interface Options {
+  parameterId: string
   ruleCatalogs: RuleCatalogs
   configuration?: ParameterConfiguration
   open: boolean
   isInteractionDisabled: boolean
-  onSave(configuration: Pick<ParameterConfiguration, 'parameterId' | 'rules'>): Promise<void>
+  reload(): Promise<ParameterRulesSnapshot>
+  onSaved(): void
 }
-
 export type ParameterEditorValidationTarget =
   { type: 'parameter' } | { type: 'rules' } | { type: 'rule'; uiKey: string }
-
 export function useParameterEditorController({
   parameterId,
   configuration,
   ruleCatalogs,
-  open,
   isInteractionDisabled,
-  onSave
-}: UseParameterEditorControllerOptions) {
-  const nextRuleKey = useRef(0)
-  const [draft, setDraft] = useState<EditorDraft>({ rules: [] })
-  const [initialDraft, setInitialDraft] = useState<EditorDraft>({ rules: [] })
-  const [errors, setErrors] = useState<DraftErrors>(emptyDraftErrors)
-
-  useEffect(() => {
-    if (!open) return
-
-    const nextDraft = configuration
+  reload,
+  onSaved
+}: Options) {
+  const [draft, setDraft] = useState<EditorDraft>(() =>
+    configuration
       ? makeEditorDraft(configuration)
       : { parameterId, rules: [createEmptyRule('first-new')] }
-    setDraft(nextDraft)
-    setInitialDraft(nextDraft)
-    setErrors(emptyDraftErrors)
-  }, [configuration, open, parameterId])
-
-  const initialRulesByKey = useMemo(
-    () => new Map((configuration ? initialDraft.rules : []).map((rule) => [rule.uiKey, rule])),
-    [configuration, initialDraft.rules]
   )
-  useEffect(() => {
-    setErrors((current) =>
-      current.parameter || current.rules || Object.keys(current.byRule).length
-        ? validateEditorDraft(draft, ruleCatalogs)
-        : current
-    )
-  }, [draft, ruleCatalogs])
-
+  const [initialDraft, setInitialDraft] = useState<EditorDraft>(() =>
+    configuration ? makeEditorDraft(configuration) : { parameterId, rules: [] }
+  )
+  const [errors, setErrors] = useState<DraftErrors>({ byRule: {} })
+  const nextKey = useRef(0)
+  const session = useRulesSaveSession(reload)
+  const disabled =
+    isInteractionDisabled || session.busy || session.syncRequired || session.uncertain
+  const initialRulesByKey = useMemo(
+    () => new Map(initialDraft.rules.map((rule) => [rule.uiKey, rule])),
+    [initialDraft]
+  )
   const isDirty = JSON.stringify(draft) !== JSON.stringify(initialDraft)
-  const hasRules = draft.rules.length > 0
-
+  const applyResolution = (result?: SaveResolution) => {
+    if (!result) return
+    const fresh = makeEditorDraft(
+      result.snapshot.configurations.find((item) => item.parameterId === parameterId) ?? {
+        parameterId,
+        rules: []
+      }
+    )
+    setInitialDraft(fresh)
+    // POST is the last operation. If acknowledged, the complete desired state is on the server.
+    // Otherwise only existing IDs were changed, so the unsaved target can be retained verbatim.
+    setDraft(result.allSaved ? fresh : result.desired)
+    setErrors(result.errors)
+    if (result.allSaved) onSaved()
+  }
   const updateRule = (
     uiKey: string,
-    errorField: keyof DraftErrors['byRule'][string] | undefined,
+    _field: keyof DraftErrors['byRule'][string] | undefined,
     update: (rule: DraftRule) => DraftRule
   ) => {
-    if (isInteractionDisabled) return
-
+    if (disabled) return
     setDraft((current) => ({
       ...current,
       rules: current.rules.map((rule) => {
         if (rule.uiKey !== uiKey) return rule
-        const next = update(rule)
-        const initial = initialRulesByKey.get(uiKey)
+        const next = update(rule),
+          initial = initialRulesByKey.get(uiKey)
         if (!initial) return next
         return {
           ...next,
@@ -85,77 +86,112 @@ export function useParameterEditorController({
           aggregationLevelId: initial.aggregationLevelId,
           aggregationRuleId: initial.aggregationRuleId,
           planTypeId: initial.planTypeId,
-          operator: initial.isDefault ? next.operator : initial.operator,
+          functionId: initial.functionId,
           value: initial.isDefault ? next.value : initial.value
         }
       })
     }))
-    if (!errorField) return
-
     setErrors((current) => {
-      const nextRuleErrors = { ...current.byRule[uiKey] }
-      delete nextRuleErrors[errorField]
-      const nextByRule = { ...current.byRule }
-
-      if (Object.keys(nextRuleErrors).length === 0) {
-        delete nextByRule[uiKey]
-      } else {
-        nextByRule[uiKey] = nextRuleErrors
-      }
-
-      return { ...current, byRule: nextByRule }
+      const byRule = { ...current.byRule }
+      delete byRule[uiKey]
+      return { ...current, byRule }
     })
   }
-
   const addRule = () => {
-    if (isInteractionDisabled) return undefined
-
-    const uiKey = `new-${nextRuleKey.current++}`
+    if (disabled) return
+    const uiKey = 'new-' + nextKey.current++
     setDraft((current) => ({ ...current, rules: [createEmptyRule(uiKey), ...current.rules] }))
-    setErrors((current) => ({ ...current, rules: undefined }))
     return uiKey
   }
-
   const removeRule = (uiKey: string) => {
-    if (isInteractionDisabled) return
-
+    if (disabled) return
     setDraft((current) => ({
       ...current,
       rules: current.rules.filter((rule) => rule.uiKey !== uiKey)
     }))
-    setErrors((current) => {
-      const nextByRule = { ...current.byRule }
-      delete nextByRule[uiKey]
-      return { ...current, byRule: nextByRule }
-    })
   }
-
+  const removed = initialDraft.rules.flatMap((before) => {
+    const after = draft.rules.find((rule) => rule.id === before.id)
+    if (!after)
+      return [
+        {
+          key: before.uiKey,
+          label: 'Правило: ' + before.name,
+          restore: () =>
+            setDraft((current) => ({
+              ...current,
+              rules: [...current.rules, structuredClone(before)]
+            }))
+        }
+      ]
+    return [
+      ...before.uiRules
+        .filter((item) => item.id && !after.uiRules.some((next) => next.id === item.id))
+        .map((item) => ({
+          key: item.id!,
+          label: before.name + ' — ' + item.label,
+          restore: () =>
+            updateRule(after.uiKey, undefined, (rule) => ({
+              ...rule,
+              uiRules: [
+                ...rule.uiRules.filter((next) => next.key !== item.key),
+                structuredClone(item)
+              ]
+            }))
+        })),
+      ...before.notifications
+        .filter((item) => item.id && !after.notifications.some((next) => next.id === item.id))
+        .map((item) => ({
+          key: item.id!,
+          label: before.name + ' — уведомление',
+          restore: () =>
+            updateRule(after.uiKey, undefined, (rule) => ({
+              ...rule,
+              notifications: [...rule.notifications, structuredClone(item)]
+            }))
+        }))
+    ]
+  })
   const validateAndSave = async (): Promise<ParameterEditorValidationTarget | undefined> => {
-    if (!isDirty || isInteractionDisabled) return undefined
-
-    const nextErrors = validateEditorDraft(draft, ruleCatalogs)
-    setErrors(nextErrors)
-    const firstInvalidRuleKey = draft.rules.find((rule) => nextErrors.byRule[rule.uiKey])?.uiKey
-
-    if (nextErrors.parameter) return { type: 'parameter' }
-    if (nextErrors.rules) return { type: 'rules' }
-    if (firstInvalidRuleKey) return { type: 'rule', uiKey: firstInvalidRuleKey }
-
-    await onSave({ parameterId: draft.parameterId!, rules: toFormattingRules(draft.rules) })
-    return undefined
+    if (disabled || !isDirty) return
+    const next = validateEditorDraft(draft, ruleCatalogs)
+    setErrors(next)
+    if (next.parameter) return { type: 'parameter' }
+    const invalid = draft.rules.find((rule) => next.byRule[rule.uiKey])
+    if (invalid) return { type: 'rule', uiKey: invalid.uiKey }
+    // Normalize saved strings without dropping local UI keys.
+    const normalized = toFormattingRules(draft.rules)
+    const desired = {
+      ...draft,
+      rules: normalized.map((rule, index) => ({ ...rule, uiKey: draft.rules[index].uiKey }))
+    }
+    setDraft(desired)
+    applyResolution(await session.save(initialDraft, desired))
   }
-
+  const deleteAll = async () => {
+    if (disabled) return
+    const desired = { parameterId, rules: [] }
+    setDraft(desired)
+    applyResolution(await session.save(initialDraft, desired))
+  }
   return {
     draft,
     errors,
-    hasRules,
+    hasRules: draft.rules.length > 0,
     initialRulesByKey,
     isDirty,
     updateRule,
     addRule,
     removeRule,
-    validateAndSave
+    validateAndSave,
+    disabled,
+    busy: session.busy,
+    status: session.status,
+    syncRequired: session.syncRequired,
+    uncertain: session.uncertain,
+    retry: async () => applyResolution(await session.retry()),
+    removed,
+    deleteAll
   }
 }
-
 export type ParameterEditorController = ReturnType<typeof useParameterEditorController>

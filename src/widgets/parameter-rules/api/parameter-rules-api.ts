@@ -1,79 +1,49 @@
-import { baseApi, type ApiError } from '@/shared/api'
-
+import { baseApi } from '@/shared/api'
 import type {
-  ParameterConfiguration,
-  ParameterRulesSnapshot,
-  SaveParameterInput
-} from '../model/parameter-rules'
-import { parameterRulesMockService } from './mock/parameter-rules-service'
-
-const parameterRulesApi = baseApi.injectEndpoints({
+  CatalogsDto,
+  ParameterDto,
+  CreateRulesBody,
+  UpdateRulesBody,
+  DeleteRulesBody,
+  RulesApiError
+} from './contracts'
+import { parameterRulesMockService as service } from './mock/parameter-rules-service'
+export const parameterRulesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    getParameters: builder.query<ParameterRulesSnapshot, void>({
-      queryFn: () => runMockRequest(() => parameterRulesMockService.getParameters()),
-      providesTags: ['ParameterRules']
+    getRuleCatalogs: builder.query<CatalogsDto, string>({
+      queryFn: (journalId) => runMockRequest(() => service.getCatalogs(journalId)),
+      providesTags: (_data, _error, id) => [{ type: 'ParameterRules', id: id + ':catalogs' }]
     }),
-    saveParameter: builder.mutation<ParameterConfiguration, SaveParameterInput>({
-      async queryFn(configuration, { dispatch }) {
-        const result = await runMockRequest(() =>
-          parameterRulesMockService.saveParameter(configuration)
-        )
-
-        const savedConfiguration = result.data
-        if (savedConfiguration) {
-          dispatch(
-            parameterRulesApi.util.updateQueryData('getParameters', undefined, (snapshot) => {
-              const existingIndex = snapshot.configurations.findIndex(
-                (item) => item.parameterId === savedConfiguration.parameterId
-              )
-
-              if (existingIndex === -1) {
-                snapshot.configurations.unshift(savedConfiguration)
-              } else {
-                snapshot.configurations[existingIndex] = savedConfiguration
-              }
-            })
-          )
-        }
-
-        return result
-      },
-      invalidatesTags: (_result, error) => (error ? [] : ['ParameterRules'])
+    getRulesByParameter: builder.query<ParameterDto[], string>({
+      queryFn: (journalId) => runMockRequest(() => service.getRules(journalId)),
+      providesTags: (_data, _error, id) => [{ type: 'ParameterRules', id: id + ':rules' }]
     }),
-    deleteParameter: builder.mutation<null, number>({
-      async queryFn(parameterId, { dispatch }) {
-        const result = await runMockRequest(() =>
-          parameterRulesMockService.deleteParameter(parameterId)
-        )
-
-        if (!result.error) {
-          dispatch(
-            parameterRulesApi.util.updateQueryData('getParameters', undefined, (snapshot) => {
-              snapshot.configurations = snapshot.configurations.filter(
-                (configuration) => configuration.parameterId !== parameterId
-              )
-            })
-          )
-        }
-
-        return result
-      },
-      invalidatesTags: (_result, error) => (error ? [] : ['ParameterRules'])
+    createRules: builder.mutation<string, { journalId: string; body: CreateRulesBody }>({
+      queryFn: ({ journalId, body }) => runMockRequest(() => service.create(journalId, body))
+    }),
+    updateRules: builder.mutation<null, { journalId: string; body: UpdateRulesBody }>({
+      queryFn: ({ journalId, body }) => runMockRequest(() => service.update(journalId, body))
+    }),
+    deleteRules: builder.mutation<null, { journalId: string; body: DeleteRulesBody }>({
+      queryFn: ({ journalId, body }) => runMockRequest(() => service.delete(journalId, body))
     })
   })
 })
-
-async function runMockRequest<T>(request: () => Promise<T>) {
+async function runMockRequest<T>(
+  request: () => Promise<T>
+): Promise<{ data: T } | { error: RulesApiError }> {
   try {
     return { data: await request() }
   } catch (error) {
-    return {
-      error: {
-        message: error instanceof Error ? error.message : 'Неизвестная ошибка mock API'
-      } satisfies ApiError
-    }
+    if (error && typeof error === 'object' && 'message' in error)
+      return { error: error as RulesApiError }
+    return { error: { message: 'Неизвестная ошибка API', uncertain: true } }
   }
 }
-
-export const { useGetParametersQuery, useSaveParameterMutation, useDeleteParameterMutation } =
-  parameterRulesApi
+export const {
+  useGetRuleCatalogsQuery,
+  useGetRulesByParameterQuery,
+  useCreateRulesMutation,
+  useUpdateRulesMutation,
+  useDeleteRulesMutation
+} = parameterRulesApi

@@ -1,130 +1,99 @@
-export type RuleOperator = '<' | '<=' | '>' | '>=' | '='
-
-export type FontWeight = 'regular' | 'medium' | 'bold'
-
-export interface RuleStyle {
-  textColor?: string
-  backgroundColor?: string
-  fontWeight?: FontWeight
+export interface UiResult {
+  id?: string
+  ruleId?: string
+  key: string
+  name: string
+  label: string
+  description: string
+  value: string
+  active?: boolean
 }
-
+export interface NotificationResult {
+  id?: string
+  ruleId?: string
+  text: string
+  description: string
+  channel?: string
+  recipients?: string[]
+  active?: boolean
+}
 export interface RuleBase {
-  id?: number
+  id?: string
   name: string
   description?: string
   aggregationLevelId: string
   aggregationRuleId: string
   planTypeId: string
   value: number
+  functionId?: string
+  scaleId?: string | null
+  active?: boolean
 }
-
-export type FormattingRule = RuleBase &
-  (
-    | { isDefault: true }
-    | { isDefault: false; operator: RuleOperator; style: RuleStyle; notificationText?: string }
-  )
-
+export interface FormattingRule extends RuleBase {
+  isDefault: boolean
+  uiRules: UiResult[]
+  notifications: NotificationResult[]
+}
 export interface RuleCatalogs {
   aggregationLevels: { id: string; name: string }[]
   aggregationRules: { id: string; name: string }[]
   planTypes: { id: string; name: string }[]
-  textColors: string[]
-  backgroundColors: string[]
+  functions: { id: string; name: string }[]
+  attributes: { id: string; key: string; name: string }[]
 }
-
 export const emptyRuleCatalogs: RuleCatalogs = {
   aggregationLevels: [],
   aggregationRules: [],
   planTypes: [],
-  textColors: [],
-  backgroundColors: []
+  functions: [],
+  attributes: []
 }
-
 export interface ParameterCatalogItem {
-  id: number
+  id: string
   name: string
   description: string
 }
-
 export interface ParameterConfiguration {
-  parameterId: number
-  updatedAt: string
+  parameterId: string
   rules: FormattingRule[]
 }
-
 export interface ParameterRulesSnapshot {
   ruleCatalogs: RuleCatalogs
   catalog: ParameterCatalogItem[]
   configurations: ParameterConfiguration[]
 }
-
-export type SaveParameterInput = Pick<ParameterConfiguration, 'parameterId' | 'rules'>
-
+export type SaveParameterInput = ParameterConfiguration
 export interface ParameterRow {
-  id: number
+  id: string
   name: string
   description: string
-  updatedAt: string
   rulesCount: number
   configuration: ParameterConfiguration
 }
-
-export const operatorLabels: Record<RuleOperator, string> = {
-  '<': '<',
-  '<=': '≤',
-  '>': '>',
-  '>=': '≥',
-  '=': '='
-}
-
-export const fontWeightLabels: Record<FontWeight, string> = {
-  regular: 'Обычный',
-  medium: 'Средний',
-  bold: 'Полужирный'
-}
-
-export function getRuleSummary(rule: FormattingRule): string {
-  let condition = 'Условие не задано'
-  if (rule.isDefault) {
-    return `По умолчанию: ${rule.value}`
-  } else {
-    condition = `Значение ${operatorLabels[rule.operator]} ${rule.value}`
-  }
-  const styles = [
-    rule.style.textColor ? 'цвет текста' : null,
-    rule.style.backgroundColor ? 'цвет фона' : null,
-    rule.style.fontWeight ? fontWeightLabels[rule.style.fontWeight] : null,
-    rule.notificationText ? 'уведомление' : null
-  ].filter(Boolean)
-
-  return `${condition} → ${styles.length > 0 ? styles.join(', ') : 'результат не задан'}`
-}
-
-export function hasRuleResult(rule: { style: RuleStyle; notificationText?: string }): boolean {
-  return Boolean(
-    rule.style.textColor ||
-    rule.style.backgroundColor ||
-    rule.style.fontWeight ||
-    rule.notificationText?.trim()
+export function getRuleSummary(rule: FormattingRule, catalogs: RuleCatalogs): string {
+  if (rule.isDefault) return 'По умолчанию: ' + rule.value
+  const fn =
+    catalogs.functions.find((item) => item.id === rule.functionId)?.name ?? 'Неизвестная функция'
+  return (
+    fn +
+    ': ' +
+    rule.value +
+    ' → ' +
+    ([
+      ...rule.uiRules.map((item) => item.label),
+      ...rule.notifications.map(() => 'уведомление')
+    ].join(', ') || 'результат не задан')
   )
 }
-
 export function getParameterRows(snapshot: ParameterRulesSnapshot): ParameterRow[] {
-  const catalogById = new Map(snapshot.catalog.map((parameter) => [parameter.id, parameter]))
-
-  return snapshot.configurations.flatMap((configuration) => {
-    const parameter = catalogById.get(configuration.parameterId)
-    if (!parameter) return []
-
-    return [
-      {
-        id: parameter.id,
-        name: parameter.name,
-        description: parameter.description,
-        updatedAt: configuration.updatedAt,
-        rulesCount: configuration.rules.length,
-        configuration
-      }
-    ]
+  return snapshot.configurations.map((configuration) => {
+    const parameter = snapshot.catalog.find((item) => item.id === configuration.parameterId)
+    return {
+      id: configuration.parameterId,
+      name: parameter?.name ?? configuration.parameterId,
+      description: parameter?.description ?? '',
+      rulesCount: configuration.rules.length,
+      configuration
+    }
   })
 }
