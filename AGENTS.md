@@ -34,3 +34,11 @@
 - The table should prioritize Excel-like interactions: single-cell selection, drag selection, `Ctrl + click` multi-selection, selected-cell background changes, and right-click note actions.
 - Background color options should come from mocked backend data, not hardcoded JSX controls.
 - Notes should be visible through a subtle marker on the cell and editable through table UI.
+
+## UI Scope
+
+- A separate mobile version and mobile-specific adaptation are not required.
+- Do not add responsive behavior through `@media` queries unless the user explicitly requests it.
+- Use fluid dimensions and natural layout flexibility so the interface remains reasonably elastic within its intended desktop viewport range.
+- Accessibility-specific implementation is out of scope unless the user explicitly requests it.
+- Do not add ARIA attributes or other a11y-only markup by default.
