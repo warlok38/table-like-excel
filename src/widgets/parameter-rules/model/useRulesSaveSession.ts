@@ -4,12 +4,11 @@ import {
   useCreateRulesMutation,
   useUpdateRulesMutation,
   useDeleteRulesMutation
-} from '../api/parameter-rules-api'
-import { mockContext } from '../api/mock/parameter-rules-data'
-import type { ParameterRulesSnapshot } from './parameter-rules'
-import type { DraftErrors, EditorDraft } from './parameter-rule-draft'
-import { buildSaveOperations } from './save-operations'
-import { mapSaveError, toRulesError } from './save-errors'
+} from '../api/parameterRulesApi'
+import type { ParameterConfiguration } from './parameterRules'
+import type { DraftErrors, EditorDraft } from './parameterRuleDraft'
+import { buildSaveOperations } from './saveOperations'
+import { mapSaveError, toRulesError } from './saveErrors'
 
 interface PendingSave {
   desired: EditorDraft
@@ -19,9 +18,12 @@ interface PendingSave {
   uncertainPost: boolean
 }
 export interface SaveResolution extends PendingSave {
-  snapshot: ParameterRulesSnapshot
+  configuration: ParameterConfiguration
 }
-export function useRulesSaveSession(reload: () => Promise<ParameterRulesSnapshot>) {
+export function useRulesSaveSession(
+  reload: () => Promise<ParameterConfiguration>,
+  saveContext: { journalId: string; author: string }
+) {
   const [create] = useCreateRulesMutation(),
     [update] = useUpdateRulesMutation(),
     [remove] = useDeleteRulesMutation()
@@ -34,8 +36,8 @@ export function useRulesSaveSession(reload: () => Promise<ParameterRulesSnapshot
   const synchronize = async (): Promise<SaveResolution | undefined> => {
     if (!pending.current) return
     try {
-      const snapshot = await reload()
-      const result = { ...pending.current, snapshot }
+      const configuration = await reload()
+      const result = { ...pending.current, configuration }
       setSyncRequired(false)
       setUncertain(result.uncertainPost)
       setStatus(
@@ -72,13 +74,13 @@ export function useRulesSaveSession(reload: () => Promise<ParameterRulesSnapshot
       const operations = buildSaveOperations(
         initial,
         desired,
-        mockContext.journalId,
-        mockContext.author
+        saveContext.journalId,
+        saveContext.author
       )
       let completed = 0
       for (const operation of operations) {
         try {
-          const journalId = mockContext.journalId
+          const journalId = saveContext.journalId
           if (operation.method === 'post')
             await create({ journalId, body: operation.body }).unwrap()
           else if (operation.method === 'put')

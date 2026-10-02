@@ -1,15 +1,17 @@
 'use client'
 
 import { App } from 'antd'
+import { mockContext } from '../api/mock/parameterRulesData'
 
-import { useParameterRulesController } from '../model/use-parameter-rules-controller'
+import { useParameterRulesController } from '../model/useParameterRulesController'
 import { ParameterEditorModal } from './ParameterEditorModal'
 import { RulesWorkspace } from './RulesWorkspace'
 import { ParameterSelectionModal } from './ParameterSelectionModal'
 
 export function ParameterRulesWidget() {
   const { message } = App.useApp()
-  const controller = useParameterRulesController(message)
+  const controller = useParameterRulesController(message, mockContext.journalId)
+  const view = controller.view
 
   return (
     <>
@@ -25,28 +27,30 @@ export function ParameterRulesWidget() {
         onEdit={controller.openEdit}
         onRetry={controller.retry}
       />
-      {controller.view.type === 'selection' && (
+      {view.type === 'selection' && (
         <ParameterSelectionModal
           catalog={controller.catalog}
-          configurations={controller.configurations}
+          rows={controller.rows}
           disabled={controller.isInteractionDisabled}
           onSelect={controller.selectParameter}
           onClose={controller.closeEditor}
         />
       )}
-      {controller.view.type === 'editor' && (
+      {view.type === 'editor' && (
         <ParameterEditorModal
-          key={controller.view.parameterId}
-          parameterId={controller.view.parameterId}
-          onBack={controller.view.source === 'selection' ? controller.openCreate : undefined}
+          key={view.parameterId}
+          parameterId={view.parameterId}
+          journalId={mockContext.journalId}
+          author={mockContext.author}
+          onBack={view.source === 'selection' ? controller.openCreate : undefined}
           ruleCatalogs={controller.ruleCatalogs}
           catalog={controller.catalog}
-          configuration={controller.view.configuration}
+          configuration={view.configuration}
           open
           isInteractionDisabled={controller.isInteractionDisabled}
 
           onClose={controller.closeEditor}
-          reload={controller.reload}
+          reload={() => controller.reloadConfiguration(view.parameterId)}
           onSaved={controller.saved}
         />
       )}

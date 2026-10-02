@@ -9,7 +9,6 @@ export interface UiAttributeDto {
   description: string | null
   attr_key: { key: string }
   interface_name: string
-  is_active: boolean
 }
 export interface UiInput {
   parameters_tech_id: string
@@ -28,15 +27,15 @@ export interface NotifyInput {
   channel_type?: string
   reciepient?: string[]
 }
-export interface UiRuleDto extends UiInput {
+export interface UiRuleDto extends Omit<UiInput, 'description'> {
   ui_rules_tech_id: string
   rules_tech_id: string
-  is_active: boolean
+  description: string | null
 }
-export interface NotifyRuleDto extends NotifyInput {
+export interface NotifyRuleDto extends Omit<NotifyInput, 'description'> {
   rule_notification_tech_id: string
   rules_tech_id: string
-  is_active: boolean
+  description: string | null
 }
 export interface RuleInput {
   name: string
@@ -52,10 +51,10 @@ export interface RuleInput {
   value: number
   scales_tech_id?: string | null
 }
-export interface RuleDto extends Omit<RuleInput, 'value'> {
+export interface RuleDto extends Omit<RuleInput, 'value' | 'description'> {
   rules_tech_id: string
   value: string | number
-  is_active: boolean
+  description: string | null
   prev_rules_tech_id: string | null
   version: number
 }

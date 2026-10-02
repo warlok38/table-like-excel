@@ -2,32 +2,33 @@
 import { useMemo, useRef, useState } from 'react'
 import {
   createEmptyRule,
+  clearChangedRuleErrors,
   makeEditorDraft,
   validateEditorDraft,
   toFormattingRules,
   type DraftErrors,
   type DraftRule,
+  type RuleChange,
   type EditorDraft
-} from './parameter-rule-draft'
-import type {
-  ParameterConfiguration,
-  ParameterRulesSnapshot,
-  RuleCatalogs
-} from './parameter-rules'
-import { useRulesSaveSession, type SaveResolution } from './use-rules-save-session'
+} from './parameterRuleDraft'
+import type { ParameterConfiguration, RuleCatalogs } from './parameterRules'
+import { useRulesSaveSession, type SaveResolution } from './useRulesSaveSession'
 interface Options {
   parameterId: string
+  journalId: string
+  author: string
   ruleCatalogs: RuleCatalogs
   configuration?: ParameterConfiguration
-  open: boolean
   isInteractionDisabled: boolean
-  reload(): Promise<ParameterRulesSnapshot>
+  reload(): Promise<ParameterConfiguration>
   onSaved(): void
 }
 export type ParameterEditorValidationTarget =
   { type: 'parameter' } | { type: 'rules' } | { type: 'rule'; uiKey: string }
 export function useParameterEditorController({
   parameterId,
+  journalId,
+  author,
   configuration,
   ruleCatalogs,
   isInteractionDisabled,
@@ -44,7 +45,7 @@ export function useParameterEditorController({
   )
   const [errors, setErrors] = useState<DraftErrors>({ byRule: {} })
   const nextKey = useRef(0)
-  const session = useRulesSaveSession(reload)
+  const session = useRulesSaveSession(reload, { journalId, author })
   const disabled =
     isInteractionDisabled || session.busy || session.syncRequired || session.uncertain
   const initialRulesByKey = useMemo(
@@ -54,12 +55,7 @@ export function useParameterEditorController({
   const isDirty = JSON.stringify(draft) !== JSON.stringify(initialDraft)
   const applyResolution = (result?: SaveResolution) => {
     if (!result) return
-    const fresh = makeEditorDraft(
-      result.snapshot.configurations.find((item) => item.parameterId === parameterId) ?? {
-        parameterId,
-        rules: []
-      }
-    )
+    const fresh = makeEditorDraft(result.configuration)
     setInitialDraft(fresh)
     // POST is the last operation. If acknowledged, the complete desired state is on the server.
     // Otherwise only existing IDs were changed, so the unsaved target can be retained verbatim.
@@ -69,18 +65,16 @@ export function useParameterEditorController({
   }
   const updateRule = (
     uiKey: string,
-    _field: keyof DraftErrors['byRule'][string] | undefined,
+    change: RuleChange,
     update: (rule: DraftRule) => DraftRule
   ) => {
     if (disabled) return
-    setDraft((current) => ({
-      ...current,
-      rules: current.rules.map((rule) => {
-        if (rule.uiKey !== uiKey) return rule
-        const next = update(rule),
-          initial = initialRulesByKey.get(uiKey)
-        if (!initial) return next
-        return {
+    const currentRule = draft.rules.find((rule) => rule.uiKey === uiKey)
+    if (!currentRule) return
+    const next = update(currentRule)
+    const initial = initialRulesByKey.get(uiKey)
+    const changedRule = initial
+      ? {
           ...next,
           isDefault: initial.isDefault,
           aggregationLevelId: initial.aggregationLevelId,
@@ -89,11 +83,18 @@ export function useParameterEditorController({
           functionId: initial.functionId,
           value: initial.isDefault ? next.value : initial.value
         }
-      })
+      : next
+    setDraft((current) => ({
+      ...current,
+      rules: current.rules.map((rule) => (rule.uiKey === uiKey ? changedRule : rule))
     }))
     setErrors((current) => {
       const byRule = { ...current.byRule }
-      delete byRule[uiKey]
+      if (byRule[uiKey]) {
+        const next = clearChangedRuleErrors(byRule[uiKey], change, changedRule)
+        if (Object.keys(next).length) byRule[uiKey] = next
+        else delete byRule[uiKey]
+      }
       return { ...current, byRule }
     })
   }
@@ -131,7 +132,7 @@ export function useParameterEditorController({
           key: item.id!,
           label: before.name + ' — ' + item.label,
           restore: () =>
-            updateRule(after.uiKey, undefined, (rule) => ({
+            updateRule(after.uiKey, { collection: 'ui_rules' }, (rule) => ({
               ...rule,
               uiRules: [
                 ...rule.uiRules.filter((next) => next.key !== item.key),
@@ -145,7 +146,7 @@ export function useParameterEditorController({
           key: item.id!,
           label: before.name + ' — уведомление',
           restore: () =>
-            updateRule(after.uiKey, undefined, (rule) => ({
+            updateRule(after.uiKey, { collection: 'notify_rules' }, (rule) => ({
               ...rule,
               notifications: [...rule.notifications, structuredClone(item)]
             }))

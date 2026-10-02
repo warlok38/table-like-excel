@@ -1,7 +1,7 @@
 'use client'
 import { Alert, Checkbox, Flex, Form, Input, InputNumber, Select } from 'antd'
-import type { DraftRule, RuleErrors } from '../../../model/parameter-rule-draft'
-import type { RuleCatalogs } from '../../../model/parameter-rules'
+import type { DraftRule, RuleChange, RuleErrors } from '../../../model/parameterRuleDraft'
+import type { RuleCatalogs } from '../../../model/parameterRules'
 import styles from './RuleFields.module.css'
 import { ResultFields } from './ResultFields'
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   errors: RuleErrors
   rule: DraftRule
   disabled: boolean
-  onChange(field: keyof RuleErrors | undefined, update: (rule: DraftRule) => DraftRule): void
+  onChange(change: RuleChange, update: (rule: DraftRule) => DraftRule): void
 }
 export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, onChange }: Props) {
   const fieldError = (field: string, fallback?: string) => errors.fields?.[field] ?? fallback
@@ -28,7 +28,7 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
           maxLength={120}
           value={rule.name}
           onChange={(event) =>
-            onChange('name', (current) => ({ ...current, name: event.target.value }))
+            onChange({ field: 'name' }, (current) => ({ ...current, name: event.target.value }))
           }
         />
       </Form.Item>
@@ -40,9 +40,12 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
         <Input
           disabled={disabled}
           maxLength={300}
-          value={rule.description}
+          value={rule.description ?? ''}
           onChange={(event) =>
-            onChange(undefined, (current) => ({ ...current, description: event.target.value }))
+            onChange({ field: 'description' }, (current) => ({
+              ...current,
+              description: event.target.value
+            }))
           }
         />
       </Form.Item>
@@ -76,7 +79,7 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
             value={rule[field]}
             options={options.map((item) => ({ value: item.id, label: item.name }))}
             onChange={(value: string) =>
-              onChange(field, (current) => ({ ...current, [field]: value }))
+              onChange({ field }, (current) => ({ ...current, [field]: value }))
             }
           />
         </Form.Item>
@@ -86,7 +89,10 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
         checked={rule.isDefault}
         disabled={disabled || identityLocked}
         onChange={(event) =>
-          onChange('condition', (current) => ({ ...current, isDefault: event.target.checked }))
+          onChange({ field: 'isDefault' }, (current) => ({
+            ...current,
+            isDefault: event.target.checked
+          }))
         }
       >
         Значение по умолчанию
@@ -112,7 +118,7 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
               value={rule.functionId}
               options={catalogs.functions.map((item) => ({ value: item.id, label: item.name }))}
               onChange={(value: string) =>
-                onChange('condition', (current) => ({ ...current, functionId: value }))
+                onChange({ field: 'functionId' }, (current) => ({ ...current, functionId: value }))
               }
             />
           )}
@@ -122,7 +128,7 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
             disabled={disabled || (identityLocked && !rule.isDefault)}
             value={Number.isFinite(rule.value) ? rule.value : null}
             onChange={(value) =>
-              onChange('value', (current) => ({ ...current, value: value ?? undefined }))
+              onChange({ field: 'value' }, (current) => ({ ...current, value: value ?? undefined }))
             }
           />
         </Flex>

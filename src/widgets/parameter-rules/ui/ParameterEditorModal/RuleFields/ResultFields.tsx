@@ -1,8 +1,8 @@
 'use client'
 import { CloseOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Form, Input, Select } from 'antd'
-import type { DraftRule, RuleErrors } from '../../../model/parameter-rule-draft'
-import type { RuleCatalogs } from '../../../model/parameter-rules'
+import type { DraftRule, RuleChange, RuleErrors } from '../../../model/parameterRuleDraft'
+import type { RuleCatalogs } from '../../../model/parameterRules'
 import styles from './RuleFields.module.css'
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
   rule: DraftRule
   errors: RuleErrors
   disabled: boolean
-  onChange(field: keyof RuleErrors | undefined, update: (rule: DraftRule) => DraftRule): void
+  onChange(change: RuleChange, update: (rule: DraftRule) => DraftRule): void
 }
 export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Props) {
   const available = catalogs.attributes.filter(
@@ -35,7 +35,7 @@ export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Pro
                 placeholder="Введите значение"
                 removeTitle="Удалить свойство"
                 onChange={(value) =>
-                  onChange('result', (current) => ({
+                  onChange({ field: `ui_rules.${index}.value` }, (current) => ({
                     ...current,
                     uiRules: current.uiRules.map((entry, i) =>
                       i === index ? { ...entry, value } : entry
@@ -43,7 +43,7 @@ export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Pro
                   }))
                 }
                 onRemove={() =>
-                  onChange('result', (current) => ({
+                  onChange({ collection: 'ui_rules' }, (current) => ({
                     ...current,
                     uiRules: current.uiRules.filter((_, i) => i !== index)
                   }))
@@ -62,7 +62,7 @@ export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Pro
             options={available.map((item) => ({ value: item.key, label: item.name }))}
             onChange={(key: string) => {
               const attribute = available.find((item) => item.key === key)!
-              onChange('result', (current) => ({
+              onChange({ collection: 'ui_rules' }, (current) => ({
                 ...current,
                 uiRules: [
                   ...current.uiRules,
@@ -90,7 +90,7 @@ export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Pro
                 placeholder="Введите текст уведомления"
                 removeTitle="Удалить уведомление"
                 onChange={(text) =>
-                  onChange('result', (current) => ({
+                  onChange({ field: `notify_rules.${index}.message_template` }, (current) => ({
                     ...current,
                     notifications: current.notifications.map((entry, i) =>
                       i === index ? { ...entry, text } : entry
@@ -98,7 +98,7 @@ export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Pro
                   }))
                 }
                 onRemove={() =>
-                  onChange('result', (current) => ({
+                  onChange({ collection: 'notify_rules' }, (current) => ({
                     ...current,
                     notifications: current.notifications.filter((_, i) => i !== index)
                   }))
@@ -111,7 +111,7 @@ export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Pro
             disabled={disabled}
             icon={<PlusOutlined />}
             onClick={() =>
-              onChange('result', (current) => ({
+              onChange({ collection: 'notify_rules' }, (current) => ({
                 ...current,
                 notifications: [...current.notifications, { text: '', description: '' }]
               }))

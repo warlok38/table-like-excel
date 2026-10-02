@@ -6,8 +6,8 @@ import {
   type RuleCatalogs,
   type UiResult,
   type NotificationResult
-} from './parameter-rules'
-import { findDuplicateRuleIndexes } from './rule-uniqueness'
+} from './parameterRules'
+import { findDuplicateRuleIndexes } from './ruleUniqueness'
 export interface DraftRule extends Omit<
   RuleBase,
   'aggregationLevelId' | 'aggregationRuleId' | 'planTypeId' | 'value'
@@ -41,6 +41,50 @@ export interface DraftErrors {
   parameter?: string
   rules?: string
   byRule: Record<string, RuleErrors>
+}
+export type RuleChange = { field: string } | { collection: 'ui_rules' | 'notify_rules' }
+
+export function clearChangedRuleErrors(
+  errors: RuleErrors,
+  change: RuleChange,
+  nextRule: DraftRule
+): RuleErrors {
+  const fields = { ...errors.fields }
+  const next: RuleErrors = { ...errors, fields }
+  delete next.server
+
+  if ('collection' in change) {
+    for (const key of Object.keys(fields)) {
+      if (key.startsWith(change.collection + '.')) delete fields[key]
+    }
+  } else {
+    const field = change.field
+    delete fields[field]
+    const apiFields: Record<string, string> = {
+      aggregationLevelId: 'aggregation_levels_tech_id',
+      aggregationRuleId: 'aggregation_rules_tech_id',
+      planTypeId: 'plan_types_tech_id',
+      functionId: 'functions_tech_id'
+    }
+    if (apiFields[field]) delete fields[apiFields[field]]
+    if (field in next && field !== 'fields')
+      delete next[field as Exclude<keyof RuleErrors, 'fields'>]
+    if (field === 'functionId' || field === 'isDefault') delete next.condition
+    if (
+      field === 'aggregationLevelId' ||
+      field === 'aggregationRuleId' ||
+      field === 'planTypeId' ||
+      field === 'functionId' ||
+      field === 'isDefault' ||
+      field === 'value'
+    )
+      delete next.duplicate
+  }
+
+  if (nextRule.isDefault || nextRule.uiRules.length || nextRule.notifications.length)
+    delete next.result
+  if (!Object.keys(fields).length) delete next.fields
+  return next
 }
 export const emptyDraftErrors: DraftErrors = { byRule: {} }
 export const createEmptyRule = (uiKey: string): DraftRule => ({

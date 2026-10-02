@@ -4,14 +4,17 @@ import { EditOutlined } from '@ant-design/icons'
 import { Button, Empty, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 
-import { formatRulesLabel } from '../../../lib/parameter-rules-format'
-import type { ParameterConfiguration, ParameterRow } from '../../../model/parameter-rules'
+import type { ParameterRow } from '../../../model/parameterRules'
+
+function formatRulesLabel(count: number): string {
+  return 'Правила: ' + count
+}
 
 type ParametersTableProps = {
   rows: ParameterRow[]
   isLoading: boolean
   isInteractionDisabled: boolean
-  onEdit(configuration: ParameterConfiguration): void
+  onEdit(parameterId: string): void
 }
 
 export function ParametersTable({
@@ -40,7 +43,7 @@ export function ParametersTable({
           <Button
             disabled={isInteractionDisabled}
             icon={<EditOutlined />}
-            onClick={() => onEdit(row.configuration)}
+            onClick={() => onEdit(row.id)}
           />
         </Tooltip>
       )

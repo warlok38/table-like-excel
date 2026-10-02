@@ -1,6 +1,6 @@
 import type { RulesApiError } from '../api/contracts'
-import type { DraftErrors } from './parameter-rule-draft'
-import type { SaveOperation } from './save-operations'
+import type { DraftErrors } from './parameterRuleDraft'
+import type { SaveOperation } from './saveOperations'
 export function toRulesError(error: unknown): RulesApiError {
   if (error && typeof error === 'object' && 'message' in error) {
     const value = error as RulesApiError

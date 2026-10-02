@@ -2,11 +2,11 @@
 
 import { Modal, Select } from 'antd'
 
-import type { ParameterCatalogItem, ParameterConfiguration } from '../model/parameter-rules'
+import type { ParameterCatalogItem, ParameterRow } from '../model/parameterRules'
 
 interface ParameterSelectionModalProps {
   catalog: ParameterCatalogItem[]
-  configurations: ParameterConfiguration[]
+  rows: ParameterRow[]
   disabled: boolean
   onSelect(parameterId: string): void
   onClose(): void
@@ -14,7 +14,7 @@ interface ParameterSelectionModalProps {
 
 export function ParameterSelectionModal({
   catalog,
-  configurations,
+  rows,
   disabled,
   onSelect,
   onClose
@@ -30,8 +30,7 @@ export function ParameterSelectionModal({
           (option?.searchName ?? '').toLocaleLowerCase().includes(input.toLocaleLowerCase())
         }
         options={catalog.map((parameter) => {
-          const count =
-            configurations.find((item) => item.parameterId === parameter.id)?.rules.length ?? 0
+          const count = rows.find((item) => item.id === parameter.id)?.rulesCount ?? 0
           return {
             value: parameter.id,
             searchName: parameter.name,

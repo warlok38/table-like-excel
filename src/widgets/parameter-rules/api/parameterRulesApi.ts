@@ -7,7 +7,7 @@ import type {
   DeleteRulesBody,
   RulesApiError
 } from './contracts'
-import { parameterRulesMockService as service } from './mock/parameter-rules-service'
+import { parameterRulesMockService as service } from './mock/parameterRulesService'
 export const parameterRulesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getRuleCatalogs: builder.query<CatalogsDto, string>({

@@ -1,25 +1,26 @@
 'use client'
 import { DeleteOutlined } from '@ant-design/icons'
 import { Alert, App, Button, Flex, Modal, Typography } from 'antd'
-import { useParameterEditorController } from '../../model/use-parameter-editor-controller'
+import { useParameterEditorController } from '../../model/useParameterEditorController'
 import type {
   RuleCatalogs,
   ParameterCatalogItem,
-  ParameterConfiguration,
-  ParameterRulesSnapshot
-} from '../../model/parameter-rules'
+  ParameterConfiguration
+} from '../../model/parameterRules'
 import { ParameterEditorForm } from './ParameterEditorForm'
 import styles from './ParameterEditorModal.module.css'
 interface Props {
   ruleCatalogs: RuleCatalogs
   catalog: ParameterCatalogItem[]
   parameterId: string
+  journalId: string
+  author: string
   onBack?: () => void
   configuration?: ParameterConfiguration
   open: boolean
   isInteractionDisabled: boolean
   onClose(): void
-  reload(): Promise<ParameterRulesSnapshot>
+  reload(): Promise<ParameterConfiguration>
   onSaved(): void
 }
 const editorFormId = 'parameter-editor-form'
@@ -27,6 +28,8 @@ export function ParameterEditorModal({
   ruleCatalogs,
   catalog,
   parameterId,
+  journalId,
+  author,
   onBack,
   configuration,
   open,
@@ -38,9 +41,10 @@ export function ParameterEditorModal({
   const { modal } = App.useApp()
   const controller = useParameterEditorController({
     parameterId,
+    journalId,
+    author,
     configuration,
     ruleCatalogs,
-    open,
     isInteractionDisabled,
     reload,
     onSaved

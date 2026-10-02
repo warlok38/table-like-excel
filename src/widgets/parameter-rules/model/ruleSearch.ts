@@ -1,5 +1,5 @@
-import type { DraftRule } from './parameter-rule-draft'
-import type { RuleCatalogs } from './parameter-rules'
+import type { DraftRule } from './parameterRuleDraft'
+import type { RuleCatalogs } from './parameterRules'
 
 export function matchesRuleSearch(rule: DraftRule, catalogs: RuleCatalogs, query: string): boolean {
   const words = query.trim().toLocaleLowerCase('ru').split(/\s+/).filter(Boolean)

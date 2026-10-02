@@ -5,8 +5,8 @@ import type {
   UiInput,
   NotifyInput
 } from '../api/contracts'
-import type { EditorDraft } from './parameter-rule-draft'
-import type { UiResult, NotificationResult } from './parameter-rules'
+import type { EditorDraft } from './parameterRuleDraft'
+import type { UiResult, NotificationResult } from './parameterRules'
 
 export type SourceMap = Record<string, { uiKey: string; field?: string }>
 export type SaveOperation = { sources: SourceMap } & (
@@ -29,14 +29,14 @@ export function buildSaveOperations(
     ...context,
     name: item.name,
     attr_key: item.key,
-    description: item.description,
+    description: item.description ?? '',
     interface_name: item.label,
     value: item.value.trim()
   })
   const notify = (item: NotificationResult): NotifyInput => ({
     ...context,
     message_template: item.text.trim(),
-    description: item.description,
+    description: item.description ?? '',
     ...(item.channel !== undefined ? { channel_type: item.channel } : {}),
     ...(item.recipients !== undefined ? { reciepient: item.recipients } : {})
   })

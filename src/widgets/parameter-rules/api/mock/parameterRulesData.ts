@@ -61,24 +61,21 @@ export const catalogsMock: CatalogsDto = {
       name: 'Background-color',
       description: null,
       attr_key: { key: 'Background-color' },
-      interface_name: 'Цвет фона',
-      is_active: true
+      interface_name: 'Цвет фона'
     },
     {
       ui_attributes_tech_id: 'e281db77-1b1d-4f5c-8409-bde851506b35',
       name: 'Color',
       description: 'Демонстрационное свойство',
       attr_key: { key: 'Color' },
-      interface_name: 'Цвет текста',
-      is_active: true
+      interface_name: 'Цвет текста'
     },
     {
       ui_attributes_tech_id: 'e281db77-1b1d-4f5c-8409-bde851506b36',
       name: 'Font-weight',
       description: 'Демонстрационное свойство',
       attr_key: { key: 'Font-weight' },
-      interface_name: 'Начертание',
-      is_active: true
+      interface_name: 'Начертание'
     }
   ],
   ui_rules: [
@@ -91,8 +88,7 @@ export const catalogsMock: CatalogsDto = {
       description: '',
       attr_key: 'Background-color',
       interface_name: 'Цвет фона',
-      value: 'red',
-      is_active: true
+      value: 'red'
     }
   ],
   notify_rules: [
@@ -104,8 +100,7 @@ export const catalogsMock: CatalogsDto = {
       description: '',
       message_template: 'Температура выше нормы',
       channel_type: 'email',
-      reciepient: ['operator@example.test'],
-      is_active: true
+      reciepient: ['operator@example.test']
     }
   ],
   scales: [],
@@ -132,8 +127,7 @@ export const parametersMock: ParameterDto[] = [
         created_by: 'dev_user',
         scales_tech_id: null,
         prev_rules_tech_id: null,
-        version: 1,
-        is_active: true
+        version: 1
       },
       {
         rules_tech_id: 'c66208a7-52d0-4df9-9a44-7bd36a16493d',
@@ -150,8 +144,7 @@ export const parametersMock: ParameterDto[] = [
         created_by: 'dev_user',
         scales_tech_id: null,
         prev_rules_tech_id: null,
-        version: 1,
-        is_active: true
+        version: 1
       }
     ]
   }

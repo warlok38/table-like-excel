@@ -3,7 +3,7 @@
 import { PlusOutlined } from '@ant-design/icons'
 import { Alert, Button, Typography } from 'antd'
 
-import type { ParameterConfiguration, ParameterRow } from '../../model/parameter-rules'
+import type { ParameterRow } from '../../model/parameterRules'
 import { ParametersTable } from './ParametersTable'
 import styles from './RulesWorkspace.module.css'
 
@@ -16,7 +16,7 @@ type RulesWorkspaceProps = {
   canCreate: boolean
   isInteractionDisabled: boolean
   onCreate(): void
-  onEdit(configuration: ParameterConfiguration): void
+  onEdit(parameterId: string): void
   onRetry(): void
 }
 
