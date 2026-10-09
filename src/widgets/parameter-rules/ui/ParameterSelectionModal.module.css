@@ -1,0 +1,70 @@
+.dropdown :global(.ant-select-item-option-content) {
+  white-space: normal;
+}
+
+.dropdown :global(.ant-select-item-option) {
+  padding-block: 8px;
+}
+
+.option {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  line-height: 1.35;
+  min-width: 0;
+}
+
+.name {
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count {
+  flex: none;
+  color: #667085;
+  font-size: 12px;
+}
+
+.countValue {
+  font-weight: 600;
+}
+
+.details {
+  display: flex;
+  gap: 0.5rem;
+  min-width: 0;
+  overflow: hidden;
+  color: #667085;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.detail {
+  display: flex;
+  flex: 0 1 auto;
+  min-width: 2.5rem;
+}
+
+.detail + .detail::before {
+  content: '|';
+  flex: none;
+  transform: translateX(-0.25rem);
+}
+
+.detailValue {
+  min-width: 2.5rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

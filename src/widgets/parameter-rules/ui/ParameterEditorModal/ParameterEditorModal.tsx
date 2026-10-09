@@ -41,6 +41,7 @@ export function ParameterEditorModal({
   const { modal } = App.useApp()
   const controller = useParameterEditorController({
     parameterId,
+    parameter: catalog.find((item) => item.id === parameterId),
     journalId,
     author,
     configuration,
@@ -125,7 +126,8 @@ export function ParameterEditorModal({
       width={880}
       title={
         <Typography.Title level={4}>
-          Правила параметра «{parameter?.name ?? parameterId}»
+          Правила параметра «{parameter?.name ?? parameterId}» ·{' '}
+          {parameter?.aggregationLevel?.name ?? 'Уровень не задан'}
         </Typography.Title>
       }
       onCancel={() => requestLeave(onClose)}
@@ -163,6 +165,7 @@ export function ParameterEditorModal({
       )}
       <ParameterEditorForm
         ruleCatalogs={ruleCatalogs}
+        parameter={parameter}
         configuration={configuration}
         controller={controller}
         formId={editorFormId}

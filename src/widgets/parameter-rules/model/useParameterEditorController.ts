@@ -11,10 +11,11 @@ import {
   type RuleChange,
   type EditorDraft
 } from './parameterRuleDraft'
-import type { ParameterConfiguration, RuleCatalogs } from './parameterRules'
+import type { ParameterCatalogItem, ParameterConfiguration, RuleCatalogs } from './parameterRules'
 import { useRulesSaveSession, type SaveResolution } from './useRulesSaveSession'
 interface Options {
   parameterId: string
+  parameter?: ParameterCatalogItem
   journalId: string
   author: string
   ruleCatalogs: RuleCatalogs
@@ -27,6 +28,7 @@ export type ParameterEditorValidationTarget =
   { type: 'parameter' } | { type: 'rules' } | { type: 'rule'; uiKey: string }
 export function useParameterEditorController({
   parameterId,
+  parameter,
   journalId,
   author,
   configuration,
@@ -38,7 +40,7 @@ export function useParameterEditorController({
   const [draft, setDraft] = useState<EditorDraft>(() =>
     configuration
       ? makeEditorDraft(configuration)
-      : { parameterId, rules: [createEmptyRule('first-new')] }
+      : { parameterId, rules: [createEmptyRule('first-new', parameter)] }
   )
   const [initialDraft, setInitialDraft] = useState<EditorDraft>(() =>
     configuration ? makeEditorDraft(configuration) : { parameterId, rules: [] }
@@ -101,7 +103,10 @@ export function useParameterEditorController({
   const addRule = () => {
     if (disabled) return
     const uiKey = 'new-' + nextKey.current++
-    setDraft((current) => ({ ...current, rules: [createEmptyRule(uiKey), ...current.rules] }))
+    setDraft((current) => ({
+      ...current,
+      rules: [createEmptyRule(uiKey, parameter), ...current.rules]
+    }))
     return uiKey
   }
   const removeRule = (uiKey: string) => {
@@ -155,9 +160,10 @@ export function useParameterEditorController({
   })
   const validateAndSave = async (): Promise<ParameterEditorValidationTarget | undefined> => {
     if (disabled || !isDirty) return
-    const next = validateEditorDraft(draft, ruleCatalogs)
+    const next = validateEditorDraft(draft, ruleCatalogs, parameter)
     setErrors(next)
     if (next.parameter) return { type: 'parameter' }
+    if (next.rules) return { type: 'rules' }
     const invalid = draft.rules.find((rule) => next.byRule[rule.uiKey])
     if (invalid) return { type: 'rule', uiKey: invalid.uiKey }
     // Normalize saved strings without dropping local UI keys.

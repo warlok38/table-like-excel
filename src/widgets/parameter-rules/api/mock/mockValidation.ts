@@ -17,15 +17,16 @@ export function validateRule(
 ) {
   if (!rule.name.trim()) rejectMock('Введите название правила', [...loc, 'name'])
   if (!Number.isFinite(rule.value)) rejectMock('Укажите число', [...loc, 'value'])
+  const parameter = catalogs.parameters.find((item) => item.tech_id === rule.parameters_tech_id)
+  if (!parameter) rejectMock('Неизвестный параметр', [...loc, 'parameters_tech_id'])
   const fields = [
-    ['parameters_tech_id', catalogs.parameters],
-    ['aggregation_levels_tech_id', catalogs.aggregation_levels],
-    ['aggregation_rules_tech_id', catalogs.aggregation_rules],
-    ['plan_types_tech_id', catalogs.plan_types]
+    ['aggregation_levels_tech_id', parameter.aggregation_level],
+    ['aggregation_rules_tech_id', parameter.aggregation_rule],
+    ['plan_types_tech_id', parameter.plan_type]
   ] as const
-  fields.forEach(([key, items]) => {
-    if (!items.some((item) => item.tech_id === rule[key]))
-      rejectMock('Неизвестное значение справочника', [...loc, key])
+  fields.forEach(([key, item]) => {
+    if (!item?.tech_id || item.tech_id !== rule[key])
+      rejectMock('Агрегации правила не соответствуют параметру', [...loc, key])
   })
   if (
     !rule.is_default &&

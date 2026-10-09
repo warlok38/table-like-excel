@@ -40,7 +40,7 @@ function addUi(draft: State, ruleId: string, input: UiInput, loc: (string | numb
   )
     rejectMock('Неверная связь оформления', loc)
   if (!input.value.trim()) rejectMock('Введите значение свойства', [...loc, 'value'])
-  if (!draft.catalogs.ui_attributes.some((item) => item.attr_key.key === input.attr_key))
+  if (!draft.catalogs.ui_attributes.some((item) => item.attr_key === input.attr_key))
     rejectMock('Неизвестное свойство', [...loc, 'attr_key'])
   if (
     draft.catalogs.ui_rules.some(
@@ -51,7 +51,8 @@ function addUi(draft: State, ruleId: string, input: UiInput, loc: (string | numb
   draft.catalogs.ui_rules.push({
     ...input,
     rules_tech_id: ruleId,
-    ui_rules_tech_id: takeId(draft)
+    ui_rules_tech_id: takeId(draft),
+    is_active: true
   })
 }
 function addNotify(draft: State, ruleId: string, input: NotifyInput, loc: (string | number)[]) {
@@ -66,7 +67,8 @@ function addNotify(draft: State, ruleId: string, input: NotifyInput, loc: (strin
   draft.catalogs.notify_rules.push({
     ...input,
     rules_tech_id: ruleId,
-    rule_notification_tech_id: takeId(draft)
+    rule_notification_tech_id: takeId(draft),
+    is_active: true
   })
 }
 export const parameterRulesMockService = {

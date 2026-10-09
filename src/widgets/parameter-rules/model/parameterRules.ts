@@ -32,16 +32,10 @@ export interface FormattingRule extends RuleBase {
   notifications: NotificationResult[]
 }
 export interface RuleCatalogs {
-  aggregationLevels: { id: string; name: string }[]
-  aggregationRules: { id: string; name: string }[]
-  planTypes: { id: string; name: string }[]
   functions: { id: string; name: string }[]
   attributes: { id: string; key: string; name: string }[]
 }
 export const emptyRuleCatalogs: RuleCatalogs = {
-  aggregationLevels: [],
-  aggregationRules: [],
-  planTypes: [],
   functions: [],
   attributes: []
 }
@@ -49,6 +43,10 @@ export interface ParameterCatalogItem {
   id: string
   name: string
   description: string | null
+  shift?: { id: string; name: string }
+  planType?: { id: string; name: string }
+  aggregationLevel?: { id: string; name: string }
+  aggregationRule?: { id: string; name: string }
 }
 export interface ParameterConfiguration {
   parameterId: string

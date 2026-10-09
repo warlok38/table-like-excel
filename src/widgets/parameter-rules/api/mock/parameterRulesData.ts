@@ -7,30 +7,78 @@ export const catalogsMock: CatalogsDto = {
     {
       tech_id: '0c44602f-a780-4092-8dfd-a670723df782',
       name: 'Температура подшипника',
-      description: 'Температура опорного подшипника оборудования'
+      description: 'Температура опорного подшипника оборудования',
+      shift: {
+        tech_id: 'dd409cd1-8858-4adc-909a-014f87724112',
+        name: 'Дневная смена',
+        description: null
+      },
+      plan_type: {
+        tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d67',
+        name: 'Факт',
+        description: null
+      },
+      aggregation_level: {
+        tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
+        name: 'Сутки',
+        description: null
+      },
+      aggregation_rule: {
+        tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1',
+        name: 'Среднее',
+        description: null
+      }
     },
     {
       tech_id: 'dc04d741-99e6-4258-b270-c24f20eceee4',
       name: 'Вибрация двигателя',
-      description: 'Среднеквадратичное значение вибрации'
+      description: 'Среднеквадратичное значение вибрации',
+      shift: {
+        tech_id: 'dd409cd1-8858-4adc-909a-014f87724112',
+        name: 'Дневная смена',
+        description: null
+      },
+      plan_type: {
+        tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d68',
+        name: 'План',
+        description: null
+      },
+      aggregation_level: {
+        tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3f',
+        name: 'Месяц',
+        description: null
+      },
+      aggregation_rule: {
+        tech_id: 'f6f1d7d1-f532-4308-9aa8-34c06616cca8',
+        name: 'Сумма',
+        description: null
+      }
     },
     {
       tech_id: 'aca72554-bc0b-4853-9d0a-d43e2861ce11',
       name: 'Давление в системе',
-      description: null
+      description: null,
+      shift: {
+        tech_id: 'dd409cd1-8858-4adc-909a-014f87724112',
+        name: 'Дневная смена',
+        description: null
+      },
+      plan_type: {
+        tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d67',
+        name: 'Факт',
+        description: null
+      },
+      aggregation_level: {
+        tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
+        name: 'Сутки',
+        description: null
+      },
+      aggregation_rule: {
+        tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1',
+        name: 'Среднее',
+        description: null
+      }
     }
-  ],
-  aggregation_levels: [
-    { tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e', name: 'Сутки', description: null },
-    { tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3f', name: 'Месяц', description: null }
-  ],
-  aggregation_rules: [
-    { tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1', name: 'Среднее', description: null },
-    { tech_id: 'f6f1d7d1-f532-4308-9aa8-34c06616cca8', name: 'Сумма', description: null }
-  ],
-  plan_types: [
-    { tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d67', name: 'Факт', description: null },
-    { tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d68', name: 'План', description: null }
   ],
   functions: [
     {
@@ -60,22 +108,25 @@ export const catalogsMock: CatalogsDto = {
       ui_attributes_tech_id: 'e281db77-1b1d-4f5c-8409-bde851506b34',
       name: 'Background-color',
       description: null,
-      attr_key: { key: 'Background-color' },
-      interface_name: 'Цвет фона'
+      attr_key: 'Background-color',
+      interface_name: 'Цвет фона',
+      is_active: true
     },
     {
       ui_attributes_tech_id: 'e281db77-1b1d-4f5c-8409-bde851506b35',
       name: 'Color',
       description: 'Демонстрационное свойство',
-      attr_key: { key: 'Color' },
-      interface_name: 'Цвет текста'
+      attr_key: 'Color',
+      interface_name: 'Цвет текста',
+      is_active: true
     },
     {
       ui_attributes_tech_id: 'e281db77-1b1d-4f5c-8409-bde851506b36',
       name: 'Font-weight',
       description: 'Демонстрационное свойство',
-      attr_key: { key: 'Font-weight' },
-      interface_name: 'Начертание'
+      attr_key: 'Font-weight',
+      interface_name: 'Начертание',
+      is_active: true
     }
   ],
   ui_rules: [
@@ -88,7 +139,8 @@ export const catalogsMock: CatalogsDto = {
       description: '',
       attr_key: 'Background-color',
       interface_name: 'Цвет фона',
-      value: 'red'
+      value: 'red',
+      is_active: true
     }
   ],
   notify_rules: [
@@ -100,7 +152,8 @@ export const catalogsMock: CatalogsDto = {
       description: '',
       message_template: 'Температура выше нормы',
       channel_type: 'email',
-      reciepient: ['operator@example.test']
+      reciepient: ['operator@example.test'],
+      is_active: true
     }
   ],
   scales: [],

@@ -7,8 +7,9 @@ export interface UiAttributeDto {
   ui_attributes_tech_id: string
   name: string
   description: string | null
-  attr_key: { key: string }
+  attr_key: string
   interface_name: string
+  is_active?: boolean
 }
 export interface UiInput {
   parameters_tech_id: string
@@ -31,11 +32,13 @@ export interface UiRuleDto extends Omit<UiInput, 'description'> {
   ui_rules_tech_id: string
   rules_tech_id: string
   description: string | null
+  is_active?: boolean
 }
 export interface NotifyRuleDto extends Omit<NotifyInput, 'description'> {
   rule_notification_tech_id: string
   rules_tech_id: string
   description: string | null
+  is_active?: boolean
 }
 export interface RuleInput {
   name: string
@@ -64,11 +67,14 @@ export interface ParameterDto {
   description: string | null
   rules: RuleDto[]
 }
+export interface CatalogParameterDto extends CatalogItemDto {
+  shift?: CatalogItemDto | null
+  plan_type?: CatalogItemDto | null
+  aggregation_level?: CatalogItemDto | null
+  aggregation_rule?: CatalogItemDto | null
+}
 export interface CatalogsDto {
-  aggregation_levels: CatalogItemDto[]
-  aggregation_rules: CatalogItemDto[]
-  plan_types: CatalogItemDto[]
-  parameters: CatalogItemDto[]
+  parameters: CatalogParameterDto[]
   ui_rules: UiRuleDto[]
   notify_rules: NotifyRuleDto[]
   ui_attributes: UiAttributeDto[]

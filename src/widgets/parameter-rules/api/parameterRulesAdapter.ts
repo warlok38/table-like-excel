@@ -16,28 +16,28 @@ export function toParameterRows(parameters: ParameterDto[]): ParameterRow[] {
 }
 
 export function toParameterCatalog(catalogs: CatalogsDto): ParameterCatalogItem[] {
+  const option = (item?: { tech_id: string; name: string } | null) =>
+    item ? { id: item.tech_id, name: item.name } : undefined
   return catalogs.parameters.map((item) => ({
     id: item.tech_id,
     name: item.name,
-    description: item.description
+    description: item.description,
+    shift: option(item.shift),
+    planType: option(item.plan_type),
+    aggregationLevel: option(item.aggregation_level),
+    aggregationRule: option(item.aggregation_rule)
   }))
 }
 
 export function toRuleCatalogs(catalogs: CatalogsDto): RuleCatalogs {
-  const options = (items: CatalogsDto['parameters']) =>
-    items.map((item) => ({ id: item.tech_id, name: item.name }))
-
   return {
-    aggregationLevels: options(catalogs.aggregation_levels),
-    aggregationRules: options(catalogs.aggregation_rules),
-    planTypes: options(catalogs.plan_types),
     functions: catalogs.functions.map((item) => ({
       id: item.functions_tech_id,
       name: item.name
     })),
     attributes: catalogs.ui_attributes.map((item) => ({
       id: item.ui_attributes_tech_id,
-      key: item.attr_key.key,
+      key: item.attr_key,
       name: item.interface_name
     }))
   }

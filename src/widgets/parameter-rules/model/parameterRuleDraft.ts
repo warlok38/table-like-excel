@@ -4,6 +4,7 @@ import {
   type ParameterConfiguration,
   type RuleBase,
   type RuleCatalogs,
+  type ParameterCatalogItem,
   type UiResult,
   type NotificationResult
 } from './parameterRules'
@@ -26,9 +27,6 @@ export interface EditorDraft {
   rules: DraftRule[]
 }
 export interface RuleErrors {
-  aggregationLevelId?: string
-  aggregationRuleId?: string
-  planTypeId?: string
   value?: string
   duplicate?: string
   name?: string
@@ -61,24 +59,13 @@ export function clearChangedRuleErrors(
     const field = change.field
     delete fields[field]
     const apiFields: Record<string, string> = {
-      aggregationLevelId: 'aggregation_levels_tech_id',
-      aggregationRuleId: 'aggregation_rules_tech_id',
-      planTypeId: 'plan_types_tech_id',
       functionId: 'functions_tech_id'
     }
     if (apiFields[field]) delete fields[apiFields[field]]
     if (field in next && field !== 'fields')
       delete next[field as Exclude<keyof RuleErrors, 'fields'>]
     if (field === 'functionId' || field === 'isDefault') delete next.condition
-    if (
-      field === 'aggregationLevelId' ||
-      field === 'aggregationRuleId' ||
-      field === 'planTypeId' ||
-      field === 'functionId' ||
-      field === 'isDefault' ||
-      field === 'value'
-    )
-      delete next.duplicate
+    if (field === 'functionId' || field === 'isDefault' || field === 'value') delete next.duplicate
   }
 
   if (nextRule.isDefault || nextRule.uiRules.length || nextRule.notifications.length)
@@ -87,10 +74,13 @@ export function clearChangedRuleErrors(
   return next
 }
 export const emptyDraftErrors: DraftErrors = { byRule: {} }
-export const createEmptyRule = (uiKey: string): DraftRule => ({
+export const createEmptyRule = (uiKey: string, parameter?: ParameterCatalogItem): DraftRule => ({
   uiKey,
   name: '',
   description: '',
+  aggregationLevelId: parameter?.aggregationLevel?.id,
+  aggregationRuleId: parameter?.aggregationRule?.id,
+  planTypeId: parameter?.planType?.id,
   isDefault: false,
   uiRules: [],
   notifications: []
@@ -122,11 +112,15 @@ export const isDraftRuleChanged = (rule: DraftRule, initialRule?: DraftRule): bo
   const { uiKey: _b, ...b } = initialRule
   return JSON.stringify(a) !== JSON.stringify(b)
 }
-export const getDraftRuleSummary = (rule: DraftRule, catalogs: RuleCatalogs) => {
+export const getDraftRuleSummary = (
+  rule: DraftRule,
+  catalogs: RuleCatalogs,
+  parameter?: ParameterCatalogItem
+) => {
   const context = [
-    catalogs.aggregationLevels.find((item) => item.id === rule.aggregationLevelId)?.name,
-    catalogs.aggregationRules.find((item) => item.id === rule.aggregationRuleId)?.name,
-    catalogs.planTypes.find((item) => item.id === rule.planTypeId)?.name
+    parameter?.aggregationLevel?.name,
+    parameter?.aggregationRule?.name,
+    parameter?.planType?.name
   ]
     .filter(Boolean)
     .join(' / ')
@@ -135,20 +129,22 @@ export const getDraftRuleSummary = (rule: DraftRule, catalogs: RuleCatalogs) => 
     : 'Условие не задано'
   return [context, summary].filter(Boolean).join(' · ')
 }
-export const validateEditorDraft = (draft: EditorDraft, catalogs: RuleCatalogs): DraftErrors => {
+export const validateEditorDraft = (
+  draft: EditorDraft,
+  catalogs: RuleCatalogs,
+  parameter?: ParameterCatalogItem
+): DraftErrors => {
   const errors: DraftErrors = { byRule: {} }
   if (!draft.parameterId) errors.parameter = 'Выберите параметр'
+  if (
+    draft.rules.some((rule) => !rule.id) &&
+    (!parameter?.aggregationLevel?.id || !parameter.aggregationRule?.id || !parameter.planType?.id)
+  )
+    errors.rules =
+      'Для параметра не заданы уровень агрегации, правило агрегации или тип плана. Сохранение нового правила недоступно.'
   const duplicates = findDuplicateRuleIndexes(draft.parameterId, draft.rules)
   draft.rules.forEach((rule, index) => {
     const next: RuleErrors = {}
-    for (const [field, items] of [
-      ['aggregationLevelId', catalogs.aggregationLevels],
-      ['aggregationRuleId', catalogs.aggregationRules],
-      ['planTypeId', catalogs.planTypes]
-    ] as const) {
-      if (!rule.id && !items.some((item) => item.id === rule[field]))
-        next[field] = 'Выберите значение'
-    }
     if (duplicates.has(index))
       next.duplicate = 'Правило с таким сочетанием агрегаций и условием уже существует'
     if (!Number.isFinite(rule.value)) next.value = 'Укажите число'

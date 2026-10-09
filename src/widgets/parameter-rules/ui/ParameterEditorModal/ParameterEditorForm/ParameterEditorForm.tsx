@@ -8,12 +8,17 @@ import cn from 'classnames'
 import type { ParameterEditorController } from '../../../model/useParameterEditorController'
 import { matchesRuleSearch } from '../../../model/ruleSearch'
 import { getDraftRuleSummary, isDraftRuleChanged } from '../../../model/parameterRuleDraft'
-import type { RuleCatalogs, ParameterConfiguration } from '../../../model/parameterRules'
+import type {
+  RuleCatalogs,
+  ParameterCatalogItem,
+  ParameterConfiguration
+} from '../../../model/parameterRules'
 import { RuleFields } from '../RuleFields'
 import styles from './ParameterEditorForm.module.css'
 
 interface ParameterEditorFormProps {
   ruleCatalogs: RuleCatalogs
+  parameter?: ParameterCatalogItem
   configuration?: ParameterConfiguration
   controller: ParameterEditorController
   formId: string
@@ -23,6 +28,7 @@ interface ParameterEditorFormProps {
 
 export function ParameterEditorForm({
   ruleCatalogs,
+  parameter,
   configuration,
   controller,
   formId,
@@ -36,11 +42,7 @@ export function ParameterEditorForm({
   const [activeRuleKeys, setActiveRuleKeys] = useState<string[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const visibleRules = controller.draft.rules.filter((rule) =>
-    matchesRuleSearch(
-      controller.initialRulesByKey.get(rule.uiKey) ?? rule,
-      ruleCatalogs,
-      searchQuery
-    )
+    matchesRuleSearch(controller.initialRulesByKey.get(rule.uiKey) ?? rule, parameter, searchQuery)
   )
   const visibleRuleKeys = new Set(visibleRules.map((rule) => rule.uiKey))
 
@@ -173,7 +175,7 @@ export function ParameterEditorForm({
               <strong>{headingRule.name.trim() || 'Новое правило'}</strong>
               {ruleChanged && <span className={styles.ruleChangeIndicator}>Изменено</span>}
             </span>
-            <span>{getDraftRuleSummary(headingRule, ruleCatalogs)}</span>
+            <span>{getDraftRuleSummary(headingRule, ruleCatalogs, parameter)}</span>
           </span>
         </div>
       ),

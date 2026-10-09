@@ -49,41 +49,6 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
           }
         />
       </Form.Item>
-      {(
-        [
-          [
-            'aggregationLevelId',
-            'Уровень агрегации',
-            catalogs.aggregationLevels,
-            'aggregation_levels_tech_id'
-          ],
-          [
-            'aggregationRuleId',
-            'Правило агрегации',
-            catalogs.aggregationRules,
-            'aggregation_rules_tech_id'
-          ],
-          ['planTypeId', 'Тип плана', catalogs.planTypes, 'plan_types_tech_id']
-        ] as const
-      ).map(([field, label, options, apiField]) => (
-        <Form.Item
-          key={field}
-          label={label}
-          required
-          help={fieldError(apiField, errors[field])}
-          validateStatus={fieldError(apiField, errors[field]) ? 'error' : undefined}
-        >
-          <Select
-            disabled={disabled || identityLocked}
-            placeholder={label}
-            value={rule[field]}
-            options={options.map((item) => ({ value: item.id, label: item.name }))}
-            onChange={(value: string) =>
-              onChange({ field }, (current) => ({ ...current, [field]: value }))
-            }
-          />
-        </Form.Item>
-      ))}
       {errors.duplicate && <Alert type="error" title={errors.duplicate} />}
       <Checkbox
         checked={rule.isDefault}
