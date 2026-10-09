@@ -28,10 +28,7 @@ export function validateRule(
     if (!item?.tech_id || item.tech_id !== rule[key])
       rejectMock('Агрегации правила не соответствуют параметру', [...loc, key])
   })
-  if (
-    !rule.is_default &&
-    !catalogs.functions.some((item) => item.functions_tech_id === rule.functions_tech_id)
-  )
+  if (!catalogs.functions.some((item) => item.functions_tech_id === rule.functions_tech_id))
     rejectMock('Выберите функцию', [...loc, 'functions_tech_id'])
   const duplicate = parameters
     .flatMap((item) => item.rules)
@@ -43,9 +40,8 @@ export function validateRule(
         item.aggregation_levels_tech_id === rule.aggregation_levels_tech_id &&
         item.aggregation_rules_tech_id === rule.aggregation_rules_tech_id &&
         item.plan_types_tech_id === rule.plan_types_tech_id &&
-        item.is_default === rule.is_default &&
-        (rule.is_default ||
-          (item.functions_tech_id === rule.functions_tech_id && Number(item.value) === rule.value))
+        item.functions_tech_id === rule.functions_tech_id &&
+        Number(item.value) === rule.value
     )
   if (duplicate) rejectMock('Правило с таким условием уже существует', loc)
 }

@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Collapse, Form, Input, Tooltip, type CollapseProps } from 'antd'
+import { Button, Collapse, Form, Input, InputNumber, Tooltip, type CollapseProps } from 'antd'
 import cn from 'classnames'
 
 import type { ParameterEditorController } from '../../../model/useParameterEditorController'
@@ -49,7 +49,7 @@ export function ParameterEditorForm({
   useEffect(() => {
     if (!open) return
     setSearchQuery('')
-    setActiveRuleKeys(configuration ? [] : ['first-new'])
+    setActiveRuleKeys([])
   }, [configuration, open])
 
   const scrollTargetIntoBody = (target: HTMLElement) => {
@@ -219,6 +219,16 @@ export function ParameterEditorForm({
   return (
     <div ref={editorBodyRef} className={styles.editorBody}>
       <Form className={styles.editorForm} id={formId} layout="vertical" onFinish={handleSave}>
+        <Form.Item label="Значение по умолчанию">
+          <InputNumber
+            className={styles.defaultValue}
+            controls={false}
+            disabled={isInteractionDisabled}
+            placeholder="Не задано"
+            value={controller.draft.defaultValue}
+            onChange={controller.updateDefaultValue}
+          />
+        </Form.Item>
         <div
           className={cn(styles.rulesHeader, {
             [styles.rulesHeaderEmpty]: !controller.hasRules

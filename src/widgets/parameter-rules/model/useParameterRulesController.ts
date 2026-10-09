@@ -50,7 +50,9 @@ export function useParameterRulesController(notifier: Notifier, journalId: strin
     parameterData: ParameterDto[]
   ) => {
     const parameter = parameterData.find((item) => item.parameters_tech_id === parameterId)
-    return parameter ? toParameterConfiguration(parameter, catalogData) : { parameterId, rules: [] }
+    return parameter
+      ? toParameterConfiguration(parameter, catalogData)
+      : { parameterId, defaultValue: null, rules: [] }
   }
   const reloadConfiguration = async (parameterId: string) => {
     const [catalogData, parameterData] = await reload()

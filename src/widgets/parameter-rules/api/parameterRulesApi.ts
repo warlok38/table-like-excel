@@ -5,6 +5,7 @@ import type {
   CreateRulesBody,
   UpdateRulesBody,
   DeleteRulesBody,
+  UpdateDefaultValueBody,
   RulesApiError
 } from './contracts'
 import { parameterRulesMockService as service } from './mock/parameterRulesService'
@@ -24,6 +25,12 @@ export const parameterRulesApi = baseApi.injectEndpoints({
     updateRules: builder.mutation<null, { journalId: string; body: UpdateRulesBody }>({
       queryFn: ({ journalId, body }) => runMockRequest(() => service.update(journalId, body))
     }),
+    updateDefaultValue: builder.mutation<null, { journalId: string; body: UpdateDefaultValueBody }>(
+      {
+        queryFn: ({ journalId, body }) =>
+          runMockRequest(() => service.updateDefaultValue(journalId, body))
+      }
+    ),
     deleteRules: builder.mutation<null, { journalId: string; body: DeleteRulesBody }>({
       queryFn: ({ journalId, body }) => runMockRequest(() => service.delete(journalId, body))
     })
@@ -45,5 +52,6 @@ export const {
   useGetRulesByParameterQuery,
   useCreateRulesMutation,
   useUpdateRulesMutation,
+  useUpdateDefaultValueMutation,
   useDeleteRulesMutation
 } = parameterRulesApi

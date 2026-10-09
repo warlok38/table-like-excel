@@ -69,10 +69,10 @@ export function ParameterEditorModal({
   const requestDelete = () => {
     if (controller.disabled) return
     modal.confirm({
-      title: 'Удалить все правила параметра «' + (parameter?.name ?? parameterId) + '»?',
+      title: 'Удалить все условия параметра «' + (parameter?.name ?? parameterId) + '»?',
       content:
-        'Связанные оформление и уведомления тоже будут удалены. Параметр останется в справочнике.',
-      okText: 'Удалить все правила',
+        'Связанные оформление и уведомления тоже будут удалены. Значение по умолчанию сохранится.',
+      okText: 'Удалить все условия',
       cancelText: 'Отмена',
       okButtonProps: { danger: true },
       centered: true,
@@ -95,7 +95,7 @@ export function ParameterEditorModal({
                 icon={<DeleteOutlined />}
                 onClick={requestDelete}
               >
-                Удалить все правила
+                Удалить все условия
               </Button>
             )}
           </div>

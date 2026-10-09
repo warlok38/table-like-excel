@@ -16,6 +16,10 @@
   margin-bottom: 0;
 }
 
+.defaultValue {
+  width: 12rem;
+}
+
 .ruleTitleRow {
   display: flex;
   align-items: baseline;

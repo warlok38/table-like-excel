@@ -2,6 +2,7 @@ import type {
   CreateRulesBody,
   UpdateRulesBody,
   DeleteRulesBody,
+  UpdateDefaultValueBody,
   UiInput,
   NotifyInput,
   RuleDto
@@ -88,7 +89,7 @@ export const parameterRulesMockService = {
           ...item,
           rules: item.rules.filter((rule) => rule.journals_tech_id === journalId)
         }))
-        .filter((item) => item.rules.length)
+        .filter((item) => item.rules.length || item.default_value !== null)
     )
   },
   async create(journalId: string, body: CreateRulesBody) {
@@ -111,6 +112,7 @@ export const parameterRulesMockService = {
           parameters_tech_id: catalog.tech_id,
           name: catalog.name,
           description: catalog.description,
+          default_value: null,
           rules: []
         }
         draft.parameters.push(parameter)
@@ -167,6 +169,34 @@ export const parameterRulesMockService = {
         rejectMock('Введите текст уведомления', ['notify_rules', index, 'message_template'])
       Object.assign(item, input)
     })
+    state = draft
+    finishMockRequest(fault)
+    return null
+  },
+  async updateDefaultValue(journalId: string, body: UpdateDefaultValueBody) {
+    const fault = await beginMockRequest('put-default')
+    checkJournal(journalId)
+    if (body.default_value !== null && !Number.isFinite(body.default_value))
+      rejectMock('Укажите число', ['default_value'])
+    const draft = structuredClone(state)
+    const catalog = draft.catalogs.parameters.find(
+      (item) => item.tech_id === body.parameters_tech_id
+    )
+    if (!catalog) rejectMock('Неизвестный параметр', ['parameters_tech_id'])
+    let parameter = draft.parameters.find(
+      (item) => item.parameters_tech_id === body.parameters_tech_id
+    )
+    if (!parameter) {
+      parameter = {
+        parameters_tech_id: catalog.tech_id,
+        name: catalog.name,
+        description: catalog.description,
+        default_value: null,
+        rules: []
+      }
+      draft.parameters.push(parameter)
+    }
+    parameter.default_value = body.default_value
     state = draft
     finishMockRequest(fault)
     return null

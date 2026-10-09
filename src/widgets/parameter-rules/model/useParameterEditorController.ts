@@ -38,12 +38,10 @@ export function useParameterEditorController({
   onSaved
 }: Options) {
   const [draft, setDraft] = useState<EditorDraft>(() =>
-    configuration
-      ? makeEditorDraft(configuration)
-      : { parameterId, rules: [createEmptyRule('first-new', parameter)] }
+    configuration ? makeEditorDraft(configuration) : { parameterId, defaultValue: null, rules: [] }
   )
   const [initialDraft, setInitialDraft] = useState<EditorDraft>(() =>
-    configuration ? makeEditorDraft(configuration) : { parameterId, rules: [] }
+    configuration ? makeEditorDraft(configuration) : { parameterId, defaultValue: null, rules: [] }
   )
   const [errors, setErrors] = useState<DraftErrors>({ byRule: {} })
   const nextKey = useRef(0)
@@ -78,12 +76,11 @@ export function useParameterEditorController({
     const changedRule = initial
       ? {
           ...next,
-          isDefault: initial.isDefault,
           aggregationLevelId: initial.aggregationLevelId,
           aggregationRuleId: initial.aggregationRuleId,
           planTypeId: initial.planTypeId,
           functionId: initial.functionId,
-          value: initial.isDefault ? next.value : initial.value
+          value: initial.value
         }
       : next
     setDraft((current) => ({
@@ -108,6 +105,10 @@ export function useParameterEditorController({
       rules: [createEmptyRule(uiKey, parameter), ...current.rules]
     }))
     return uiKey
+  }
+  const updateDefaultValue = (value: number | null) => {
+    if (disabled) return
+    setDraft((current) => ({ ...current, defaultValue: value }))
   }
   const removeRule = (uiKey: string) => {
     if (disabled) return
@@ -177,7 +178,7 @@ export function useParameterEditorController({
   }
   const deleteAll = async () => {
     if (disabled) return
-    const desired = { parameterId, rules: [] }
+    const desired = { parameterId, defaultValue: draft.defaultValue, rules: [] }
     setDraft(desired)
     applyResolution(await session.save(initialDraft, desired))
   }
@@ -188,6 +189,7 @@ export function useParameterEditorController({
     initialRulesByKey,
     isDirty,
     updateRule,
+    updateDefaultValue,
     addRule,
     removeRule,
     validateAndSave,

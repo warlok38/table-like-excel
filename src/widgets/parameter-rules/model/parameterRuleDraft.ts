@@ -17,13 +17,13 @@ export interface DraftRule extends Omit<
   aggregationRuleId?: string
   planTypeId?: string
   value?: number
-  isDefault: boolean
   uiRules: UiResult[]
   notifications: NotificationResult[]
   uiKey: string
 }
 export interface EditorDraft {
   parameterId?: string
+  defaultValue: number | null
   rules: DraftRule[]
 }
 export interface RuleErrors {
@@ -64,12 +64,11 @@ export function clearChangedRuleErrors(
     if (apiFields[field]) delete fields[apiFields[field]]
     if (field in next && field !== 'fields')
       delete next[field as Exclude<keyof RuleErrors, 'fields'>]
-    if (field === 'functionId' || field === 'isDefault') delete next.condition
-    if (field === 'functionId' || field === 'isDefault' || field === 'value') delete next.duplicate
+    if (field === 'functionId') delete next.condition
+    if (field === 'functionId' || field === 'value') delete next.duplicate
   }
 
-  if (nextRule.isDefault || nextRule.uiRules.length || nextRule.notifications.length)
-    delete next.result
+  if (nextRule.uiRules.length || nextRule.notifications.length) delete next.result
   if (!Object.keys(fields).length) delete next.fields
   return next
 }
@@ -81,12 +80,12 @@ export const createEmptyRule = (uiKey: string, parameter?: ParameterCatalogItem)
   aggregationLevelId: parameter?.aggregationLevel?.id,
   aggregationRuleId: parameter?.aggregationRule?.id,
   planTypeId: parameter?.planType?.id,
-  isDefault: false,
   uiRules: [],
   notifications: []
 })
 export const makeEditorDraft = (configuration?: ParameterConfiguration): EditorDraft => ({
   parameterId: configuration?.parameterId,
+  defaultValue: configuration?.defaultValue ?? null,
   rules:
     configuration?.rules.map((rule) => ({
       ...structuredClone(rule),
@@ -149,11 +148,7 @@ export const validateEditorDraft = (
       next.duplicate = 'Правило с таким сочетанием агрегаций и условием уже существует'
     if (!Number.isFinite(rule.value)) next.value = 'Укажите число'
     if (!rule.name.trim()) next.name = 'Введите название правила'
-    if (
-      !rule.isDefault &&
-      !rule.id &&
-      !catalogs.functions.some((item) => item.id === rule.functionId)
-    )
+    if (!rule.id && !catalogs.functions.some((item) => item.id === rule.functionId))
       next.condition = 'Выберите функцию'
     const fields: Record<string, string> = {}
     rule.uiRules.forEach((item, i) => {
@@ -163,7 +158,7 @@ export const validateEditorDraft = (
       if (!item.text.trim()) fields['notify_rules.' + i + '.message_template'] = 'Введите текст'
     })
     if (Object.keys(fields).length) next.fields = fields
-    if (!rule.isDefault && !rule.uiRules.length && !rule.notifications.length)
+    if (!rule.uiRules.length && !rule.notifications.length)
       next.result = 'Добавьте хотя бы один результат правила'
     if (Object.keys(next).length) errors.byRule[rule.uiKey] = next
   })

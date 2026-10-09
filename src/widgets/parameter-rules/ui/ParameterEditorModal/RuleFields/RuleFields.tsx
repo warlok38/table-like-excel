@@ -1,5 +1,5 @@
 'use client'
-import { Alert, Checkbox, Flex, Form, Input, InputNumber, Select } from 'antd'
+import { Alert, Flex, Form, Input, InputNumber, Select } from 'antd'
 import type { DraftRule, RuleChange, RuleErrors } from '../../../model/parameterRuleDraft'
 import type { RuleCatalogs } from '../../../model/parameterRules'
 import styles from './RuleFields.module.css'
@@ -50,20 +50,8 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
         />
       </Form.Item>
       {errors.duplicate && <Alert type="error" title={errors.duplicate} />}
-      <Checkbox
-        checked={rule.isDefault}
-        disabled={disabled || identityLocked}
-        onChange={(event) =>
-          onChange({ field: 'isDefault' }, (current) => ({
-            ...current,
-            isDefault: event.target.checked
-          }))
-        }
-      >
-        Значение по умолчанию
-      </Checkbox>
       <Form.Item
-        label={rule.isDefault ? 'Значение по умолчанию' : 'Условие'}
+        label="Условие"
         required
         help={
           fieldError('functions_tech_id', errors.condition) ?? fieldError('value', errors.value)
@@ -75,22 +63,20 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
         }
       >
         <Flex className={styles.conditionControls} gap={8}>
-          {!rule.isDefault && (
-            <Select
-              className={styles.conditionOperator}
-              disabled={disabled || identityLocked}
-              placeholder="Знак"
-              value={rule.functionId}
-              options={catalogs.functions.map((item) => ({ value: item.id, label: item.name }))}
-              onChange={(value: string) =>
-                onChange({ field: 'functionId' }, (current) => ({ ...current, functionId: value }))
-              }
-            />
-          )}
+          <Select
+            className={styles.conditionOperator}
+            disabled={disabled || identityLocked}
+            placeholder="Знак"
+            value={rule.functionId}
+            options={catalogs.functions.map((item) => ({ value: item.id, label: item.name }))}
+            onChange={(value: string) =>
+              onChange({ field: 'functionId' }, (current) => ({ ...current, functionId: value }))
+            }
+          />
           <InputNumber
             className={styles.conditionValue}
             controls={false}
-            disabled={disabled || (identityLocked && !rule.isDefault)}
+            disabled={disabled || identityLocked}
             value={Number.isFinite(rule.value) ? rule.value : null}
             onChange={(value) =>
               onChange({ field: 'value' }, (current) => ({ ...current, value: value ?? undefined }))

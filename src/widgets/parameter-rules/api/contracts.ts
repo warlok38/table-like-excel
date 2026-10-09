@@ -47,10 +47,9 @@ export interface RuleInput {
   aggregation_levels_tech_id: string
   aggregation_rules_tech_id: string
   plan_types_tech_id: string
-  is_default: boolean
   created_by: string
   description: string
-  functions_tech_id?: string | null
+  functions_tech_id: string
   value: number
   scales_tech_id?: string | null
 }
@@ -65,7 +64,12 @@ export interface ParameterDto {
   parameters_tech_id: string
   name: string
   description: string | null
+  default_value: number | null
   rules: RuleDto[]
+}
+export interface UpdateDefaultValueBody {
+  parameters_tech_id: string
+  default_value: number | null
 }
 export interface CatalogParameterDto extends CatalogItemDto {
   shift?: CatalogItemDto | null

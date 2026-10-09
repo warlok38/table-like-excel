@@ -49,6 +49,7 @@ export function toParameterConfiguration(
 ): ParameterConfiguration {
   return {
     parameterId: parameter.parameters_tech_id,
+    defaultValue: parameter.default_value,
     rules: parameter.rules.map((rule) => {
       const related = (item: { rules_tech_id: string; parameters_tech_id: string }) =>
         item.rules_tech_id === rule.rules_tech_id &&
@@ -61,7 +62,6 @@ export function toParameterConfiguration(
         aggregationLevelId: rule.aggregation_levels_tech_id,
         aggregationRuleId: rule.aggregation_rules_tech_id,
         planTypeId: rule.plan_types_tech_id,
-        isDefault: rule.is_default,
         functionId: rule.functions_tech_id ?? undefined,
         scaleId: rule.scales_tech_id,
         value: typeof rule.value === 'string' && !rule.value.trim() ? NaN : Number(rule.value),

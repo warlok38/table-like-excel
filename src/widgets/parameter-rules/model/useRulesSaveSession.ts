@@ -3,6 +3,7 @@ import { useRef, useState } from 'react'
 import {
   useCreateRulesMutation,
   useUpdateRulesMutation,
+  useUpdateDefaultValueMutation,
   useDeleteRulesMutation
 } from '../api/parameterRulesApi'
 import type { ParameterConfiguration } from './parameterRules'
@@ -26,6 +27,7 @@ export function useRulesSaveSession(
 ) {
   const [create] = useCreateRulesMutation(),
     [update] = useUpdateRulesMutation(),
+    [updateDefaultValue] = useUpdateDefaultValueMutation(),
     [remove] = useDeleteRulesMutation()
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState('')
@@ -85,6 +87,8 @@ export function useRulesSaveSession(
             await create({ journalId, body: operation.body }).unwrap()
           else if (operation.method === 'put')
             await update({ journalId, body: operation.body }).unwrap()
+          else if (operation.method === 'put-default')
+            await updateDefaultValue({ journalId, body: operation.body }).unwrap()
           else await remove({ journalId, body: operation.body }).unwrap()
           completed++
         } catch (error) {

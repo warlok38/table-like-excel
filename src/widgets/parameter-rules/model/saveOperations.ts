@@ -2,6 +2,7 @@ import type {
   CreateRulesBody,
   UpdateRulesBody,
   DeleteRulesBody,
+  UpdateDefaultValueBody,
   UiInput,
   NotifyInput
 } from '../api/contracts'
@@ -13,6 +14,7 @@ export type SaveOperation = { sources: SourceMap } & (
   | { method: 'post'; body: CreateRulesBody }
   | { method: 'put'; body: UpdateRulesBody }
   | { method: 'delete'; body: DeleteRulesBody }
+  | { method: 'put-default'; body: UpdateDefaultValueBody }
 )
 export function buildSaveOperations(
   initial: EditorDraft,
@@ -63,8 +65,7 @@ export function buildSaveOperations(
         aggregation_levels_tech_id: rule.aggregationLevelId!,
         aggregation_rules_tech_id: rule.aggregationRuleId!,
         plan_types_tech_id: rule.planTypeId!,
-        is_default: rule.isDefault,
-        ...(!rule.isDefault ? { functions_tech_id: rule.functionId } : {}),
+        functions_tech_id: rule.functionId!,
         value: rule.value!,
         ui_rules: rule.uiRules.map(ui),
         notify_rules: rule.notifications.map(notify)
@@ -150,6 +151,15 @@ export function buildSaveOperations(
   return [
     ...deletes,
     ...updates,
+    ...(initial.defaultValue !== desired.defaultValue
+      ? [
+          {
+            method: 'put-default' as const,
+            body: { parameters_tech_id: desired.parameterId!, default_value: desired.defaultValue },
+            sources: {}
+          }
+        ]
+      : []),
     ...(post.parameter_rules.length || post.ui_rules.length || post.notify_rules.length
       ? [{ method: 'post' as const, body: post, sources }]
       : [])

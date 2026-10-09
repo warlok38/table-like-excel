@@ -27,7 +27,6 @@ export interface RuleBase {
   scaleId?: string | null
 }
 export interface FormattingRule extends RuleBase {
-  isDefault: boolean
   uiRules: UiResult[]
   notifications: NotificationResult[]
 }
@@ -50,6 +49,7 @@ export interface ParameterCatalogItem {
 }
 export interface ParameterConfiguration {
   parameterId: string
+  defaultValue: number | null
   rules: FormattingRule[]
 }
 export type SaveParameterInput = ParameterConfiguration
@@ -60,7 +60,6 @@ export interface ParameterRow {
   rulesCount: number
 }
 export function getRuleSummary(rule: FormattingRule, catalogs: RuleCatalogs): string {
-  if (rule.isDefault) return 'По умолчанию: ' + rule.value
   const fn =
     catalogs.functions.find((item) => item.id === rule.functionId)?.name ?? 'Неизвестная функция'
   return (
