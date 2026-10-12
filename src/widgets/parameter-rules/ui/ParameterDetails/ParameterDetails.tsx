@@ -1,4 +1,4 @@
-import type { ParameterCatalogItem } from '../model/parameterRules'
+import type { ParameterCatalogItem } from '../../model/parameterRules'
 import styles from './ParameterDetails.module.css'
 
 // Reserve space for every value and split the remaining width between long values.

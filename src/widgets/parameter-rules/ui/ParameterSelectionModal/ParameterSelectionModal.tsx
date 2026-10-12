@@ -2,8 +2,8 @@
 
 import { Modal, Select } from 'antd'
 
-import type { ParameterCatalogItem, ParameterRow } from '../model/parameterRules'
-import { ParameterDetails } from './ParameterDetails'
+import type { ParameterCatalogItem, ParameterRow } from '../../model/parameterRules'
+import { ParameterDetails } from '../ParameterDetails'
 import styles from './ParameterSelectionModal.module.css'
 
 interface ParameterSelectionModalProps {
