@@ -2,8 +2,6 @@ import type { TableStructure } from '../../model'
 import { makeVirtualTableMap } from '../../model/selection/virtualTable'
 import type { SelectionRect } from '../SelectionOutline/makeSelectionOutline'
 
-export type CellContentSize = { width: number; height: number }
-
 export type RowSpanInterval = {
   start: number
   end: number
@@ -12,6 +10,8 @@ export type RowSpanInterval = {
 export type TableLayoutModel = {
   visualColumnCount: number
   rowByCellKey: Map<string, number>
+  rowEndByCellKey: Map<string, number>
+  columnRangeByCellKey: Map<string, { start: number; end: number }>
   rowSpanIntervals: RowSpanInterval[]
   pinnedRowEnd: number
 }
@@ -21,7 +21,6 @@ export type TableLayoutSnapshot = TableLayoutModel & {
   rowHeights: number[]
   rowOffsets: number[]
   columnWidths: number[]
-  contentSizes: Map<string, CellContentSize>
   cellRects: Map<string, SelectionRect>
   totalHeight: number
   totalWidth: number
@@ -41,11 +40,18 @@ export const VIRTUALIZATION_OVERSCAN = 8
 export function makeTableLayoutModel(structure: TableStructure): TableLayoutModel {
   const virtualMap = makeVirtualTableMap(structure.rows)
   const rowByCellKey = new Map<string, number>()
+  const rowEndByCellKey = new Map<string, number>()
+  const columnRangeByCellKey = new Map<string, { start: number; end: number }>()
   const rowSpanIntervals: RowSpanInterval[] = []
   const lastRow = structure.rows.length - 1
 
   virtualMap.cellsByKey.forEach((cell, key) => {
     rowByCellKey.set(key, cell.rowIndex)
+    rowEndByCellKey.set(key, Math.min(lastRow, cell.rowIndex + cell.rowSpan - 1))
+    columnRangeByCellKey.set(key, {
+      start: cell.visualCol,
+      end: cell.visualCol + cell.colSpan
+    })
 
     if (cell.rowSpan > 1 && lastRow >= 0) {
       rowSpanIntervals.push({
@@ -60,6 +66,8 @@ export function makeTableLayoutModel(structure: TableStructure): TableLayoutMode
   return {
     visualColumnCount: Math.max(0, virtualMap.maxCol + 1),
     rowByCellKey,
+    rowEndByCellKey,
+    columnRangeByCellKey,
     rowSpanIntervals,
     pinnedRowEnd: lastRow >= 0 ? expandRowRange(0, 0, rowSpanIntervals).end : -1
   }
@@ -69,7 +77,8 @@ export function measureTableLayout(
   table: HTMLTableElement,
   surface: HTMLElement,
   structure: TableStructure,
-  model: TableLayoutModel
+  model: TableLayoutModel,
+  preservedColumnWidths?: number[]
 ): TableLayoutSnapshot | null {
   const rowElements = Array.from(
     table.querySelectorAll<HTMLTableRowElement>('tr[data-table-row-index]')
@@ -83,30 +92,22 @@ export function measureTableLayout(
 
   const rowHeights = rowElements.map((row) => row.getBoundingClientRect().height)
   const rowOffsets = makeOffsets(rowHeights)
-  const columnWidths = probeCells.map((cell) => cell.getBoundingClientRect().width)
+  const columnWidths =
+    preservedColumnWidths ?? probeCells.map((cell) => cell.getBoundingClientRect().width)
   const origin = surface.getBoundingClientRect()
-  const contentSizes = new Map<string, CellContentSize>()
   const cellRects = new Map<string, SelectionRect>()
-
-  table.querySelectorAll<HTMLElement>('[data-cell-content]').forEach((content) => {
-    const cellKey = content.dataset.cellContent
-    if (!cellKey) return
-    const rect = content.getBoundingClientRect()
-    contentSizes.set(cellKey, {
-      width: rect.width,
-      height: rect.height > 0 ? rect.height : content.scrollHeight
-    })
-  })
 
   table.querySelectorAll<HTMLTableCellElement>('[data-cell-key]').forEach((cell) => {
     const cellKey = cell.dataset.cellKey
     if (!cellKey) return
     const rect = cell.getBoundingClientRect()
+    const rowStart = model.rowByCellKey.get(cellKey)!
+    const rowEnd = model.rowEndByCellKey.get(cellKey)!
     cellRects.set(cellKey, {
       left: rect.left - origin.left,
       right: rect.right - origin.left,
-      top: rect.top - origin.top,
-      bottom: rect.bottom - origin.top
+      top: rowOffsets[rowStart],
+      bottom: rowOffsets[rowEnd + 1]
     })
   })
 
@@ -116,7 +117,6 @@ export function measureTableLayout(
     rowHeights,
     rowOffsets,
     columnWidths,
-    contentSizes,
     cellRects,
     totalHeight: rowOffsets[rowOffsets.length - 1] ?? 0,
     totalWidth: columnWidths.reduce((sum, width) => sum + width, 0)
@@ -159,7 +159,7 @@ export function isRowRendered(window: VirtualRowWindow, rowIndex: number): boole
   return rowIndex <= window.pinnedRowEnd || (rowIndex >= window.start && rowIndex <= window.end)
 }
 
-function makeOffsets(sizes: number[]): number[] {
+export function makeOffsets(sizes: number[]): number[] {
   const offsets = [0]
   for (const size of sizes) {
     offsets.push(offsets[offsets.length - 1] + size)
@@ -167,7 +167,7 @@ function makeOffsets(sizes: number[]): number[] {
   return offsets
 }
 
-function findRowAtOffset(offsets: number[], offset: number): number {
+export function findRowAtOffset(offsets: number[], offset: number): number {
   const rowCount = Math.max(0, offsets.length - 1)
   if (rowCount === 0) return 0
 
@@ -184,7 +184,7 @@ function findRowAtOffset(offsets: number[], offset: number): number {
   return Math.min(rowCount - 1, low)
 }
 
-function expandRowRange(
+export function expandRowRange(
   initialStart: number,
   initialEnd: number,
   intervals: RowSpanInterval[]

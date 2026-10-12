@@ -88,6 +88,10 @@ function makeBodyRow(rowIndex: number): CellTable[] {
       value = `Показатель ${row}\nДополнительная строка для проверки высоты`
     }
 
+    if (row === 9 && col === 4) {
+      value = 'Проверка ширины'
+    }
+
     if (!isValueOnlyRow && rowIndex === 3 && col === 2) {
       value = 'approved'
       dataStatus = attentionStatus

@@ -12,6 +12,7 @@ type UseTableVirtualRowsOptions = {
   viewportRef: RefObject<HTMLDivElement>
   snapshot: TableLayoutSnapshot | null
   enabled: boolean
+  getScrollTop: () => number
   activeCellKey: string | null
   onBeforeWindowChange: (nextWindow: VirtualRowWindow) => void
 }
@@ -20,28 +21,29 @@ export function useTableVirtualRows({
   viewportRef,
   snapshot,
   enabled,
+  getScrollTop,
   activeCellKey,
   onBeforeWindowChange
 }: UseTableVirtualRowsOptions) {
   const callbackRef = useRef(onBeforeWindowChange)
+  const layoutRef = useRef({ enabled, snapshot })
+  const revealedCellRef = useRef<{ structureKey: string; cellKey: string } | null>(null)
   const frameRef = useRef<number | null>(null)
   const windowRef = useRef<VirtualRowWindow | null>(null)
   const [window, setWindow] = useState<VirtualRowWindow | null>(null)
   callbackRef.current = onBeforeWindowChange
+  layoutRef.current = { enabled, snapshot }
 
   const updateWindow = useCallback(() => {
     const viewport = viewportRef.current
+    const { enabled, snapshot } = layoutRef.current
     if (!enabled || !snapshot || !viewport) {
       windowRef.current = null
       setWindow(null)
       return
     }
 
-    const nextWindow = calculateVirtualRowWindow(
-      snapshot,
-      viewport.scrollTop,
-      viewport.clientHeight
-    )
+    const nextWindow = calculateVirtualRowWindow(snapshot, getScrollTop(), viewport.clientHeight)
 
     const current = windowRef.current
     if (
@@ -58,7 +60,7 @@ export function useTableVirtualRows({
     callbackRef.current(nextWindow)
     windowRef.current = nextWindow
     setWindow(nextWindow)
-  }, [enabled, snapshot, viewportRef])
+  }, [getScrollTop, viewportRef])
 
   const scheduleUpdate = useCallback(() => {
     if (frameRef.current !== null) return
@@ -70,7 +72,7 @@ export function useTableVirtualRows({
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current
-    if (!viewport || !enabled || !snapshot) {
+    if (!viewport || !enabled) {
       windowRef.current = null
       setWindow(null)
       return
@@ -89,11 +91,21 @@ export function useTableVirtualRows({
         frameRef.current = null
       }
     }
-  }, [enabled, scheduleUpdate, snapshot, updateWindow, viewportRef])
+  }, [enabled, scheduleUpdate, updateWindow, viewportRef])
+
+  useLayoutEffect(() => {
+    updateWindow()
+  }, [snapshot, updateWindow])
 
   useLayoutEffect(() => {
     const viewport = viewportRef.current
+    if (!activeCellKey) revealedCellRef.current = null
     if (!viewport || !enabled || !snapshot || !activeCellKey) return
+    const revealed = revealedCellRef.current
+    if (revealed?.cellKey === activeCellKey && revealed.structureKey === snapshot.structureKey) {
+      return
+    }
+    revealedCellRef.current = { cellKey: activeCellKey, structureKey: snapshot.structureKey }
 
     const rowIndex = snapshot.rowByCellKey.get(activeCellKey)
     if (rowIndex === undefined || rowIndex <= snapshot.pinnedRowEnd) return

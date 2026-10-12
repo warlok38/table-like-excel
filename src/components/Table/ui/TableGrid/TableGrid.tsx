@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useLayoutEffect, useRef, type ReactNode } from 'react'
+import { useCallback, useLayoutEffect, useMemo, useRef, type ReactNode } from 'react'
 import cn from 'classnames'
 
 import { getTableCellKey } from '../../lib'
@@ -19,9 +19,11 @@ import {
   type TableStructure
 } from '../../model'
 import { SelectionOutline } from '../SelectionOutline/SelectionOutline'
+import { hasOwnPending } from '../../model/changes/pendingChanges'
 import { useSelectionGeometry } from '../SelectionOutline/useSelectionGeometry'
 import { TableCell } from '../TableCell/TableCell'
 import styles from './TableGrid.module.css'
+import type { TableCellContent } from './tableColumnLayout'
 import { isRowRendered, VIRTUALIZATION_ROW_THRESHOLD, type VirtualRowWindow } from './tableLayout'
 import { useTableDragAutoScroll } from './useTableDragAutoScroll'
 import { useTableLayout } from './useTableLayout'
@@ -33,6 +35,18 @@ function formatCellValue(value: CellTable['formatted_value']): string {
   if (value === null) return ''
   if (typeof value === 'number') return cellNumberFormat.format(value)
   return value
+}
+
+function getDisplayValue(
+  cell: CellTable,
+  cellKey: string,
+  values: PendingChanges['values']
+): string {
+  if (!hasOwnPending(values, cellKey)) return formatCellValue(cell.formatted_value)
+  const value = getEffectiveValue(cellKey, cell, values)
+  return cell.data.editor && cell.data.editor.type !== 'readonly'
+    ? formatPendingValue(value, cell.data.editor)
+    : String(value ?? '')
 }
 
 type TableGridProps = {
@@ -86,8 +100,29 @@ export function TableGrid({
   const tableRef = useRef<HTMLTableElement>(null)
   const surfaceRef = useRef<HTMLDivElement>(null)
   const viewportRef = useRef<HTMLDivElement>(null)
-  const { model, snapshot, isMeasuring } = useTableLayout(tableRef, surfaceRef, structure)
-  const virtualizationEnabled = data.length >= VIRTUALIZATION_ROW_THRESHOLD && snapshot !== null
+  const cellContents = useMemo(() => {
+    const contents = new Map<string, TableCellContent>()
+    data.forEach((row, rowIndex) => {
+      row.forEach((cell, cellIndex) => {
+        const key = getTableCellKey(cell, rowIndex, cellIndex)
+        contents.set(key, {
+          text: getDisplayValue(cell, key, pendingChanges.values),
+          preserveLines: cell.data.editor?.type === 'textarea'
+        })
+      })
+    })
+    return contents
+  }, [data, pendingChanges.values])
+  const { model, snapshot, isMeasuring, registerRowRef, getScrollTop } = useTableLayout(
+    tableRef,
+    surfaceRef,
+    viewportRef,
+    structure,
+    cellContents
+  )
+  const hasFixedColumns = snapshot !== null
+  const hasVirtualViewport = data.length >= VIRTUALIZATION_ROW_THRESHOLD && hasFixedColumns
+  const virtualizationEnabled = hasVirtualViewport && !isMeasuring
   const handleBeforeWindowChange = useCallback(
     (nextWindow: VirtualRowWindow) => {
       if (session) {
@@ -110,6 +145,7 @@ export function TableGrid({
     viewportRef,
     snapshot,
     enabled: virtualizationEnabled,
+    getScrollTop,
     activeCellKey: selection.activeCellKey,
     onBeforeWindowChange: handleBeforeWindowChange
   })
@@ -159,9 +195,9 @@ export function TableGrid({
     return (
       <tr
         key={`row-${rowIndex + 1}`}
+        ref={registerRowRef(rowIndex)}
         className={styles.tr}
         data-table-row-index={rowIndex}
-        style={isVirtualized ? { height: snapshot.rowHeights[rowIndex] } : undefined}
       >
         {row.map((cell, cellIndex) => {
           const cellKey = getTableCellKey(cell, rowIndex, cellIndex)
@@ -171,13 +207,7 @@ export function TableGrid({
           const hasPendingNote = isNotePending(pendingChanges, cellKey)
           const pendingBackground = getPendingBackground(pendingChanges, cellKey)
           const value = getEffectiveValue(cellKey, cell, pendingChanges.values)
-          let displayValue = formatCellValue(cell.formatted_value)
-
-          if (hasPendingValue && cell.data.editor && cell.data.editor.type !== 'readonly') {
-            displayValue = formatPendingValue(value, cell.data.editor)
-          } else if (hasPendingValue) {
-            displayValue = String(value ?? '')
-          }
+          const displayValue = cellContents.get(cellKey)!.text
 
           return (
             <TableCell
@@ -194,7 +224,6 @@ export function TableGrid({
               isActive={selection.activeCellKey === cellKey}
               isSelected={selection.selectedCellKeys.has(cellKey)}
               isLocked={capabilities.isLocked}
-              contentSize={snapshot?.contentSizes.get(cellKey)}
               registerCellRef={selectionGeometry.registerCellRef}
               isValueChanged={hasPendingValue}
               isNoteChanged={hasPendingNote}
@@ -266,14 +295,14 @@ export function TableGrid({
   return (
     <div
       ref={viewportRef}
-      className={cn(styles.tableViewport, { [styles.virtualViewport]: isVirtualized })}
+      className={cn(styles.tableViewport, { [styles.virtualViewport]: hasVirtualViewport })}
       data-virtualized={isVirtualized || undefined}
     >
       <div ref={surfaceRef} className={styles.tableSurface}>
         <table
           ref={tableRef}
-          className={cn(styles.table, { [styles.virtualTable]: isVirtualized })}
-          style={isVirtualized ? { width: snapshot.totalWidth } : undefined}
+          className={cn(styles.table, { [styles.virtualTable]: hasFixedColumns })}
+          style={hasFixedColumns ? { width: snapshot.totalWidth } : undefined}
         >
           {snapshot && (
             <colgroup>

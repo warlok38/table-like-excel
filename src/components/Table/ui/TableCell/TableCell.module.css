@@ -120,6 +120,7 @@
   font-weight: 450;
   text-align: center;
   background: transparent;
+  white-space: nowrap;
 }
 
 .constCellComments {
@@ -132,5 +133,5 @@
 }
 
 .preWrap {
-  white-space: pre-wrap;
+  white-space: pre;
 }

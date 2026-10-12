@@ -6,7 +6,6 @@ import cn from 'classnames'
 import type { CellTable, CellValue, EditStart, EditingSession } from '../../model'
 import { CellValueEditor } from '../CellValueEditor/CellValueEditor'
 import { DataStatusNote } from '../DataStatusNote/DataStatusNote'
-import type { CellContentSize } from '../TableGrid/tableLayout'
 import { getCellStyle } from './cellStyle'
 import styles from './TableCell.module.css'
 
@@ -27,7 +26,6 @@ type TableCellProps = {
   isActive: boolean
   isSelected: boolean
   isLocked: boolean
-  contentSize?: CellContentSize
   registerCellRef: (cellKey: string) => RefCallback<HTMLTableCellElement>
   isValueChanged: boolean
   isNoteChanged: boolean
@@ -65,7 +63,6 @@ function TableCellComponent({
   isActive,
   isSelected,
   isLocked,
-  contentSize,
   registerCellRef,
   isValueChanged,
   isNoteChanged,
@@ -106,12 +103,6 @@ function TableCellComponent({
   }, [isSaving])
 
   const style = useMemo(() => getCellStyle(cell, manualBackground), [cell, manualBackground])
-  const contentStyle = contentSize
-    ? {
-        width: contentSize.width,
-        ...(contentSize.height > 0 ? { height: contentSize.height } : {})
-      }
-    : undefined
   const handleMouseDown = useCallback(
     (event: React.MouseEvent<HTMLTableCellElement>) => {
       if (event.button !== 0) return
@@ -212,7 +203,6 @@ function TableCellComponent({
     >
       <div
         data-cell-content={cellKey}
-        style={contentStyle}
         title={hasNote || session ? undefined : displayValue}
         className={cn(styles.constCell, {
           [styles.nowrap]: isNumericCellValue(cell.formatted_value),
