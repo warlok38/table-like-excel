@@ -44,7 +44,7 @@ export function ParameterRulesWidget() {
           author={mockContext.author}
           onBack={view.source === 'selection' ? controller.openCreate : undefined}
           ruleCatalogs={controller.ruleCatalogs}
-          catalog={controller.catalog}
+          parameter={controller.editorParameter}
           configuration={view.configuration}
           open
           isInteractionDisabled={controller.isInteractionDisabled}

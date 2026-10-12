@@ -2,6 +2,7 @@
 import { useCallback, useMemo, useState } from 'react'
 import { useGetRuleCatalogsQuery, useGetRulesByParameterQuery } from '../api/parameterRulesApi'
 import {
+  toEditorParameter,
   toParameterCatalog,
   toParameterRows,
   toParameterConfiguration,
@@ -29,6 +30,13 @@ export function useParameterRulesController(notifier: Notifier, journalId: strin
     () => (catalogs.currentData ? toParameterCatalog(catalogs.currentData) : []),
     [catalogs.currentData]
   )
+  const editorParameter = useMemo(() => {
+    if (view.type !== 'editor') return undefined
+    return toEditorParameter(
+      rules.currentData?.find((item) => item.parameters_tech_id === view.parameterId),
+      catalog.find((item) => item.id === view.parameterId)
+    )
+  }, [view, rules.currentData, catalog])
   const ruleCatalogs = useMemo(
     () => (catalogs.currentData ? toRuleCatalogs(catalogs.currentData) : emptyRuleCatalogs),
     [catalogs.currentData]
@@ -87,6 +95,7 @@ export function useParameterRulesController(notifier: Notifier, journalId: strin
   return {
     rows,
     catalog,
+    editorParameter,
     ruleCatalogs,
     isRefreshing: catalogs.isFetching || rules.isFetching,
     isInitialLoading: !hasData && (catalogs.isLoading || rules.isLoading),

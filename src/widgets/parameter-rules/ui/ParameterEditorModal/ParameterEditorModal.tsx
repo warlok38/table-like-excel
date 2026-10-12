@@ -13,7 +13,7 @@ import { PendingDeletionsAlert } from './PendingDeletionsAlert'
 import styles from './ParameterEditorModal.module.css'
 interface Props {
   ruleCatalogs: RuleCatalogs
-  catalog: ParameterCatalogItem[]
+  parameter?: ParameterCatalogItem
   parameterId: string
   journalId: string
   author: string
@@ -28,7 +28,7 @@ interface Props {
 const editorFormId = 'parameter-editor-form'
 export function ParameterEditorModal({
   ruleCatalogs,
-  catalog,
+  parameter,
   parameterId,
   journalId,
   author,
@@ -43,7 +43,7 @@ export function ParameterEditorModal({
   const { modal } = App.useApp()
   const controller = useParameterEditorController({
     parameterId,
-    parameter: catalog.find((item) => item.id === parameterId),
+    parameter,
     journalId,
     author,
     configuration,
@@ -52,7 +52,6 @@ export function ParameterEditorModal({
     reload,
     onSaved
   })
-  const parameter = catalog.find((item) => item.id === parameterId)
   const requestLeave = (leave: () => void) => {
     if (controller.busy) return
     if (!controller.isDirty && !controller.syncRequired && !controller.uncertain) {

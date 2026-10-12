@@ -30,6 +30,23 @@ export function toParameterCatalog(catalogs: CatalogsDto): ParameterCatalogItem[
   }))
 }
 
+export function toEditorParameter(
+  parameter: ParameterDto | undefined,
+  catalogParameter: ParameterCatalogItem | undefined
+): ParameterCatalogItem | undefined {
+  if (!parameter) return catalogParameter
+
+  return {
+    ...catalogParameter,
+    id: parameter.parameters_tech_id,
+    name: parameter.name ?? catalogParameter?.name ?? parameter.parameters_tech_id,
+    description:
+      parameter.description !== undefined
+        ? parameter.description
+        : (catalogParameter?.description ?? null)
+  }
+}
+
 export function toRuleCatalogs(catalogs: CatalogsDto): RuleCatalogs {
   return {
     functions: catalogs.functions.map((item) => ({
