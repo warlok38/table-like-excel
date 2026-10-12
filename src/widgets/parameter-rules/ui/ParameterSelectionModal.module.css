@@ -38,33 +38,3 @@
 .countValue {
   font-weight: 600;
 }
-
-.details {
-  display: flex;
-  gap: 0.5rem;
-  min-width: 0;
-  overflow: hidden;
-  color: #667085;
-  font-size: 12px;
-  line-height: 1.4;
-  white-space: nowrap;
-}
-
-.detail {
-  display: flex;
-  flex: 0 1 auto;
-  min-width: 2.5rem;
-}
-
-.detail + .detail::before {
-  content: '|';
-  flex: none;
-  transform: translateX(-0.25rem);
-}
-
-.detailValue {
-  min-width: 2.5rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}

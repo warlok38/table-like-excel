@@ -175,7 +175,7 @@ export function ParameterEditorForm({
               <strong>{headingRule.name.trim() || 'Новое правило'}</strong>
               {ruleChanged && <span className={styles.ruleChangeIndicator}>Изменено</span>}
             </span>
-            <span>{getDraftRuleSummary(headingRule, ruleCatalogs, parameter)}</span>
+            <span>{getDraftRuleSummary(headingRule, ruleCatalogs)}</span>
           </span>
         </div>
       ),

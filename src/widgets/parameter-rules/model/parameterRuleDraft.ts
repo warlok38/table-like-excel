@@ -111,23 +111,10 @@ export const isDraftRuleChanged = (rule: DraftRule, initialRule?: DraftRule): bo
   const { uiKey: _b, ...b } = initialRule
   return JSON.stringify(a) !== JSON.stringify(b)
 }
-export const getDraftRuleSummary = (
-  rule: DraftRule,
-  catalogs: RuleCatalogs,
-  parameter?: ParameterCatalogItem
-) => {
-  const context = [
-    parameter?.aggregationLevel?.name,
-    parameter?.aggregationRule?.name,
-    parameter?.planType?.name
-  ]
-    .filter(Boolean)
-    .join(' / ')
-  const summary = Number.isFinite(rule.value)
+export const getDraftRuleSummary = (rule: DraftRule, catalogs: RuleCatalogs) =>
+  Number.isFinite(rule.value)
     ? getRuleSummary(toFormattingRules([rule])[0], catalogs)
     : 'Условие не задано'
-  return [context, summary].filter(Boolean).join(' · ')
-}
 export const validateEditorDraft = (
   draft: EditorDraft,
   catalogs: RuleCatalogs,

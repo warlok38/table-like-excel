@@ -8,6 +8,7 @@ import type {
   ParameterConfiguration
 } from '../../model/parameterRules'
 import { ParameterEditorForm } from './ParameterEditorForm'
+import { ParameterDetails } from '../ParameterDetails'
 import styles from './ParameterEditorModal.module.css'
 interface Props {
   ruleCatalogs: RuleCatalogs
@@ -125,10 +126,12 @@ export function ParameterEditorModal({
       open={open}
       width={880}
       title={
-        <Typography.Title level={4}>
-          Правила параметра «{parameter?.name ?? parameterId}» ·{' '}
-          {parameter?.aggregationLevel?.name ?? 'Уровень не задан'}
-        </Typography.Title>
+        <div className={styles.modalHeading}>
+          <Typography.Title className={styles.modalTitle} level={4}>
+            Правила параметра «{parameter?.name ?? parameterId}»
+          </Typography.Title>
+          <ParameterDetails parameter={parameter} />
+        </div>
       }
       onCancel={() => requestLeave(onClose)}
     >
