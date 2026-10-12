@@ -38,14 +38,19 @@ export const emptyRuleCatalogs: RuleCatalogs = {
   functions: [],
   attributes: []
 }
+export interface CatalogItem {
+  id: string
+  name: string
+  description?: string | null
+}
 export interface ParameterCatalogItem {
   id: string
   name: string
   description: string | null
-  shift?: { id: string; name: string }
-  planType?: { id: string; name: string }
-  aggregationLevel?: { id: string; name: string }
-  aggregationRule?: { id: string; name: string }
+  shift?: CatalogItem
+  planType?: CatalogItem
+  aggregationLevel?: CatalogItem
+  aggregationRule?: CatalogItem
 }
 export interface ParameterConfiguration {
   parameterId: string

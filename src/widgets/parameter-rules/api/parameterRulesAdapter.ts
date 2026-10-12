@@ -1,5 +1,6 @@
-import type { CatalogsDto, ParameterDto } from './contracts'
+import type { CatalogItemDto, CatalogsDto, ParameterDto } from './contracts'
 import type {
+  CatalogItem,
   ParameterCatalogItem,
   ParameterConfiguration,
   RuleCatalogs,
@@ -16,8 +17,8 @@ export function toParameterRows(parameters: ParameterDto[]): ParameterRow[] {
 }
 
 export function toParameterCatalog(catalogs: CatalogsDto): ParameterCatalogItem[] {
-  const option = (item?: { tech_id: string; name: string } | null) =>
-    item ? { id: item.tech_id, name: item.name } : undefined
+  const option = (item?: CatalogItemDto | null): CatalogItem | undefined =>
+    item ? { id: item.tech_id, name: item.name, description: item.description } : undefined
   return catalogs.parameters.map((item) => ({
     id: item.tech_id,
     name: item.name,

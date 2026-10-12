@@ -12,13 +12,13 @@ export function ParameterDetails({ parameter }: { parameter?: ParameterCatalogIt
     { item: parameter?.aggregationLevel, missing: 'Уровень не задан' }
   ]
   const hasLongDetails = details.some(
-    ({ item, missing }) => (item?.name ?? missing).length > shortDetailLength
+    ({ item, missing }) => (item?.description ?? missing).length > shortDetailLength
   )
 
   return (
     <div className={styles.details}>
       {details.map(({ item, missing }) => {
-        const value = item?.name ?? missing
+        const value = item?.description ?? missing
         const isLong = value.length > shortDetailLength
         let flex: string | undefined
         if (hasLongDetails) {

@@ -49,7 +49,7 @@ export function ParameterSelectionModal({
             searchFields: [
               parameter.name,
               parameter.id,
-              ...details.flatMap((item) => [item?.name, item?.id])
+              ...details.flatMap((item) => [item?.description, item?.name, item?.id])
             ].filter((value): value is string => Boolean(value)),
             label: (
               <div className={styles.option}>
