@@ -13,6 +13,7 @@ import {
 } from './parameterRuleDraft'
 import type { ParameterCatalogItem, ParameterConfiguration, RuleCatalogs } from './parameterRules'
 import { useRulesSaveSession, type SaveResolution } from './useRulesSaveSession'
+import { restoreRemovedRules } from './restoreRemovedRules'
 interface Options {
   parameterId: string
   parameter?: ParameterCatalogItem
@@ -163,6 +164,26 @@ export function useParameterEditorController({
         }))
     ]
   })
+  const restoreAllRemoved = () => {
+    if (disabled) return
+    const rules = restoreRemovedRules(draft.rules, initialDraft.rules)
+    setDraft((current) => ({ ...current, rules }))
+    setErrors((current) => {
+      const byRule = { ...current.byRule }
+      for (const rule of rules) {
+        const before = draft.rules.find((item) => item.uiKey === rule.uiKey)
+        if (before === rule || !byRule[rule.uiKey]) continue
+        let next = byRule[rule.uiKey]
+        if (!before || before.uiRules !== rule.uiRules)
+          next = clearChangedRuleErrors(next, { collection: 'ui_rules' }, rule)
+        if (!before || before.notifications !== rule.notifications)
+          next = clearChangedRuleErrors(next, { collection: 'notify_rules' }, rule)
+        if (Object.keys(next).length) byRule[rule.uiKey] = next
+        else delete byRule[rule.uiKey]
+      }
+      return { ...current, byRule }
+    })
+  }
   const validateAndSave = async (): Promise<ParameterEditorValidationTarget | undefined> => {
     if (disabled || !isDirty) return
     const next = validateEditorDraft(draft, ruleCatalogs, parameter)
@@ -210,6 +231,7 @@ export function useParameterEditorController({
     uncertain: session.uncertain,
     retry: async () => applyResolution(await session.retry()),
     removed,
+    restoreAllRemoved,
     deleteAll
   }
 }

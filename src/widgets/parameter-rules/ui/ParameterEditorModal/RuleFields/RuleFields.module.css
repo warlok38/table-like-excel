@@ -27,6 +27,12 @@
   width: 12.5rem;
 }
 
+.resultFields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
 .resultEditor {
   display: flex;
   align-items: flex-start;

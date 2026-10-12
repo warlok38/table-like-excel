@@ -9,6 +9,7 @@ import type {
 } from '../../model/parameterRules'
 import { ParameterEditorForm } from './ParameterEditorForm'
 import { ParameterDetails } from '../ParameterDetails'
+import { PendingDeletionsAlert } from './PendingDeletionsAlert'
 import styles from './ParameterEditorModal.module.css'
 interface Props {
   ruleCatalogs: RuleCatalogs
@@ -149,21 +150,10 @@ export function ParameterEditorModal({
         />
       )}
       {controller.removed.length > 0 && (
-        <Alert
-          type="info"
-          title="Ожидают удаления"
-          description={
-            <div>
-              {controller.removed.map((item) => (
-                <div key={item.key}>
-                  {item.label}{' '}
-                  <Button type="link" disabled={controller.disabled} onClick={item.restore}>
-                    Отменить удаление
-                  </Button>
-                </div>
-              ))}
-            </div>
-          }
+        <PendingDeletionsAlert
+          items={controller.removed}
+          disabled={controller.disabled}
+          onRestoreAll={controller.restoreAllRemoved}
         />
       )}
       <ParameterEditorForm
