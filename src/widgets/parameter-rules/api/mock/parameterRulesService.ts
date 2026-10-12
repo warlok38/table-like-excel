@@ -2,7 +2,6 @@ import type {
   CreateRulesBody,
   UpdateRulesBody,
   DeleteRulesBody,
-  UpdateDefaultValueBody,
   UiInput,
   NotifyInput,
   RuleDto
@@ -89,7 +88,7 @@ export const parameterRulesMockService = {
           ...item,
           rules: item.rules.filter((rule) => rule.journals_tech_id === journalId)
         }))
-        .filter((item) => item.rules.length || item.default_value !== null)
+        .filter((item) => item.rules.length || item.default_rule !== null)
     )
   },
   async create(journalId: string, body: CreateRulesBody) {
@@ -112,7 +111,7 @@ export const parameterRulesMockService = {
           parameters_tech_id: catalog.tech_id,
           name: catalog.name,
           description: catalog.description,
-          default_value: null,
+          default_rule: null,
           rules: []
         }
         draft.parameters.push(parameter)
@@ -142,7 +141,18 @@ export const parameterRulesMockService = {
     checkJournal(journalId)
     const draft = structuredClone(state)
     body.parameter_rules.forEach((input, index) => {
+      const defaultRule = draft.parameters.find(
+        (item) => item.default_rule?.id === input.rules_tech_id
+      )?.default_rule
+      if (defaultRule) {
+        if (!Number.isFinite(input.value))
+          rejectMock('Укажите число', ['parameter_rules', index, 'value'])
+        defaultRule.value = input.value
+        return
+      }
       const rule = parent(draft, input.rules_tech_id)
+      if (input.name === undefined || input.description === undefined)
+        rejectMock('Укажите название и описание правила', ['parameter_rules', index])
       validateRule(
         { ...rule, ...input },
         draft.catalogs,
@@ -173,39 +183,18 @@ export const parameterRulesMockService = {
     finishMockRequest(fault)
     return null
   },
-  async updateDefaultValue(journalId: string, body: UpdateDefaultValueBody) {
-    const fault = await beginMockRequest('put-default')
-    checkJournal(journalId)
-    if (body.default_value !== null && !Number.isFinite(body.default_value))
-      rejectMock('Укажите число', ['default_value'])
-    const draft = structuredClone(state)
-    const catalog = draft.catalogs.parameters.find(
-      (item) => item.tech_id === body.parameters_tech_id
-    )
-    if (!catalog) rejectMock('Неизвестный параметр', ['parameters_tech_id'])
-    let parameter = draft.parameters.find(
-      (item) => item.parameters_tech_id === body.parameters_tech_id
-    )
-    if (!parameter) {
-      parameter = {
-        parameters_tech_id: catalog.tech_id,
-        name: catalog.name,
-        description: catalog.description,
-        default_value: null,
-        rules: []
-      }
-      draft.parameters.push(parameter)
-    }
-    parameter.default_value = body.default_value
-    state = draft
-    finishMockRequest(fault)
-    return null
-  },
   async delete(journalId: string, body: DeleteRulesBody) {
     const fault = await beginMockRequest('delete')
     checkJournal(journalId)
     const draft = structuredClone(state)
-    body.parameter_rules.forEach((id) => parent(draft, id))
+    body.parameter_rules.forEach((id, index) => {
+      const parameter = draft.parameters.find((item) => item.default_rule?.id === id)
+      if (parameter) parameter.default_rule = null
+      else if (
+        !draft.parameters.some((item) => item.rules.some((rule) => rule.rules_tech_id === id))
+      )
+        rejectMock('Правило не найдено', ['parameter_rules', index], 404)
+    })
     body.ui_rules.forEach((id) => {
       if (!draft.catalogs.ui_rules.some((item) => item.ui_rules_tech_id === id))
         rejectMock('Оформление не найдено', [], 404)

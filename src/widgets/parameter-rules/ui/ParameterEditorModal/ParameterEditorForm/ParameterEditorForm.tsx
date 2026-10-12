@@ -36,6 +36,7 @@ export function ParameterEditorForm({
   open
 }: ParameterEditorFormProps) {
   const editorBodyRef = useRef<HTMLDivElement>(null)
+  const defaultValueRef = useRef<HTMLDivElement>(null)
   const addRuleButtonRef = useRef<HTMLButtonElement>(null)
   const addRuleButtonPreviousRect = useRef<DOMRect | null>(null)
   const ruleRefs = useRef(new Map<string, HTMLDivElement>())
@@ -148,6 +149,10 @@ export function ParameterEditorForm({
     if (!validationTarget) return
 
     if (validationTarget.type === 'parameter') return
+    if (validationTarget.type === 'defaultValue') {
+      revealTarget(() => defaultValueRef.current, true)
+      return
+    }
 
     if (validationTarget.type === 'rules') {
       revealTarget(() => addRuleButtonRef.current)
@@ -219,16 +224,27 @@ export function ParameterEditorForm({
   return (
     <div ref={editorBodyRef} className={styles.editorBody}>
       <Form className={styles.editorForm} id={formId} layout="vertical" onFinish={handleSave}>
-        <Form.Item label="Значение по умолчанию">
-          <InputNumber
-            className={styles.defaultValue}
-            controls={false}
-            disabled={isInteractionDisabled}
-            placeholder="Не задано"
-            value={controller.draft.defaultValue}
-            onChange={controller.updateDefaultValue}
-          />
-        </Form.Item>
+        <div ref={defaultValueRef}>
+          <Form.Item
+            label="Значение по умолчанию"
+            validateStatus={controller.errors.defaultValue ? 'error' : undefined}
+            help={controller.errors.defaultValue}
+            extra={
+              !controller.draft.defaultRuleId
+                ? 'Создание значения по умолчанию пока недоступно'
+                : undefined
+            }
+          >
+            <InputNumber
+              className={styles.defaultValue}
+              controls={false}
+              disabled={isInteractionDisabled || !controller.draft.defaultRuleId}
+              placeholder="Не задано"
+              value={controller.draft.defaultValue}
+              onChange={controller.updateDefaultValue}
+            />
+          </Form.Item>
+        </div>
         <div
           className={cn(styles.rulesHeader, {
             [styles.rulesHeaderEmpty]: !controller.hasRules

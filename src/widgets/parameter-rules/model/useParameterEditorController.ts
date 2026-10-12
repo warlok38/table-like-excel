@@ -25,7 +25,10 @@ interface Options {
   onSaved(): void
 }
 export type ParameterEditorValidationTarget =
-  { type: 'parameter' } | { type: 'rules' } | { type: 'rule'; uiKey: string }
+  | { type: 'parameter' }
+  | { type: 'defaultValue' }
+  | { type: 'rules' }
+  | { type: 'rule'; uiKey: string }
 export function useParameterEditorController({
   parameterId,
   parameter,
@@ -59,7 +62,7 @@ export function useParameterEditorController({
     setInitialDraft(fresh)
     // POST is the last operation. If acknowledged, the complete desired state is on the server.
     // Otherwise only existing IDs were changed, so the unsaved target can be retained verbatim.
-    setDraft(result.allSaved ? fresh : result.desired)
+    setDraft(result.allSaved ? fresh : { ...result.desired, defaultRuleId: fresh.defaultRuleId })
     setErrors(result.errors)
     if (result.allSaved) onSaved()
   }
@@ -107,8 +110,9 @@ export function useParameterEditorController({
     return uiKey
   }
   const updateDefaultValue = (value: number | null) => {
-    if (disabled) return
+    if (disabled || !draft.defaultRuleId) return
     setDraft((current) => ({ ...current, defaultValue: value }))
+    setErrors((current) => ({ ...current, defaultValue: undefined }))
   }
   const removeRule = (uiKey: string) => {
     if (disabled) return
@@ -164,6 +168,7 @@ export function useParameterEditorController({
     const next = validateEditorDraft(draft, ruleCatalogs, parameter)
     setErrors(next)
     if (next.parameter) return { type: 'parameter' }
+    if (next.defaultValue) return { type: 'defaultValue' }
     if (next.rules) return { type: 'rules' }
     const invalid = draft.rules.find((rule) => next.byRule[rule.uiKey])
     if (invalid) return { type: 'rule', uiKey: invalid.uiKey }
@@ -178,7 +183,12 @@ export function useParameterEditorController({
   }
   const deleteAll = async () => {
     if (disabled) return
-    const desired = { parameterId, defaultValue: draft.defaultValue, rules: [] }
+    const desired = {
+      parameterId,
+      defaultRuleId: initialDraft.defaultRuleId,
+      defaultValue: initialDraft.defaultValue,
+      rules: []
+    }
     setDraft(desired)
     applyResolution(await session.save(initialDraft, desired))
   }

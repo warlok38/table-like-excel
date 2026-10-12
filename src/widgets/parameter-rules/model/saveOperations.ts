@@ -2,19 +2,20 @@ import type {
   CreateRulesBody,
   UpdateRulesBody,
   DeleteRulesBody,
-  UpdateDefaultValueBody,
   UiInput,
   NotifyInput
 } from '../api/contracts'
 import type { EditorDraft } from './parameterRuleDraft'
 import type { UiResult, NotificationResult } from './parameterRules'
 
-export type SourceMap = Record<string, { uiKey: string; field?: string }>
+export type SourceMap = Record<
+  string,
+  { uiKey: string; field?: string } | { target: 'defaultValue' }
+>
 export type SaveOperation = { sources: SourceMap } & (
   | { method: 'post'; body: CreateRulesBody }
   | { method: 'put'; body: UpdateRulesBody }
   | { method: 'delete'; body: DeleteRulesBody }
-  | { method: 'put-default'; body: UpdateDefaultValueBody }
 )
 export function buildSaveOperations(
   initial: EditorDraft,
@@ -148,18 +149,38 @@ export function buildSaveOperations(
       }
     })
   })
+  if (initial.defaultValue !== desired.defaultValue) {
+    if (!initial.defaultRuleId) throw new Error('Создание значения по умолчанию пока недоступно')
+    if (desired.defaultValue === null) {
+      deletes.push({
+        method: 'delete',
+        body: { parameter_rules: [initial.defaultRuleId], ui_rules: [], notify_rules: [] },
+        sources: { 'parameter_rules.0': { target: 'defaultValue' } }
+      })
+    } else {
+      if (!Number.isFinite(desired.defaultValue)) throw new Error('Укажите число')
+      const existing = updates.find(
+        (operation) => operation.method === 'put' && operation.body.parameter_rules.length > 0
+      )
+      const operation: SaveOperation = existing ?? {
+        method: 'put',
+        body: { parameter_rules: [], ui_rules: [], notify_rules: [] },
+        sources: {}
+      }
+      if (operation.method === 'put') {
+        const index = operation.body.parameter_rules.length
+        operation.body.parameter_rules.push({
+          rules_tech_id: initial.defaultRuleId,
+          value: desired.defaultValue
+        })
+        operation.sources['parameter_rules.' + index] = { target: 'defaultValue' }
+        if (!existing) updates.push(operation)
+      }
+    }
+  }
   return [
     ...deletes,
     ...updates,
-    ...(initial.defaultValue !== desired.defaultValue
-      ? [
-          {
-            method: 'put-default' as const,
-            body: { parameters_tech_id: desired.parameterId!, default_value: desired.defaultValue },
-            sources: {}
-          }
-        ]
-      : []),
     ...(post.parameter_rules.length || post.ui_rules.length || post.notify_rules.length
       ? [{ method: 'post' as const, body: post, sources }]
       : [])

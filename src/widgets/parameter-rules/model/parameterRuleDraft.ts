@@ -23,6 +23,7 @@ export interface DraftRule extends Omit<
 }
 export interface EditorDraft {
   parameterId?: string
+  defaultRuleId?: string
   defaultValue: number | null
   rules: DraftRule[]
 }
@@ -37,6 +38,7 @@ export interface RuleErrors {
 }
 export interface DraftErrors {
   parameter?: string
+  defaultValue?: string
   rules?: string
   byRule: Record<string, RuleErrors>
 }
@@ -85,6 +87,7 @@ export const createEmptyRule = (uiKey: string, parameter?: ParameterCatalogItem)
 })
 export const makeEditorDraft = (configuration?: ParameterConfiguration): EditorDraft => ({
   parameterId: configuration?.parameterId,
+  defaultRuleId: configuration?.defaultRuleId,
   defaultValue: configuration?.defaultValue ?? null,
   rules:
     configuration?.rules.map((rule) => ({
@@ -122,6 +125,10 @@ export const validateEditorDraft = (
 ): DraftErrors => {
   const errors: DraftErrors = { byRule: {} }
   if (!draft.parameterId) errors.parameter = 'Выберите параметр'
+  if (draft.defaultValue !== null) {
+    if (!draft.defaultRuleId) errors.defaultValue = 'Создание значения по умолчанию пока недоступно'
+    else if (!Number.isFinite(draft.defaultValue)) errors.defaultValue = 'Укажите число'
+  }
   if (
     draft.rules.some((rule) => !rule.id) &&
     (!parameter?.aggregationLevel?.id || !parameter.aggregationRule?.id || !parameter.planType?.id)

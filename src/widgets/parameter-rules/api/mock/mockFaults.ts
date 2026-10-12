@@ -1,5 +1,5 @@
 import type { RulesApiError } from '../contracts'
-export type MockOperation = 'catalogs' | 'rules' | 'post' | 'put' | 'put-default' | 'delete'
+export type MockOperation = 'catalogs' | 'rules' | 'post' | 'put' | 'delete'
 type Fault = {
   call?: number
   mode?: 'reject' | 'unknown'
@@ -11,10 +11,11 @@ const calls: Record<MockOperation, number> = {
   rules: 0,
   post: 0,
   put: 0,
-  'put-default': 0,
   delete: 0
 }
 const scenarios: Record<string, Partial<Record<MockOperation, Fault>>> = {
+  'default-put-rejected': { put: { call: 1, loc: ['parameter_rules', 0, 'value'] } },
+  'default-delete-rejected': { delete: { call: 1, loc: ['parameter_rules', 0] } },
   'partial-put': { put: { call: 2, loc: ['ui_rules', 0, 'value'] } },
   'partial-delete': { delete: { call: 2 } },
   'post-rejected': { post: { call: 1, loc: ['parameter_rules', 0, 'name'] } },

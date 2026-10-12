@@ -49,7 +49,8 @@ export function toParameterConfiguration(
 ): ParameterConfiguration {
   return {
     parameterId: parameter.parameters_tech_id,
-    defaultValue: parameter.default_value,
+    defaultRuleId: parameter.default_rule?.id,
+    defaultValue: parameter.default_rule?.value ?? null,
     rules: parameter.rules.map((rule) => {
       const related = (item: { rules_tech_id: string; parameters_tech_id: string }) =>
         item.rules_tech_id === rule.rules_tech_id &&

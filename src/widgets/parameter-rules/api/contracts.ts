@@ -64,12 +64,8 @@ export interface ParameterDto {
   parameters_tech_id: string
   name: string
   description: string | null
-  default_value: number | null
+  default_rule: { id: string; value: number } | null
   rules: RuleDto[]
-}
-export interface UpdateDefaultValueBody {
-  parameters_tech_id: string
-  default_value: number | null
 }
 export interface CatalogParameterDto extends CatalogItemDto {
   shift?: CatalogItemDto | null
@@ -100,7 +96,10 @@ export interface CreateRulesBody {
   notify_rules: (NotifyInput & { rules_tech_id: string })[]
 }
 export interface UpdateRulesBody {
-  parameter_rules: { rules_tech_id: string; name: string; description: string; value: number }[]
+  parameter_rules: (
+    | { rules_tech_id: string; name: string; description: string; value: number }
+    | { rules_tech_id: string; value: number; name?: never; description?: never }
+  )[]
   ui_rules: {
     ui_rules_tech_id: string
     name: string

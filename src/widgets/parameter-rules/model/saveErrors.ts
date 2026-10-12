@@ -29,6 +29,10 @@ export function mapSaveError(error: RulesApiError, operation: SaveOperation): Dr
       .find((path) => loc === path || loc.startsWith(path + '.'))
     if (!key) continue
     const source = operation.sources[key]
+    if ('target' in source) {
+      errors.defaultValue = error.msg ?? error.message
+      continue
+    }
     const suffix = loc.slice(key.length).replace(/^\./, '')
     const field = [source.field, suffix].filter(Boolean).join('.')
     const current = errors.byRule[source.uiKey] ?? {}

@@ -49,6 +49,7 @@ export interface ParameterCatalogItem {
 }
 export interface ParameterConfiguration {
   parameterId: string
+  defaultRuleId?: string
   defaultValue: number | null
   rules: FormattingRule[]
 }
