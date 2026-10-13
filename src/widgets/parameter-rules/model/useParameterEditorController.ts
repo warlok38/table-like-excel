@@ -49,7 +49,7 @@ export function useParameterEditorController({
   )
   const [errors, setErrors] = useState<DraftErrors>({ byRule: {} })
   const nextKey = useRef(0)
-  const session = useRulesSaveSession(reload, { journalId, author })
+  const session = useRulesSaveSession(reload, { journalId, author, parameter })
   const disabled =
     isInteractionDisabled || session.busy || session.syncRequired || session.uncertain
   const initialRulesByKey = useMemo(

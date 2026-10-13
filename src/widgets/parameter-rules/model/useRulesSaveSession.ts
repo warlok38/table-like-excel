@@ -5,7 +5,7 @@ import {
   useUpdateRulesMutation,
   useDeleteRulesMutation
 } from '../api/parameterRulesApi'
-import type { ParameterConfiguration } from './parameterRules'
+import type { ParameterCatalogItem, ParameterConfiguration } from './parameterRules'
 import type { DraftErrors, EditorDraft } from './parameterRuleDraft'
 import { buildSaveOperations } from './saveOperations'
 import { mapSaveError, toRulesError } from './saveErrors'
@@ -22,7 +22,7 @@ export interface SaveResolution extends PendingSave {
 }
 export function useRulesSaveSession(
   reload: () => Promise<ParameterConfiguration>,
-  saveContext: { journalId: string; author: string }
+  saveContext: { journalId: string; author: string; parameter?: ParameterCatalogItem }
 ) {
   const [create] = useCreateRulesMutation(),
     [update] = useUpdateRulesMutation(),
@@ -75,7 +75,8 @@ export function useRulesSaveSession(
         initial,
         desired,
         saveContext.journalId,
-        saveContext.author
+        saveContext.author,
+        saveContext.parameter
       )
       let completed = 0
       for (const operation of operations) {

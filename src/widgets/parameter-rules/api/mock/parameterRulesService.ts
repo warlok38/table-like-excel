@@ -101,6 +101,21 @@ export const parameterRulesMockService = {
       const loc = ['parameter_rules', index]
       if (input.journals_tech_id !== journalId) rejectMock('Неверный журнал', loc)
       if ('default_value' in input) {
+        if (typeof input.name !== 'string' || !input.name.trim())
+          rejectMock('Введите название правила', [...loc, 'name'])
+        const catalog = draft.catalogs.parameters.find(
+          (item) => item.tech_id === input.parameters_tech_id
+        )
+        if (!catalog) rejectMock('Неизвестный параметр', [...loc, 'parameters_tech_id'])
+        const fields = [
+          ['aggregation_levels_tech_id', catalog.aggregation_level],
+          ['aggregation_rules_tech_id', catalog.aggregation_rule],
+          ['plan_types_tech_id', catalog.plan_type]
+        ] as const
+        fields.forEach(([key, item]) => {
+          if (!item?.tech_id || item.tech_id !== input[key])
+            rejectMock('Агрегации правила не соответствуют параметру', [...loc, key])
+        })
         if (!Number.isFinite(input.default_value))
           rejectMock('Укажите число', [...loc, 'default_value'])
       } else validateRule(input, draft.catalogs, draft.parameters, loc)

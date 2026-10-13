@@ -129,6 +129,22 @@ export const validateEditorDraft = (
   if (draft.defaultValue !== null && !Number.isFinite(draft.defaultValue))
     errors.defaultValue = 'Укажите число'
   if (
+    !initial?.defaultRuleId &&
+    draft.defaultValue !== null &&
+    Number.isFinite(draft.defaultValue) &&
+    draft.defaultValue !== (initial?.defaultValue ?? null)
+  ) {
+    if (!parameter || parameter.id !== draft.parameterId)
+      errors.defaultValue = 'Не найден выбранный параметр. Обновите данные.'
+    else if (
+      !parameter.aggregationLevel?.id ||
+      !parameter.aggregationRule?.id ||
+      !parameter.planType?.id
+    )
+      errors.defaultValue =
+        'Для параметра не заданы уровень агрегации, правило агрегации или тип плана. Создание значения по умолчанию недоступно.'
+  }
+  if (
     draft.defaultValue === null &&
     !draft.rules.length &&
     !initial?.defaultRuleId &&

@@ -6,7 +6,7 @@ import type {
   NotifyInput
 } from '../api/contracts'
 import type { EditorDraft } from './parameterRuleDraft'
-import type { UiResult, NotificationResult } from './parameterRules'
+import type { UiResult, NotificationResult, ParameterCatalogItem } from './parameterRules'
 
 export type SourceMap = Record<
   string,
@@ -21,7 +21,8 @@ export function buildSaveOperations(
   initial: EditorDraft,
   desired: EditorDraft,
   journalId: string,
-  author: string
+  author: string,
+  parameter?: ParameterCatalogItem
 ): SaveOperation[] {
   const deletes: SaveOperation[] = [],
     updates: SaveOperation[] = []
@@ -160,9 +161,22 @@ export function buildSaveOperations(
     } else {
       if (!Number.isFinite(desired.defaultValue)) throw new Error('Укажите число')
       if (!initial.defaultRuleId) {
+        if (!parameter || parameter.id !== desired.parameterId)
+          throw new Error('Не найден выбранный параметр. Обновите данные.')
+        const aggregationLevelId = parameter.aggregationLevel?.id
+        const aggregationRuleId = parameter.aggregationRule?.id
+        const planTypeId = parameter.planType?.id
+        if (!aggregationLevelId || !aggregationRuleId || !planTypeId)
+          throw new Error(
+            'Для параметра не заданы уровень агрегации, правило агрегации или тип плана. Создание значения по умолчанию недоступно.'
+          )
         const index = post.parameter_rules.length
         post.parameter_rules.push({
           ...context,
+          name: 'Значение по умолчанию',
+          aggregation_levels_tech_id: aggregationLevelId,
+          aggregation_rules_tech_id: aggregationRuleId,
+          plan_types_tech_id: planTypeId,
           created_by: author,
           default_value: desired.defaultValue
         })

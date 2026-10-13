@@ -96,7 +96,13 @@ export interface CreateRuleInput extends RuleInput {
 }
 export interface CreateDefaultRuleInput extends Pick<
   RuleInput,
-  'parameters_tech_id' | 'journals_tech_id' | 'created_by'
+  | 'name'
+  | 'parameters_tech_id'
+  | 'journals_tech_id'
+  | 'aggregation_levels_tech_id'
+  | 'aggregation_rules_tech_id'
+  | 'plan_types_tech_id'
+  | 'created_by'
 > {
   default_value: number
 }
