@@ -13,6 +13,7 @@ import {
   isNotePending,
   isValuePending,
   type CellTable,
+  type EditStart,
   type EditingSession,
   type PendingChanges,
   type TableSelectionState,
@@ -23,7 +24,13 @@ import { hasOwnPending } from '../../model/changes/pendingChanges'
 import { useSelectionGeometry } from '../SelectionOutline/useSelectionGeometry'
 import { TableCell } from '../TableCell/TableCell'
 import styles from './TableGrid.module.css'
-import type { TableCellContent } from './tableColumnLayout'
+import type { TableCellContent } from './tableCellContents'
+import {
+  getCellContentClass,
+  getCellDisplayMode,
+  getMeasurementCellClass
+} from '../TableCell/cellDisplayMode'
+import { getCellStyle } from '../TableCell/cellStyle'
 import { isRowRendered, VIRTUALIZATION_ROW_THRESHOLD, type VirtualRowWindow } from './tableLayout'
 import { useTableDragAutoScroll } from './useTableDragAutoScroll'
 import { useTableLayout } from './useTableLayout'
@@ -60,12 +67,10 @@ type TableGridProps = {
   dataStatusActionsEnabled: boolean
   isSaving: boolean
   getNoteValue: (cellKey: string, cell: CellTable) => string | null
-  onOpenEditor: (
-    cellKey: string,
-    start: { kind: 'current' } | { kind: 'replace'; text: string }
-  ) => void
+  onOpenEditor: (cellKey: string, start: EditStart) => void
   onDraftChange: (draft: string) => void
   onChooseValue: (value: string | number | null) => void
+  onBlurEditor: () => void
   onCommitEditor: () => void
   onCancelEditor: () => void
   onNavigateEditorByTab: (backward: boolean) => boolean
@@ -89,6 +94,7 @@ export function TableGrid({
   onOpenEditor,
   onDraftChange,
   onChooseValue,
+  onBlurEditor,
   onCommitEditor,
   onCancelEditor,
   onNavigateEditorByTab,
@@ -105,9 +111,15 @@ export function TableGrid({
     data.forEach((row, rowIndex) => {
       row.forEach((cell, cellIndex) => {
         const key = getTableCellKey(cell, rowIndex, cellIndex)
+        const displayMode = getCellDisplayMode(cell)
         contents.set(key, {
           text: getDisplayValue(cell, key, pendingChanges.values),
-          preserveLines: cell.data.editor?.type === 'textarea'
+          displayMode,
+          template: {
+            cellClass: getMeasurementCellClass(cell),
+            cellStyle: getCellStyle(cell),
+            contentClass: getCellContentClass(cell, displayMode)
+          }
         })
       })
     })
@@ -208,6 +220,7 @@ export function TableGrid({
           const pendingBackground = getPendingBackground(pendingChanges, cellKey)
           const value = getEffectiveValue(cellKey, cell, pendingChanges.values)
           const displayValue = cellContents.get(cellKey)!.text
+          const naturalDisplayMode = cell.data.editor?.type === 'textarea' ? 'multiline' : 'wrap'
 
           return (
             <TableCell
@@ -216,6 +229,9 @@ export function TableGrid({
               cellKey={cellKey}
               rowIndex={rowIndex}
               cellIndex={cellIndex}
+              displayMode={
+                hasFixedColumns ? cellContents.get(cellKey)!.displayMode : naturalDisplayMode
+              }
               displayValue={displayValue}
               currentValue={value}
               manualBackground={hasPendingBackground ? (pendingBackground ?? null) : undefined}
@@ -239,6 +255,7 @@ export function TableGrid({
               onOpenEditor={onOpenEditor}
               onDraftChange={onDraftChange}
               onChooseValue={onChooseValue}
+              onBlurEditor={onBlurEditor}
               onCommitEditor={onCommitEditor}
               onCancelEditor={onCancelEditor}
               onNavigateEditorByTab={onNavigateEditorByTab}

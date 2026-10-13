@@ -9,6 +9,7 @@ type TextValueEditorProps = {
   session: EditingSession
   tableOwnerId: string
   onDraftChange: (draft: string) => void
+  onBlur: () => void
   onCommit: () => void
   onCancel: () => void
   onNavigateByTab: (backward: boolean) => boolean
@@ -18,12 +19,16 @@ export function TextValueEditor({
   session,
   tableOwnerId,
   onDraftChange,
+  onBlur,
   onCommit,
   onCancel,
   onNavigateByTab
 }: TextValueEditorProps) {
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null)
   const isComposingRef = useRef(false)
+  const isFinishedRef = useRef(false)
+  const initialCaretRef = useRef(session.initialCaret)
+  initialCaretRef.current = session.initialCaret
   const editor =
     session.editor.type === 'text' ||
     session.editor.type === 'textarea' ||
@@ -35,8 +40,13 @@ export function TextValueEditor({
     const input = inputRef.current
     if (!input) return
 
+    isFinishedRef.current = false
+    const caret = Math.max(
+      0,
+      Math.min(initialCaretRef.current ?? input.value.length, input.value.length)
+    )
+    input.setSelectionRange(caret, caret)
     input.focus()
-    input.setSelectionRange(input.value.length, input.value.length)
   }, [session.cellKey])
 
   const applyCandidate = (candidate: string) => {
@@ -54,6 +64,7 @@ export function TextValueEditor({
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     if (event.key === 'Tab') {
+      isFinishedRef.current = true
       const didMove = onNavigateByTab(event.shiftKey)
       if (didMove) {
         event.preventDefault()
@@ -65,6 +76,7 @@ export function TextValueEditor({
     if (event.key === 'Escape') {
       event.preventDefault()
       event.stopPropagation()
+      isFinishedRef.current = true
       onCancel()
       return
     }
@@ -80,6 +92,7 @@ export function TextValueEditor({
 
       event.preventDefault()
       event.stopPropagation()
+      isFinishedRef.current = true
       onCommit()
     }
   }
@@ -126,6 +139,11 @@ export function TextValueEditor({
     'data-value-editor-owner': tableOwnerId,
     onChange: (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       applyCandidate(event.target.value),
+    onBlur: () => {
+      if (isFinishedRef.current) return
+      isFinishedRef.current = true
+      onBlur()
+    },
     onKeyDown: handleKeyDown,
     onPaste: handlePaste,
     onCompositionStart: () => {

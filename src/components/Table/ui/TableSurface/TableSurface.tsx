@@ -74,6 +74,7 @@ export function TableSurface({ controller }: TableSurfaceProps) {
           onOpenEditor={openEditor}
           onDraftChange={editing.updateDraft}
           onChooseValue={editing.chooseValue}
+          onBlurEditor={editing.commitEditing}
           onCommitEditor={commitEditorWithFocus}
           onCancelEditor={cancelEditorWithFocus}
           onNavigateEditorByTab={navigateEditorByTab}

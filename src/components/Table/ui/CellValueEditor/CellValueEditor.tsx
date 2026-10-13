@@ -14,6 +14,7 @@ type CellValueEditorProps = {
   tableOwnerId: string
   onDraftChange: (draft: string) => void
   onChooseValue: (value: CellValue) => void
+  onBlur: () => void
   onCommit: () => void
   onCancel: () => void
   onNavigateByTab: (backward: boolean) => boolean
@@ -26,6 +27,7 @@ export function CellValueEditor({
   tableOwnerId,
   onDraftChange,
   onChooseValue,
+  onBlur,
   onCommit,
   onCancel,
   onNavigateByTab
@@ -39,6 +41,7 @@ export function CellValueEditor({
       <TextValueEditor
         session={session}
         tableOwnerId={tableOwnerId}
+        onBlur={onBlur}
         onDraftChange={onDraftChange}
         onCommit={onCommit}
         onCancel={onCancel}

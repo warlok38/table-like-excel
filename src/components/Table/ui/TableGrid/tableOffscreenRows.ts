@@ -1,12 +1,12 @@
 import type { TableStructure } from '../../model'
-import type { TableColumnMeasurements } from './tableColumnLayout'
+import type { TableCellContent } from './tableCellContents'
 import { expandRowRange, type RowSpanInterval, type TableLayoutSnapshot } from './tableLayout'
 
 export function measureChangedOffscreenRows(
   table: HTMLTableElement,
   structure: TableStructure,
   snapshot: TableLayoutSnapshot,
-  measurements: TableColumnMeasurements,
+  measurements: ReadonlyMap<string, TableCellContent>,
   changedKeys: ReadonlySet<string>,
   renderedRows: ReadonlyMap<number, HTMLTableRowElement>
 ): Map<number, number> {
@@ -58,12 +58,11 @@ export function measureChangedOffscreenRows(
         const measured = measurements.get(cell.key)!
         const td = document.createElement('td')
         td.className = measured.template.cellClass
-        if (measured.template.cellStyle) td.setAttribute('style', measured.template.cellStyle)
+        Object.assign(td.style, measured.template.cellStyle)
         td.colSpan = cell.colSpan
         td.rowSpan = cell.rowSpan
         const content = document.createElement('div')
         content.className = measured.template.contentClass
-        content.style.whiteSpace = measured.preserveLines ? 'pre' : 'nowrap'
         const span = document.createElement('span')
         span.textContent = measured.text
         content.append(span)

@@ -12,12 +12,7 @@ import {
 
 import type { TableStructure } from '../../model'
 import { makeTableLayoutModel, measureTableLayout, type TableLayoutSnapshot } from './tableLayout'
-import {
-  measureTableColumns,
-  updateTableColumnWidths,
-  type TableCellContent,
-  type TableColumnMeasurements
-} from './tableColumnLayout'
+import { findChangedCellContents, type TableCellContent } from './tableCellContents'
 import { measureChangedOffscreenRows } from './tableOffscreenRows'
 import {
   captureTableScrollAnchor,
@@ -37,7 +32,10 @@ export function useTableLayout(
   const [snapshot, setSnapshot] = useState<TableLayoutSnapshot | null>(null)
   const [isRemeasuring, setIsRemeasuring] = useState(false)
   const currentSnapshot = snapshot?.structureKey === structure.key ? snapshot : null
-  const isMeasuring = currentSnapshot === null || isRemeasuring
+  const hasFixedColumns = currentSnapshot !== null
+  const [settledStructureKey, setSettledStructureKey] = useState<string | null>(null)
+  const isMeasuring =
+    currentSnapshot === null || settledStructureKey !== structure.key || isRemeasuring
   const snapshotRef = useRef(currentSnapshot)
   const isMeasuringRef = useRef(isMeasuring)
   const rowsRef = useRef(new Map<number, HTMLTableRowElement>())
@@ -50,7 +48,7 @@ export function useTableLayout(
   const contentAnchorRef = useRef<TableScrollAnchor | null>(null)
   const contentVersionRef = useRef(cellContents)
   const contentsRef = useRef(cellContents)
-  const columnMeasurementsRef = useRef<TableColumnMeasurements>(new Map())
+  const measuredContentsRef = useRef<ReadonlyMap<string, TableCellContent>>(new Map())
   contentsRef.current = cellContents
   snapshotRef.current = currentSnapshot
   isMeasuringRef.current = isMeasuring
@@ -131,31 +129,35 @@ export function useTableLayout(
       snapshotRef.current?.columnWidths
     )
     if (measuredSnapshot) {
-      const columns = measureTableColumns(table, model, contentsRef.current)
-      columnMeasurementsRef.current = columns.measurements
-      const nextSnapshot = updateTableColumnWidths(measuredSnapshot, columns.widths)
-      snapshotRef.current = nextSnapshot
-      setSnapshot(nextSnapshot)
-      setIsRemeasuring(false)
+      // First commit fixes the natural fractional widths. Keep every row mounted
+      // for a second pass with the final display policy at those same widths.
+      snapshotRef.current = measuredSnapshot
+      setSnapshot(measuredSnapshot)
+      if (hasFixedColumns) {
+        measuredContentsRef.current = contentsRef.current
+        setSettledStructureKey(structure.key)
+        setIsRemeasuring(false)
+      } else {
+        setSettledStructureKey(null)
+      }
     }
-  }, [isMeasuring, model, structure, surfaceRef, tableRef])
+  }, [isMeasuring, hasFixedColumns, model, structure, surfaceRef, tableRef])
 
   useLayoutEffect(() => {
     const table = tableRef.current
     const current = snapshotRef.current
     if (!table || !current || isMeasuringRef.current) return
-    const columns = measureTableColumns(table, model, cellContents, columnMeasurementsRef.current)
-    columnMeasurementsRef.current = columns.measurements
-    let next = updateTableColumnWidths(current, columns.widths)
+    const changedKeys = findChangedCellContents(cellContents, measuredContentsRef.current)
+    measuredContentsRef.current = cellContents
     const offscreenHeights = measureChangedOffscreenRows(
       table,
       structure,
-      next,
-      columns.measurements,
-      columns.changedKeys,
+      current,
+      cellContents,
+      changedKeys,
       rowsRef.current
     )
-    next = updateTableRowHeights(next, rowsRef.current, offscreenHeights)
+    const next = updateTableRowHeights(current, rowsRef.current, offscreenHeights)
     if (next === current) return
 
     const anchor = contentAnchorRef.current ?? settledAnchorRef.current

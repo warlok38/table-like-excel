@@ -6,6 +6,7 @@ import type { CellValue } from '../table'
 import { getCellCapabilities } from '../cellCapabilities'
 import type { TableCellEntry } from '../data/tableIndex'
 import { isDateAllowed } from './dateRules'
+import { getInitialCaret } from './initialCaret'
 import {
   getEffectiveValue,
   getInitialDraft,
@@ -118,6 +119,7 @@ export function useTableEditing({
             cellKey,
             editor,
             draft,
+            initialCaret: getInitialCaret(start, draft, editor),
             initialPending: {
               exists: hasPending,
               value: hasPending ? pendingValuesRef.current[cellKey] : null

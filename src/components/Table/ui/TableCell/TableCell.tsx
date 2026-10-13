@@ -7,17 +7,16 @@ import type { CellTable, CellValue, EditStart, EditingSession } from '../../mode
 import { CellValueEditor } from '../CellValueEditor/CellValueEditor'
 import { DataStatusNote } from '../DataStatusNote/DataStatusNote'
 import { getCellStyle } from './cellStyle'
+import { caretFromPoint } from './caretFromPoint'
+import { getCellContentClass, type CellDisplayMode } from './cellDisplayMode'
 import styles from './TableCell.module.css'
-
-function isNumericCellValue(value: CellTable['formatted_value']): boolean {
-  return value !== null && value !== '' && !Number.isNaN(Number(value))
-}
 
 type TableCellProps = {
   cell: CellTable
   cellKey: string
   rowIndex: number
   cellIndex: number
+  displayMode: CellDisplayMode
   displayValue: string
   currentValue: CellValue
   manualBackground: string | null | undefined
@@ -41,6 +40,7 @@ type TableCellProps = {
   onOpenEditor: (cellKey: string, start: EditStart) => void
   onDraftChange: (draft: string) => void
   onChooseValue: (value: CellValue) => void
+  onBlurEditor: () => void
   onCommitEditor: () => void
   onCancelEditor: () => void
   onNavigateEditorByTab: (backward: boolean) => boolean
@@ -55,6 +55,7 @@ function TableCellComponent({
   cellKey,
   rowIndex,
   cellIndex,
+  displayMode,
   displayValue,
   currentValue,
   manualBackground,
@@ -78,6 +79,7 @@ function TableCellComponent({
   onOpenEditor,
   onDraftChange,
   onChooseValue,
+  onBlurEditor,
   onCommitEditor,
   onCancelEditor,
   onNavigateEditorByTab,
@@ -87,6 +89,7 @@ function TableCellComponent({
   onContextMenu
 }: TableCellProps) {
   const tdRef = useRef<HTMLTableCellElement | null>(null)
+  const valueRef = useRef<HTMLSpanElement | null>(null)
   const externalCellRef = registerCellRef(cellKey)
   const setTdRef = useCallback(
     (element: HTMLTableCellElement | null) => {
@@ -143,14 +146,26 @@ function TableCellComponent({
     (event: React.MouseEvent<HTMLTableCellElement>) => {
       if (!canEditValue) return
       if (isSaving) return
-      if (event.target instanceof Element && event.target.closest('[data-table-interactive]')) {
+      if (
+        event.target instanceof Element &&
+        event.target.closest('[data-table-interactive], input, textarea')
+      ) {
         return
       }
 
       event.preventDefault()
-      onOpenEditor(cellKey, { kind: 'current' })
+      const span = valueRef.current
+      const editorType = cell.data.editor?.type
+      const textLike = editorType === 'text' || editorType === 'number' || editorType === 'textarea'
+      onOpenEditor(cellKey, {
+        kind: 'current',
+        caret:
+          span && textLike
+            ? { text: displayValue, offset: caretFromPoint(span, event.clientX, event.clientY) }
+            : undefined
+      })
     },
-    [canEditValue, cellKey, isSaving, onOpenEditor]
+    [canEditValue, cell, cellKey, displayValue, isSaving, onOpenEditor]
   )
   const handleOpenPicker = useCallback(
     (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -204,12 +219,11 @@ function TableCellComponent({
       <div
         data-cell-content={cellKey}
         title={hasNote || session ? undefined : displayValue}
-        className={cn(styles.constCell, {
-          [styles.nowrap]: isNumericCellValue(cell.formatted_value),
-          [styles.preWrap]: cell.data.editor?.type === 'textarea'
-        })}
+        className={getCellContentClass(cell, displayMode)}
       >
-        <span style={isEditingTextLike ? { visibility: 'hidden' } : undefined}>{displayValue}</span>
+        <span ref={valueRef} style={isEditingTextLike ? { visibility: 'hidden' } : undefined}>
+          {displayValue}
+        </span>
         {isEditingTextLike && session && (
           <CellValueEditor
             session={session}
@@ -218,6 +232,7 @@ function TableCellComponent({
             tableOwnerId={tableOwnerId}
             onDraftChange={onDraftChange}
             onChooseValue={onChooseValue}
+            onBlur={onBlurEditor}
             onCommit={onCommitEditor}
             onCancel={onCancelEditor}
             onNavigateByTab={onNavigateEditorByTab}
@@ -248,6 +263,7 @@ function TableCellComponent({
           tableOwnerId={tableOwnerId}
           onDraftChange={onDraftChange}
           onChooseValue={onChooseValue}
+          onBlur={onBlurEditor}
           onCommit={onCommitEditor}
           onCancel={onCancelEditor}
           onNavigateByTab={onNavigateEditorByTab}

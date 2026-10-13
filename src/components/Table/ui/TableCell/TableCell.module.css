@@ -120,7 +120,6 @@
   font-weight: 450;
   text-align: center;
   background: transparent;
-  white-space: nowrap;
 }
 
 .constCellComments {
@@ -133,5 +132,17 @@
 }
 
 .preWrap {
-  white-space: pre;
+  white-space: pre-wrap;
+}
+
+.singleLine {
+  white-space: nowrap;
+}
+
+.singleLine > span {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  vertical-align: top;
+  text-align: left;
 }

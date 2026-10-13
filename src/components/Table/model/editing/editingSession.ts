@@ -5,11 +5,13 @@ export type EditableCellEditor = Exclude<CellEditor, { type: 'readonly' }>
 
 export type PendingValues = PendingChanges['values']
 
-export type EditStart = { kind: 'current' } | { kind: 'replace'; text: string }
+export type EditStart =
+  { kind: 'current'; caret?: { text: string; offset: number } } | { kind: 'replace'; text: string }
 
 export type EditingSession = {
   cellKey: string
   editor: EditableCellEditor
   draft: string
+  initialCaret?: number
   initialPending: { exists: boolean; value: CellValue }
 }
