@@ -95,18 +95,23 @@ export const parameterRulesMockService = {
     const fault = await beginMockRequest('post')
     checkJournal(journalId)
     const draft = structuredClone(state)
-    body.parameter_rules.forEach(({ ui_rules, notify_rules, ...input }, index) => {
+    if (!body.parameter_rules.length && !body.ui_rules.length && !body.notify_rules.length)
+      rejectMock('Добавьте хотя бы одно правило')
+    body.parameter_rules.forEach((input, index) => {
       const loc = ['parameter_rules', index]
       if (input.journals_tech_id !== journalId) rejectMock('Неверный журнал', loc)
-      validateRule(input, draft.catalogs, draft.parameters, loc)
-      const id = takeId(draft)
+      if ('default_value' in input) {
+        if (!Number.isFinite(input.default_value))
+          rejectMock('Укажите число', [...loc, 'default_value'])
+      } else validateRule(input, draft.catalogs, draft.parameters, loc)
       let parameter = draft.parameters.find(
         (item) => item.parameters_tech_id === input.parameters_tech_id
       )
       if (!parameter) {
         const catalog = draft.catalogs.parameters.find(
           (item) => item.tech_id === input.parameters_tech_id
-        )!
+        )
+        if (!catalog) rejectMock('Неизвестный параметр', [...loc, 'parameters_tech_id'])
         parameter = {
           parameters_tech_id: catalog.tech_id,
           name: catalog.name,
@@ -116,8 +121,16 @@ export const parameterRulesMockService = {
         }
         draft.parameters.push(parameter)
       }
+      if ('default_value' in input) {
+        if (parameter.default_rule)
+          rejectMock('Значение по умолчанию уже существует', [...loc, 'default_value'])
+        parameter.default_rule = { id: takeId(draft), value: input.default_value }
+        return
+      }
+      const { ui_rules, notify_rules, ...ruleInput } = input
+      const id = takeId(draft)
       parameter.rules.push({
-        ...input,
+        ...ruleInput,
         value: String(input.value),
         rules_tech_id: id,
         version: 1,

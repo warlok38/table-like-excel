@@ -229,16 +229,11 @@ export function ParameterEditorForm({
             label="Значение по умолчанию"
             validateStatus={controller.errors.defaultValue ? 'error' : undefined}
             help={controller.errors.defaultValue}
-            extra={
-              !controller.draft.defaultRuleId
-                ? 'Создание значения по умолчанию пока недоступно'
-                : undefined
-            }
           >
             <InputNumber
               className={styles.defaultValue}
               controls={false}
-              disabled={isInteractionDisabled || !controller.draft.defaultRuleId}
+              disabled={isInteractionDisabled}
               placeholder="Не задано"
               value={controller.draft.defaultValue}
               onChange={controller.updateDefaultValue}

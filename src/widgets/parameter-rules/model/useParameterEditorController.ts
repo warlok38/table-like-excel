@@ -111,9 +111,13 @@ export function useParameterEditorController({
     return uiKey
   }
   const updateDefaultValue = (value: number | null) => {
-    if (disabled || !draft.defaultRuleId) return
+    if (disabled) return
     setDraft((current) => ({ ...current, defaultValue: value }))
-    setErrors((current) => ({ ...current, defaultValue: undefined }))
+    setErrors((current) => ({
+      ...current,
+      defaultValue: undefined,
+      rules: draft.rules.length ? current.rules : undefined
+    }))
   }
   const removeRule = (uiKey: string) => {
     if (disabled) return
@@ -186,7 +190,7 @@ export function useParameterEditorController({
   }
   const validateAndSave = async (): Promise<ParameterEditorValidationTarget | undefined> => {
     if (disabled || !isDirty) return
-    const next = validateEditorDraft(draft, ruleCatalogs, parameter)
+    const next = validateEditorDraft(draft, ruleCatalogs, parameter, initialDraft)
     setErrors(next)
     if (next.parameter) return { type: 'parameter' }
     if (next.defaultValue) return { type: 'defaultValue' }

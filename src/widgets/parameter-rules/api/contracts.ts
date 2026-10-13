@@ -90,8 +90,18 @@ export interface CatalogsDto {
     description: string | null
   }[]
 }
+export interface CreateRuleInput extends RuleInput {
+  ui_rules: UiInput[]
+  notify_rules: NotifyInput[]
+}
+export interface CreateDefaultRuleInput extends Pick<
+  RuleInput,
+  'parameters_tech_id' | 'journals_tech_id' | 'created_by'
+> {
+  default_value: number
+}
 export interface CreateRulesBody {
-  parameter_rules: (RuleInput & { ui_rules: UiInput[]; notify_rules: NotifyInput[] })[]
+  parameter_rules: (CreateRuleInput | CreateDefaultRuleInput)[]
   ui_rules: (UiInput & { rules_tech_id: string })[]
   notify_rules: (NotifyInput & { rules_tech_id: string })[]
 }

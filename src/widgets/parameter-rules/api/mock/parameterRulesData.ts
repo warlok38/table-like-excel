@@ -164,7 +164,7 @@ export const parametersMock: ParameterDto[] = [
     parameters_tech_id: '0c44602f-a780-4092-8dfd-a670723df782',
     name: 'Температура подшипника',
     description: 'Температура опорного подшипника оборудования',
-    default_rule: { id: '034eb292-548f-4a3c-b159-149c12ba36e4', value: 0 },
+    default_rule: null,
     rules: [
       {
         rules_tech_id: 'c66208a7-52d0-4df9-9a44-7bd36a16493c',

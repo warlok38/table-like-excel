@@ -12,7 +12,7 @@ export function toParameterRows(parameters: ParameterDto[]): ParameterRow[] {
     id: parameter.parameters_tech_id,
     name: parameter.name,
     description: parameter.description,
-    rulesCount: parameter.rules.length
+    rulesCount: parameter.rules.length + (parameter.default_rule ? 1 : 0)
   }))
 }
 

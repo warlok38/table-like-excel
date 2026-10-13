@@ -121,14 +121,20 @@ export const getDraftRuleSummary = (rule: DraftRule, catalogs: RuleCatalogs) =>
 export const validateEditorDraft = (
   draft: EditorDraft,
   catalogs: RuleCatalogs,
-  parameter?: ParameterCatalogItem
+  parameter?: ParameterCatalogItem,
+  initial?: EditorDraft
 ): DraftErrors => {
   const errors: DraftErrors = { byRule: {} }
   if (!draft.parameterId) errors.parameter = 'Выберите параметр'
-  if (draft.defaultValue !== null) {
-    if (!draft.defaultRuleId) errors.defaultValue = 'Создание значения по умолчанию пока недоступно'
-    else if (!Number.isFinite(draft.defaultValue)) errors.defaultValue = 'Укажите число'
-  }
+  if (draft.defaultValue !== null && !Number.isFinite(draft.defaultValue))
+    errors.defaultValue = 'Укажите число'
+  if (
+    draft.defaultValue === null &&
+    !draft.rules.length &&
+    !initial?.defaultRuleId &&
+    !initial?.rules.length
+  )
+    errors.rules = 'Задайте значение по умолчанию или добавьте правило'
   if (
     draft.rules.some((rule) => !rule.id) &&
     (!parameter?.aggregationLevel?.id || !parameter.aggregationRule?.id || !parameter.planType?.id)

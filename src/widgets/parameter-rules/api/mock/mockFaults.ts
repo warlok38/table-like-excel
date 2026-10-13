@@ -14,6 +14,7 @@ const calls: Record<MockOperation, number> = {
   delete: 0
 }
 const scenarios: Record<string, Partial<Record<MockOperation, Fault>>> = {
+  'default-post-rejected': { post: { call: 1, loc: ['parameter_rules', 0, 'default_value'] } },
   'default-put-rejected': { put: { call: 1, loc: ['parameter_rules', 0, 'value'] } },
   'default-delete-rejected': { delete: { call: 1, loc: ['parameter_rules', 0] } },
   'partial-put': { put: { call: 2, loc: ['ui_rules', 0, 'value'] } },

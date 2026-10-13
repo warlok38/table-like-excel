@@ -150,8 +150,8 @@ export function buildSaveOperations(
     })
   })
   if (initial.defaultValue !== desired.defaultValue) {
-    if (!initial.defaultRuleId) throw new Error('Создание значения по умолчанию пока недоступно')
     if (desired.defaultValue === null) {
+      if (!initial.defaultRuleId) throw new Error('Исходное значение по умолчанию не найдено')
       deletes.push({
         method: 'delete',
         body: { parameter_rules: [initial.defaultRuleId], ui_rules: [], notify_rules: [] },
@@ -159,22 +159,32 @@ export function buildSaveOperations(
       })
     } else {
       if (!Number.isFinite(desired.defaultValue)) throw new Error('Укажите число')
-      const existing = updates.find(
-        (operation) => operation.method === 'put' && operation.body.parameter_rules.length > 0
-      )
-      const operation: SaveOperation = existing ?? {
-        method: 'put',
-        body: { parameter_rules: [], ui_rules: [], notify_rules: [] },
-        sources: {}
-      }
-      if (operation.method === 'put') {
-        const index = operation.body.parameter_rules.length
-        operation.body.parameter_rules.push({
-          rules_tech_id: initial.defaultRuleId,
-          value: desired.defaultValue
+      if (!initial.defaultRuleId) {
+        const index = post.parameter_rules.length
+        post.parameter_rules.push({
+          ...context,
+          created_by: author,
+          default_value: desired.defaultValue
         })
-        operation.sources['parameter_rules.' + index] = { target: 'defaultValue' }
-        if (!existing) updates.push(operation)
+        sources['parameter_rules.' + index] = { target: 'defaultValue' }
+      } else {
+        const existing = updates.find(
+          (operation) => operation.method === 'put' && operation.body.parameter_rules.length > 0
+        )
+        const operation: SaveOperation = existing ?? {
+          method: 'put',
+          body: { parameter_rules: [], ui_rules: [], notify_rules: [] },
+          sources: {}
+        }
+        if (operation.method === 'put') {
+          const index = operation.body.parameter_rules.length
+          operation.body.parameter_rules.push({
+            rules_tech_id: initial.defaultRuleId,
+            value: desired.defaultValue
+          })
+          operation.sources['parameter_rules.' + index] = { target: 'defaultValue' }
+          if (!existing) updates.push(operation)
+        }
       }
     }
   }
