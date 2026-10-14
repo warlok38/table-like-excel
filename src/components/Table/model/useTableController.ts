@@ -9,8 +9,6 @@ import type { EditStart } from './editing/editingSession'
 import { useTableChanges } from './changes/useTableChanges'
 import { useTableData } from './data/useTableData'
 import { useTableEditing } from './editing/useTableEditing'
-import { getChangesWithEditingDraft } from './editing/editingChanges'
-import { hasPendingChanges, isValuePending } from './changes/pendingChanges'
 import { useTableInteractions } from './useTableInteractions'
 import { useTableSave } from './save/useTableSave'
 import { useTableSelection } from './selection/useTableSelection'
@@ -114,10 +112,7 @@ export function useTableController({
   })
   editingOpenRef.current = Boolean(editing.session)
 
-  const changesToSave = getChangesWithEditingDraft(pendingChanges, editing.session, entriesByKey)
-  const canSaveDraft = Boolean(
-    editing.session && isValuePending(changesToSave, editing.session.cellKey)
-  )
+  const canSaveDraft = Boolean(editing.session)
   const applyBackground = useCallback(
     (background: string | null) => {
       if (savingOpenRef.current) return
@@ -248,13 +243,13 @@ export function useTableController({
     isBlockedRef: savingOpenRef
   })
 
-  const hasPendingActions = pendingSummary.operations > 0 || Boolean(editing.session)
+  const hasPendingActions = pendingSummary.operations > 0 || canSaveDraft
   const headerActions: TableHeaderActionsModel = {
     ownerId,
     colors: availableBackgroundColors,
     dataStatusActionsEnabled: cellManagementEnabled,
     canChangeBackground: backgroundEditableSelectedCount > 0 && !tableSave.isSaving,
-    canSave: hasPendingChanges(changesToSave) && !tableSave.isSaving,
+    canSave: hasPendingActions && !tableSave.isSaving,
     canCancel: hasPendingActions && !tableSave.isSaving,
     isSaving: tableSave.isSaving,
     saveStatus: tableSave.saveStatus,
