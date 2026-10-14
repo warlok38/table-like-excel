@@ -3,12 +3,12 @@
 }
 
 .dropdown :global(.ant-select-item-option) {
-  padding-block: 8px;
+  padding-block: 0.4167rem;
 }
 
 .option {
   display: grid;
-  gap: 4px;
+  gap: 0.2083rem;
   min-width: 0;
 }
 
@@ -16,7 +16,7 @@
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 12px;
+  gap: 0.625rem;
   line-height: 1.35;
   min-width: 0;
 }
@@ -32,7 +32,7 @@
 .count {
   flex: none;
   color: #667085;
-  font-size: 12px;
+  font-size: 0.625rem;
 }
 
 .countValue {

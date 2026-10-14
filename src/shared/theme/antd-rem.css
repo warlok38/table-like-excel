@@ -1,0 +1,282 @@
+/* Ant Design 6 dimension tokens normalized to a 19.2px root font, rounded to 4 decimals.
+ * Numeric theme tokens stay intact for Ant's calculations. The html prefix wins over Ant's
+ * unlayered variable declarations regardless of insertion order, including portals.
+ * Recheck component tokens when changing the theme or upgrading Ant Design.
+ */
+
+html .app-theme.ant-table-css-var {
+  --ant-table-cell-padding-block: 0.8333rem;
+  --ant-table-cell-padding-inline: 0.8333rem;
+  --ant-table-cell-padding-block-md: 0.625rem;
+  --ant-table-cell-padding-inline-md: 0.4167rem;
+  --ant-table-cell-padding-block-sm: 0.4167rem;
+  --ant-table-cell-padding-inline-sm: 0.4167rem;
+  --ant-table-header-border-radius: 0.3125rem;
+  --ant-table-cell-font-size: 0.7292rem;
+  --ant-table-cell-font-size-md: 0.7292rem;
+  --ant-table-cell-font-size-sm: 0.7292rem;
+  --ant-table-selection-column-width: 2.0833rem;
+  --ant-table-sticky-scroll-bar-border-radius: 5.2083rem;
+  --ant-table-expand-icon-margin-top: 0.1302rem;
+  --ant-table-expand-icon-half-inner: 0.4688rem;
+  --ant-table-expand-icon-size: 1.0938rem;
+}
+
+html .app-theme.ant-input-number-css-var {
+  --ant-input-number-padding-block: 0.4167rem;
+  --ant-input-number-padding-block-sm: 0.1563rem;
+  --ant-input-number-padding-block-lg: 0.625rem;
+  --ant-input-number-padding-inline: 0.5729rem;
+  --ant-input-number-padding-inline-sm: 0.3646rem;
+  --ant-input-number-padding-inline-lg: 0.5729rem;
+  --ant-input-number-active-shadow: 0 0 0 0.1042rem rgba(255, 245, 5, 0.1);
+  --ant-input-number-error-active-shadow: 0 0 0 0.1042rem rgba(255, 38, 5, 0.06);
+  --ant-input-number-warning-active-shadow: 0 0 0 0.1042rem rgba(255, 215, 5, 0.1);
+  --ant-input-number-input-font-size: 0.7292rem;
+  --ant-input-number-input-font-size-lg: 0.8333rem;
+  --ant-input-number-input-font-size-sm: 0.7292rem;
+  --ant-input-number-control-width: 4.6875rem;
+  --ant-input-number-handle-width: 1.4583rem;
+  --ant-input-number-handle-font-size: 0.3646rem;
+  --ant-input-number-handle-visible-width: 0rem;
+}
+
+html .app-theme.ant-select-css-var {
+  --ant-select-internal_fixed_item_margin: 0.1042rem;
+  --ant-select-option-padding: 0.4688rem 0.625rem;
+  --ant-select-option-font-size: 0.7292rem;
+  --ant-select-option-height: 2.0833rem;
+  --ant-select-single-item-height-lg: 2.6042rem;
+  --ant-select-multiple-item-height: 1.6667rem;
+  --ant-select-multiple-item-height-sm: 1.1458rem;
+  --ant-select-multiple-item-height-lg: 2.1875rem;
+  --ant-select-show-arrow-padding-inline-end: 0.9375rem;
+  --ant-select-select-affix-padding: 0.2083rem;
+}
+
+html .app-theme.ant-modal-css-var {
+  --ant-modal-title-font-size: 0.8333rem;
+  --ant-modal-content-padding: 1.0417rem 1.25rem;
+  --ant-modal-header-padding: 0rem;
+  --ant-modal-header-margin-bottom: 0.4167rem;
+  --ant-modal-body-padding: 0rem;
+  --ant-modal-footer-padding: 0rem;
+  --ant-modal-footer-border-radius: 0rem;
+  --ant-modal-footer-margin-top: 0.625rem;
+  --ant-modal-confirm-body-padding: 0rem;
+  --ant-modal-confirm-icon-margin-inline-end: 0.625rem;
+  --ant-modal-confirm-btns-margin-top: 0.625rem;
+}
+
+html .app-theme.ant-form-css-var {
+  --ant-form-label-font-size: 0.7292rem;
+  --ant-form-label-height: 2.0833rem;
+  --ant-form-label-colon-margin-inline-start: 0.1042rem;
+  --ant-form-label-colon-margin-inline-end: 0.4167rem;
+  --ant-form-item-margin-bottom: 1.25rem;
+  --ant-form-vertical-label-margin: 0rem;
+  --ant-form-inline-item-margin-bottom: 0rem;
+}
+
+html .app-theme.ant-input {
+  --ant-input-padding-block: 0.4167rem;
+  --ant-input-padding-block-sm: 0.1563rem;
+  --ant-input-padding-block-lg: 0.625rem;
+  --ant-input-padding-inline: 0.5729rem;
+  --ant-input-padding-inline-sm: 0.3646rem;
+  --ant-input-padding-inline-lg: 0.5729rem;
+  --ant-input-active-shadow: 0 0 0 0.1042rem rgba(255, 245, 5, 0.1);
+  --ant-input-error-active-shadow: 0 0 0 0.1042rem rgba(255, 38, 5, 0.06);
+  --ant-input-warning-active-shadow: 0 0 0 0.1042rem rgba(255, 215, 5, 0.1);
+  --ant-input-input-font-size: 0.7292rem;
+  --ant-input-input-font-size-lg: 0.8333rem;
+  --ant-input-input-font-size-sm: 0.7292rem;
+}
+
+html .app-theme.ant-input-css-var {
+  --ant-input-padding-block: 0.4167rem;
+  --ant-input-padding-block-sm: 0.1563rem;
+  --ant-input-padding-block-lg: 0.625rem;
+  --ant-input-padding-inline: 0.5729rem;
+  --ant-input-padding-inline-sm: 0.3646rem;
+  --ant-input-padding-inline-lg: 0.5729rem;
+  --ant-input-active-shadow: 0 0 0 0.1042rem rgba(255, 245, 5, 0.1);
+  --ant-input-error-active-shadow: 0 0 0 0.1042rem rgba(255, 38, 5, 0.06);
+  --ant-input-warning-active-shadow: 0 0 0 0.1042rem rgba(255, 215, 5, 0.1);
+  --ant-input-input-font-size: 0.7292rem;
+  --ant-input-input-font-size-lg: 0.8333rem;
+  --ant-input-input-font-size-sm: 0.7292rem;
+}
+
+html .app-theme.ant-collapse {
+  --ant-collapse-header-padding: 0.625rem 0.8333rem;
+  --ant-collapse-header-padding-sm: 0.4167rem 0.625rem 0.4167rem 0.4167rem;
+  --ant-collapse-header-padding-lg: 0.8333rem 1.25rem 0.8333rem 0.8333rem;
+  --ant-collapse-content-padding: 0.8333rem 0.8333rem;
+  --ant-collapse-content-padding-sm: 0.625rem;
+  --ant-collapse-content-padding-lg: 1.25rem;
+  --ant-collapse-borderless-content-padding: 0.2083rem 0.8333rem 0.8333rem;
+}
+
+html .app-theme.ant-alert {
+  --ant-alert-border-radius: 0.3125rem;
+  --ant-alert-with-description-icon-size: 1.25rem;
+  --ant-alert-default-padding: 0.4167rem 0.625rem;
+  --ant-alert-with-description-padding: 1.0417rem 1.25rem;
+}
+
+html .app-theme.ant-tooltip-css-var {
+  --ant-tooltip-max-width: 13.0208rem;
+  --ant-tooltip-arrow-offset-horizontal: 0.625rem;
+  --ant-tooltip-arrow-offset-vertical: 0.4167rem;
+  --ant-tooltip-arrow-shadow-width: 0.4672rem;
+  --ant-tooltip-arrow-polygon: polygon(
+    0.0863rem 100%,
+    50% 0.0863rem,
+    0.747rem 100%,
+    0.0863rem 100%
+  );
+}
+
+html .app-theme.ant-btn {
+  --ant-button-blue-shadow-color: 0 0.1042rem 0 rgba(5, 145, 255, 0.1);
+  --ant-button-purple-shadow-color: 0 0.1042rem 0 rgba(155, 5, 255, 0.06);
+  --ant-button-cyan-shadow-color: 0 0.1042rem 0 rgba(5, 255, 215, 0.1);
+  --ant-button-green-shadow-color: 0 0.1042rem 0 rgba(142, 255, 30, 0.08);
+  --ant-button-magenta-shadow-color: 0 0.1042rem 0 rgba(255, 5, 105, 0.06);
+  --ant-button-pink-shadow-color: 0 0.1042rem 0 rgba(255, 5, 105, 0.06);
+  --ant-button-red-shadow-color: 0 0.1042rem 0 rgba(255, 22, 5, 0.06);
+  --ant-button-orange-shadow-color: 0 0.1042rem 0 rgba(255, 175, 5, 0.1);
+  --ant-button-yellow-shadow-color: 0 0.1042rem 0 rgba(245, 255, 5, 0.1);
+  --ant-button-volcano-shadow-color: 0 0.1042rem 0 rgba(255, 125, 25, 0.1);
+  --ant-button-geekblue-shadow-color: 0 0.1042rem 0 rgba(5, 88, 255, 0.06);
+  --ant-button-lime-shadow-color: 0 0.1042rem 0 rgba(225, 255, 5, 0.1);
+  --ant-button-gold-shadow-color: 0 0.1042rem 0 rgba(255, 215, 5, 0.1);
+  --ant-button-icon-gap: 0.4167rem;
+  --ant-button-default-shadow: 0 0.1042rem 0 rgba(0, 0, 0, 0.02);
+  --ant-button-primary-shadow: 0 0.1042rem 0 rgba(255, 245, 5, 0.1);
+  --ant-button-danger-shadow: 0 0.1042rem 0 rgba(255, 38, 5, 0.06);
+  --ant-button-padding-inline: 0.7813rem;
+  --ant-button-padding-inline-lg: 0.7813rem;
+  --ant-button-padding-inline-sm: 0.3646rem;
+  --ant-button-content-font-size: 0.7292rem;
+  --ant-button-content-font-size-sm: 0.7292rem;
+  --ant-button-content-font-size-lg: 0.8333rem;
+  --ant-button-padding-block: 0.4167rem;
+  --ant-button-padding-block-sm: 0.1563rem;
+  --ant-button-padding-block-lg: 0.625rem;
+}
+
+html .app-theme {
+  --ant-font-size: 0.7292rem;
+  --ant-border-radius: 0.2604rem;
+  --ant-size-unit: 0.2083rem;
+  --ant-size-step: 0.2083rem;
+  --ant-size-popup-arrow: 0.8333rem;
+  --ant-control-height: 2.0833rem;
+  --ant-font-size-sm: 0.625rem;
+  --ant-font-size-lg: 0.8333rem;
+  --ant-font-size-xl: 1.0417rem;
+  --ant-font-size-heading-1: 1.9792rem;
+  --ant-font-size-heading-2: 1.5625rem;
+  --ant-font-size-heading-3: 1.25rem;
+  --ant-font-size-heading-4: 1.0417rem;
+  --ant-font-size-heading-5: 0.8333rem;
+  --ant-font-height: 1.1458rem;
+  --ant-font-height-lg: 1.25rem;
+  --ant-font-height-sm: 1.0417rem;
+  --ant-size-xxl: 2.5rem;
+  --ant-size-xl: 1.6667rem;
+  --ant-size-lg: 1.25rem;
+  --ant-size-md: 1.0417rem;
+  --ant-size-ms: 0.8333rem;
+  --ant-size: 0.8333rem;
+  --ant-size-sm: 0.625rem;
+  --ant-size-xs: 0.4167rem;
+  --ant-size-xxs: 0.2083rem;
+  --ant-control-height-sm: 1.5625rem;
+  --ant-control-height-xs: 1.0417rem;
+  --ant-control-height-lg: 2.6042rem;
+  --ant-line-width-bold: 0.1042rem;
+  --ant-border-radius-xs: 0.0521rem;
+  --ant-border-radius-sm: 0.2083rem;
+  --ant-border-radius-lg: 0.3125rem;
+  --ant-border-radius-outer: 0.2083rem;
+  --ant-font-size-icon: 0.625rem;
+  --ant-line-width-focus: 0.1563rem;
+  --ant-control-outline-width: 0.1042rem;
+  --ant-control-interactive-size: 1.0417rem;
+  --ant-control-padding-horizontal: 0.625rem;
+  --ant-control-padding-horizontal-sm: 0.4167rem;
+  --ant-padding-xxs: 0.2083rem;
+  --ant-padding-xs: 0.4167rem;
+  --ant-padding-sm: 0.625rem;
+  --ant-padding: 0.8333rem;
+  --ant-padding-md: 1.0417rem;
+  --ant-padding-lg: 1.25rem;
+  --ant-padding-xl: 1.6667rem;
+  --ant-padding-content-horizontal-lg: 1.25rem;
+  --ant-padding-content-vertical-lg: 0.8333rem;
+  --ant-padding-content-horizontal: 0.8333rem;
+  --ant-padding-content-vertical: 0.625rem;
+  --ant-padding-content-horizontal-sm: 0.8333rem;
+  --ant-padding-content-vertical-sm: 0.4167rem;
+  --ant-margin-xxs: 0.2083rem;
+  --ant-margin-xs: 0.4167rem;
+  --ant-margin-sm: 0.625rem;
+  --ant-margin: 0.8333rem;
+  --ant-margin-md: 1.0417rem;
+  --ant-margin-lg: 1.25rem;
+  --ant-margin-xl: 1.6667rem;
+  --ant-margin-xxl: 2.5rem;
+  --ant-box-shadow:
+    0 0.3125rem 0.8333rem 0 rgba(0, 0, 0, 0.08),
+    0 0.1563rem 0.3125rem -0.2083rem rgba(0, 0, 0, 0.12),
+    0 0.4688rem 1.4583rem 0.4167rem rgba(0, 0, 0, 0.05);
+  --ant-box-shadow-secondary:
+    0 0.3125rem 0.8333rem 0 rgba(0, 0, 0, 0.08),
+    0 0.1563rem 0.3125rem -0.2083rem rgba(0, 0, 0, 0.12),
+    0 0.4688rem 1.4583rem 0.4167rem rgba(0, 0, 0, 0.05);
+  --ant-box-shadow-tertiary:
+    0 0.0521rem 0.1042rem 0 rgba(0, 0, 0, 0.05),
+    0 0.0521rem 0.3125rem -0.0521rem rgba(0, 0, 0, 0.03),
+    0 0.1042rem 0.2083rem 0 rgba(0, 0, 0, 0.03);
+  --ant-box-shadow-popover-arrow: 0.1042rem 0.1042rem 0.2604rem rgba(0, 0, 0, 0.05);
+  --ant-drop-shadow-popover: drop-shadow(0 0.3125rem 0.8333rem rgba(0, 0, 0, 0.08))
+    drop-shadow(0 0.1563rem 0.3125rem rgba(0, 0, 0, 0.12))
+    drop-shadow(0 0.4688rem 1.4583rem rgba(0, 0, 0, 0.05));
+  --ant-box-shadow-card:
+    0 0.0521rem 0.1042rem -0.1042rem rgba(0, 0, 0, 0.16),
+    0 0.1563rem 0.3125rem 0 rgba(0, 0, 0, 0.12), 0 0.2604rem 0.625rem 0.2083rem rgba(0, 0, 0, 0.09);
+  --ant-box-shadow-drawer-right:
+    -0.3125rem 0 0.8333rem 0 rgba(0, 0, 0, 0.08),
+    -0.1563rem 0 0.3125rem -0.2083rem rgba(0, 0, 0, 0.12),
+    -0.4688rem 0 1.4583rem 0.4167rem rgba(0, 0, 0, 0.05);
+  --ant-box-shadow-drawer-left:
+    0.3125rem 0 0.8333rem 0 rgba(0, 0, 0, 0.08),
+    0.1563rem 0 0.3125rem -0.2083rem rgba(0, 0, 0, 0.12),
+    0.4688rem 0 1.4583rem 0.4167rem rgba(0, 0, 0, 0.05);
+  --ant-box-shadow-drawer-up:
+    0 0.3125rem 0.8333rem 0 rgba(0, 0, 0, 0.08),
+    0 0.1563rem 0.3125rem -0.2083rem rgba(0, 0, 0, 0.12),
+    0 0.4688rem 1.4583rem 0.4167rem rgba(0, 0, 0, 0.05);
+  --ant-box-shadow-drawer-down:
+    0 -0.3125rem 0.8333rem 0 rgba(0, 0, 0, 0.08),
+    0 -0.1563rem 0.3125rem -0.2083rem rgba(0, 0, 0, 0.12),
+    0 -0.4688rem 1.4583rem 0.4167rem rgba(0, 0, 0, 0.05);
+  --ant-box-shadow-tabs-overflow-left: inset 0.5208rem 0 0.4167rem -0.4167rem rgba(0, 0, 0, 0.08);
+  --ant-box-shadow-tabs-overflow-right: inset -0.5208rem 0 0.4167rem -0.4167rem rgba(0, 0, 0, 0.08);
+  --ant-box-shadow-tabs-overflow-top: inset 0 0.5208rem 0.4167rem -0.4167rem rgba(0, 0, 0, 0.08);
+  --ant-box-shadow-tabs-overflow-bottom: inset 0 -0.5208rem 0.4167rem -0.4167rem rgba(0, 0, 0, 0.08);
+}
+
+html .app-theme.ant-spin {
+  --ant-spin-content-height: 20.8333rem;
+  --ant-spin-dot-size: 1.3021rem;
+  --ant-spin-dot-size-sm: 0.9115rem;
+  --ant-spin-dot-size-lg: 2.0833rem;
+}
+
+html .app-theme.ant-message {
+  --ant-message-content-padding: 0.7292rem 0.625rem;
+}

@@ -3,6 +3,7 @@ import type { ThemeConfig } from 'antd'
 import { componentOverrides } from './overrides'
 
 export const themeConfig: ThemeConfig = {
+  cssVar: { key: 'app-theme' },
   token: {
     fontFamily: 'var(--font-montserrat), Arial, Helvetica, sans-serif',
     borderRadius: 5,

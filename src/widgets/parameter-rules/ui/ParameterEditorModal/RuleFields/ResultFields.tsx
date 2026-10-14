@@ -1,6 +1,7 @@
 'use client'
 import { CloseOutlined, PlusOutlined } from '@ant-design/icons'
 import { Button, Form, Input, Select } from 'antd'
+import { useRootFontSize } from '@/shared/theme'
 import type { DraftRule, RuleChange, RuleErrors } from '../../../model/parameterRuleDraft'
 import type { RuleCatalogs } from '../../../model/parameterRules'
 import styles from './RuleFields.module.css'
@@ -13,6 +14,7 @@ interface Props {
   onChange(change: RuleChange, update: (rule: DraftRule) => DraftRule): void
 }
 export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Props) {
+  const rootFontSize = useRootFontSize()
   const available = catalogs.attributes.filter(
     (item) => !rule.uiRules.some((value) => value.key === item.key)
   )
@@ -54,11 +56,13 @@ export function ResultFields({ catalogs, rule, errors, disabled, onChange }: Pro
               ))}
             </div>
             <Select
+              listHeight={13.3333 * rootFontSize}
+              listItemHeight={2.0833 * rootFontSize}
               className={styles.addResultPropertySelect}
               value={null}
               size="small"
               disabled={disabled || !available.length}
-              placeholder="Добавить стиль"
+              placeholder={available.length ? 'Добавить стиль' : 'Нет доступных стилей'}
               showSearch
               optionFilterProp="label"
               options={available.map((item) => ({ value: item.key, label: item.name }))}

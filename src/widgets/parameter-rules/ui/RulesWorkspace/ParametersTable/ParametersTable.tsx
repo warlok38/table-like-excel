@@ -24,20 +24,20 @@ export function ParametersTable({
   onEdit
 }: ParametersTableProps) {
   const columns: ColumnsType<ParameterRow> = [
-    { title: 'ID', dataIndex: 'id', width: 160, ellipsis: true },
-    { title: 'Название', dataIndex: 'name', width: 220 },
+    { title: 'ID', dataIndex: 'id', width: '8.3333rem', ellipsis: true },
+    { title: 'Название', dataIndex: 'name', width: '11.4583rem' },
     { title: 'Описание', dataIndex: 'description' },
     {
       title: 'Правила',
       dataIndex: 'rulesCount',
-      width: 110,
+      width: '5.7292rem',
       render: (count: number) => formatRulesLabel(count)
     },
     {
       title: '',
       key: 'actions',
       align: 'center',
-      width: 64,
+      width: '3.3333rem',
       render: (_, row) => (
         <Tooltip title="Редактировать">
           <Button
@@ -69,7 +69,7 @@ export function ParametersTable({
       }}
       pagination={false}
       rowKey="id"
-      scroll={{ x: 900 }}
+      scroll={{ x: '46.875rem' }}
       size="small"
     />
   )

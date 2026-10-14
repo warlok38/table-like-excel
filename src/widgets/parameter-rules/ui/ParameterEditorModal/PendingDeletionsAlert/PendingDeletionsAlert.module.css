@@ -1,49 +1,49 @@
 .alert:global(.ant-alert) {
-  margin-bottom: 16px;
-  padding: 8px 12px;
+  margin-bottom: 0.8333rem;
+  padding: 0.4167rem 0.625rem;
   cursor: pointer;
 }
 
 .header {
   display: flex;
   align-items: center;
-  gap: 16px;
-  padding-right: 32px;
-  font-size: 14px;
+  gap: 0.8333rem;
+  padding-right: 1.6667rem;
+  font-size: 0.7292rem;
   font-weight: 400;
-  line-height: 24px;
+  line-height: 1.25rem;
 }
 
 .link:global(.ant-btn) {
-  height: 24px;
+  height: 1.25rem;
   padding: 0;
-  font-size: 13px;
+  font-size: 0.6771rem;
 }
 
 .toggle {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 0.4167rem;
+  right: 0.4167rem;
   display: flex;
-  width: 24px;
-  height: 24px;
+  width: 1.25rem;
+  height: 1.25rem;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 0.625rem;
 }
 
 .list {
   display: grid;
-  gap: 2px;
-  margin-top: 4px;
-  font-size: 14px;
+  gap: 0.1042rem;
+  margin-top: 0.2083rem;
+  font-size: 0.7292rem;
   font-weight: 400;
-  line-height: 24px;
+  line-height: 1.25rem;
 }
 
 .item {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 12px;
+  gap: 0 0.625rem;
 }

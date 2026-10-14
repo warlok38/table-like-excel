@@ -4,6 +4,7 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Collapse, Form, Input, InputNumber, Tooltip, type CollapseProps } from 'antd'
 import cn from 'classnames'
+import { useRootFontSize } from '@/shared/theme'
 
 import type { ParameterEditorController } from '../../../model/useParameterEditorController'
 import { matchesRuleSearch } from '../../../model/ruleSearch'
@@ -35,6 +36,7 @@ export function ParameterEditorForm({
   isInteractionDisabled,
   open
 }: ParameterEditorFormProps) {
+  const rootFontSize = useRootFontSize()
   const editorBodyRef = useRef<HTMLDivElement>(null)
   const defaultValueRef = useRef<HTMLDivElement>(null)
   const addRuleButtonRef = useRef<HTMLButtonElement>(null)
@@ -64,7 +66,7 @@ export function ParameterEditorForm({
     if (!targetIsVisible) {
       body.scrollTo({
         behavior: 'smooth',
-        top: body.scrollTop + targetRect.top - bodyRect.top - 16
+        top: body.scrollTop + targetRect.top - bodyRect.top - 0.8333 * rootFontSize
       })
     }
   }

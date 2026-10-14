@@ -1,4 +1,5 @@
 import './globals.css'
+import '@/shared/theme/antd-rem.css'
 import type { Metadata } from 'next'
 import { AntdRegistry } from '@ant-design/nextjs-registry'
 import { Montserrat } from 'next/font/google'

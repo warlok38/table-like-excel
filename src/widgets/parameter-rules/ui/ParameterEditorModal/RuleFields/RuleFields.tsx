@@ -1,5 +1,6 @@
 'use client'
 import { Alert, Flex, Form, Input, InputNumber, Select } from 'antd'
+import { useRootFontSize } from '@/shared/theme'
 import type { DraftRule, RuleChange, RuleErrors } from '../../../model/parameterRuleDraft'
 import type { RuleCatalogs } from '../../../model/parameterRules'
 import styles from './RuleFields.module.css'
@@ -13,6 +14,7 @@ interface Props {
   onChange(change: RuleChange, update: (rule: DraftRule) => DraftRule): void
 }
 export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, onChange }: Props) {
+  const rootFontSize = useRootFontSize()
   const fieldError = (field: string, fallback?: string) => errors.fields?.[field] ?? fallback
   return (
     <div className={styles.ruleFields}>
@@ -62,8 +64,10 @@ export function RuleFields({ catalogs, identityLocked, errors, rule, disabled, o
             : undefined
         }
       >
-        <Flex className={styles.conditionControls} gap={8}>
+        <Flex className={styles.conditionControls} gap="0.4167rem">
           <Select
+            listHeight={13.3333 * rootFontSize}
+            listItemHeight={2.0833 * rootFontSize}
             className={styles.conditionOperator}
             disabled={disabled || identityLocked}
             placeholder="Знак"

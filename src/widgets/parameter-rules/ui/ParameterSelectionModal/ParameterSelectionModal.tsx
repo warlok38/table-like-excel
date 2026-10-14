@@ -1,6 +1,7 @@
 'use client'
 
 import { Modal, Select } from 'antd'
+import { useRootFontSize } from '@/shared/theme'
 
 import type { ParameterCatalogItem, ParameterRow } from '../../model/parameterRules'
 import { ParameterDetails } from '../ParameterDetails'
@@ -21,9 +22,20 @@ export function ParameterSelectionModal({
   onSelect,
   onClose
 }: ParameterSelectionModalProps) {
+  const rootFontSize = useRootFontSize()
+
   return (
-    <Modal open centered title="Выбор параметра" footer={null} onCancel={onClose}>
+    <Modal
+      open
+      centered
+      title="Выбор параметра"
+      width="27.0833rem"
+      footer={null}
+      onCancel={onClose}
+    >
       <Select<string>
+        listHeight={13.3333 * rootFontSize}
+        listItemHeight={2.0833 * rootFontSize}
         style={{ width: '100%' }}
         showSearch
         disabled={disabled}

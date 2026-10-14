@@ -1,15 +1,15 @@
 .page {
-  min-height: calc(100vh - 4.25rem);
-  padding: 2rem 1.5rem 3rem;
+  min-height: calc(100vh - 3.5417rem);
+  padding: 1.6667rem 1.25rem 2.5rem;
   background: #f3f5f7;
 }
 
 .workspace {
-  width: min(80rem, 100%);
+  width: min(66.6667rem, 100%);
   margin: 0 auto;
-  padding: 1.5rem;
+  padding: 1.25rem;
   border: 1px solid #e4e7ec;
-  border-radius: 0.75rem;
+  border-radius: 0.625rem;
   background: #fff;
 }
 
@@ -17,10 +17,10 @@
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 0.8333rem;
+  margin-bottom: 0.8333rem;
 }
 
 .statusAlert {
-  margin-bottom: 1rem;
+  margin-bottom: 0.8333rem;
 }

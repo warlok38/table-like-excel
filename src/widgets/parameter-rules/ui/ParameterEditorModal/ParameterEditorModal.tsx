@@ -63,6 +63,7 @@ export function ParameterEditorModal({
       content: 'Несохранённые изменения будут потеряны. Уже сохранённые изменения останутся.',
       okText: 'Закрыть',
       cancelText: 'Продолжить редактирование',
+      width: '21.6667rem',
       centered: true,
       onOk: leave
     })
@@ -75,6 +76,7 @@ export function ParameterEditorModal({
         'Связанные оформление и уведомления тоже будут удалены. Значение по умолчанию сохранится.',
       okText: 'Удалить все условия',
       cancelText: 'Отмена',
+      width: '21.6667rem',
       okButtonProps: { danger: true },
       centered: true,
       onOk: controller.deleteAll
@@ -100,7 +102,7 @@ export function ParameterEditorModal({
               </Button>
             )}
           </div>
-          <Flex gap={8}>
+          <Flex gap="0.4167rem">
             {onBack && (
               <Button disabled={controller.busy} onClick={() => requestLeave(onBack)}>
                 Назад
@@ -124,7 +126,7 @@ export function ParameterEditorModal({
       mask={{ closable: false }}
       keyboard={!controller.busy}
       open={open}
-      width={880}
+      width="45.8333rem"
       title={
         <div className={styles.modalHeading}>
           <Typography.Title className={styles.modalTitle} level={4}>

@@ -1,10 +1,10 @@
 .details {
   display: flex;
-  gap: 0.5rem;
+  gap: 0.4167rem;
   min-width: 0;
   overflow: hidden;
   color: #667085;
-  font-size: 12px;
+  font-size: 0.625rem;
   font-weight: 400;
   line-height: 1.4;
   white-space: nowrap;
@@ -13,17 +13,17 @@
 .detail {
   display: flex;
   flex: 0 1 auto;
-  min-width: 2.5rem;
+  min-width: 2.0833rem;
 }
 
 .detail + .detail::before {
   content: '|';
   flex: none;
-  transform: translateX(-0.25rem);
+  transform: translateX(-0.2083rem);
 }
 
 .detailValue {
-  min-width: 2.5rem;
+  min-width: 2.0833rem;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
