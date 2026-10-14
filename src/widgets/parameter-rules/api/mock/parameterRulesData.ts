@@ -11,22 +11,67 @@ export const catalogsMock: CatalogsDto = {
       shift: {
         tech_id: 'dd409cd1-8858-4adc-909a-014f87724112',
         name: 'Дневная смена',
-        description: null
+        description: 'Дневная смена'
       },
       plan_type: {
         tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d67',
         name: 'Факт',
-        description: null
+        description: 'Факт'
       },
       aggregation_level: {
         tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
         name: 'Сутки',
-        description: null
+        description: 'Сутки'
       },
       aggregation_rule: {
         tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1',
         name: 'Среднее',
-        description: null
+        description: 'Среднее'
+      }
+    },
+    {
+      tech_id: '0c44602f-a780-4092-8dfd-a670723df782',
+      name: 'Температура подшипника',
+      description: 'Плановая температура опорного подшипника',
+      plan_type: {
+        tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d68',
+        name: 'План',
+        description: 'План'
+      },
+      aggregation_level: {
+        tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
+        name: 'Сутки',
+        description: 'Сутки'
+      },
+      aggregation_rule: {
+        tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1',
+        name: 'Среднее',
+        description: 'Среднее'
+      }
+    },
+    {
+      tech_id: '0c44602f-a780-4092-8dfd-a670723df782',
+      name: 'Температура подшипника',
+      description: 'Максимальная температура за сутки',
+      shift: {
+        tech_id: 'dd409cd1-8858-4adc-909a-014f87724113',
+        name: 'Ночная смена',
+        description: 'Ночная смена'
+      },
+      plan_type: {
+        tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d67',
+        name: 'Факт',
+        description: 'Факт'
+      },
+      aggregation_level: {
+        tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
+        name: 'Сутки',
+        description: 'Сутки'
+      },
+      aggregation_rule: {
+        tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a2',
+        name: 'Максимум',
+        description: 'Максимум'
       }
     },
     {
@@ -36,22 +81,22 @@ export const catalogsMock: CatalogsDto = {
       shift: {
         tech_id: 'dd409cd1-8858-4adc-909a-014f87724112',
         name: 'Дневная смена',
-        description: null
+        description: 'Дневная смена'
       },
       plan_type: {
         tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d68',
         name: 'План',
-        description: null
+        description: 'План'
       },
       aggregation_level: {
         tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3f',
         name: 'Месяц',
-        description: null
+        description: 'Месяц'
       },
       aggregation_rule: {
         tech_id: 'f6f1d7d1-f532-4308-9aa8-34c06616cca8',
         name: 'Сумма',
-        description: null
+        description: 'Сумма'
       }
     },
     {
@@ -61,22 +106,22 @@ export const catalogsMock: CatalogsDto = {
       shift: {
         tech_id: 'dd409cd1-8858-4adc-909a-014f87724112',
         name: 'Дневная смена',
-        description: null
+        description: 'Дневная смена'
       },
       plan_type: {
         tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d67',
         name: 'Факт',
-        description: null
+        description: 'Факт'
       },
       aggregation_level: {
         tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
         name: 'Сутки',
-        description: null
+        description: 'Сутки'
       },
       aggregation_rule: {
         tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1',
         name: 'Среднее',
-        description: null
+        description: 'Среднее'
       }
     }
   ],
@@ -162,6 +207,15 @@ export const catalogsMock: CatalogsDto = {
 export const parametersMock: ParameterDto[] = [
   {
     parameters_tech_id: '0c44602f-a780-4092-8dfd-a670723df782',
+    journals_tech_id: journal,
+    aggregation_levels_tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
+    aggregation_rules_tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1',
+    plan_types_tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d67',
+    shift: {
+      id: 'dd409cd1-8858-4adc-909a-014f87724112',
+      name: 'Дневная смена',
+      description: 'Дневная смена'
+    },
     name: 'Температура подшипника',
     description: 'Температура опорного подшипника оборудования',
     default_rule: null,
@@ -170,18 +224,25 @@ export const parametersMock: ParameterDto[] = [
         rules_tech_id: 'c66208a7-52d0-4df9-9a44-7bd36a16493c',
         name: 'Критическое значение',
         description: 'Превышение порога',
-        parameters_tech_id: '0c44602f-a780-4092-8dfd-a670723df782',
-        journals_tech_id: journal,
-        aggregation_levels_tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
-        aggregation_rules_tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1',
-        plan_types_tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d67',
         functions_tech_id: '509f20dc-8954-4f75-84d4-225b0a9dc5dc',
-        value: '90',
+        value: 90,
+        is_active: true,
         created_by: 'dev_user',
         scales_tech_id: null,
         prev_rules_tech_id: null,
         version: 1
       }
     ]
+  },
+  {
+    parameters_tech_id: '0c44602f-a780-4092-8dfd-a670723df782',
+    journals_tech_id: journal,
+    aggregation_levels_tech_id: '69060959-09a5-4257-9e0a-1491f44d1e3e',
+    aggregation_rules_tech_id: 'b73671d9-ce30-43e5-94f0-962e9fb764a1',
+    plan_types_tech_id: 'f59001c1-5ee3-4a65-aa2b-baaccaee5d68',
+    name: 'Температура подшипника',
+    description: 'Плановая температура опорного подшипника',
+    default_rule: { id: 'c66208a7-52d0-4df9-9a44-7bd36a16494c', value: 75 },
+    rules: []
   }
 ]

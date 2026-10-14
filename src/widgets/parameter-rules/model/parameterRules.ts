@@ -54,6 +54,7 @@ export interface ParameterCatalogItem {
 }
 export interface ParameterConfiguration {
   parameterId: string
+  selectionKey: string
   defaultRuleId?: string
   defaultValue: number | null
   rules: FormattingRule[]
@@ -61,6 +62,7 @@ export interface ParameterConfiguration {
 export type SaveParameterInput = ParameterConfiguration
 export interface ParameterRow {
   id: string
+  selectionKey: string
   name: string
   description: string | null
   rulesCount: number

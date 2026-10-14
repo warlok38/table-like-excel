@@ -1,6 +1,12 @@
-import type { ParameterCatalogItem } from './parameterRules'
+export interface ParameterSelectionIdentity {
+  id: string
+  planType?: { id: string }
+  aggregationRule?: { id: string }
+  aggregationLevel?: { id: string }
+  shift?: { id: string } | null
+}
 
-export function getParameterSelectionKey(parameter: ParameterCatalogItem): string {
+export function getParameterSelectionKey(parameter: ParameterSelectionIdentity): string {
   return JSON.stringify([
     parameter.id,
     parameter.planType?.id ?? null,

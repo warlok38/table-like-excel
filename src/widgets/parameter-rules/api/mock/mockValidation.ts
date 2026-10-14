@@ -1,4 +1,5 @@
 import type { CatalogsDto, ParameterDto, RuleInput, RulesApiError } from '../contracts'
+import { getRulesParameterSelectionKey } from '../parameterRulesAdapter'
 export function rejectMock(message: string, loc: (string | number)[] = [], status = 422): never {
   throw {
     message,
@@ -13,11 +14,18 @@ export function validateRule(
   catalogs: CatalogsDto,
   parameters: ParameterDto[],
   loc: (string | number)[],
+  selectionKey: string,
   ignoreId?: string
 ) {
   if (!rule.name.trim()) rejectMock('Введите название правила', [...loc, 'name'])
   if (!Number.isFinite(rule.value)) rejectMock('Укажите число', [...loc, 'value'])
-  const parameter = catalogs.parameters.find((item) => item.tech_id === rule.parameters_tech_id)
+  const parameter = catalogs.parameters.find(
+    (item) =>
+      item.tech_id === rule.parameters_tech_id &&
+      item.aggregation_level?.tech_id === rule.aggregation_levels_tech_id &&
+      item.aggregation_rule?.tech_id === rule.aggregation_rules_tech_id &&
+      item.plan_type?.tech_id === rule.plan_types_tech_id
+  )
   if (!parameter) rejectMock('Неизвестный параметр', [...loc, 'parameters_tech_id'])
   const fields = [
     ['aggregation_levels_tech_id', parameter.aggregation_level],
@@ -31,15 +39,15 @@ export function validateRule(
   if (!catalogs.functions.some((item) => item.functions_tech_id === rule.functions_tech_id))
     rejectMock('Выберите функцию', [...loc, 'functions_tech_id'])
   const duplicate = parameters
+    .filter(
+      (item) =>
+        item.journals_tech_id === rule.journals_tech_id &&
+        getRulesParameterSelectionKey(item) === selectionKey
+    )
     .flatMap((item) => item.rules)
     .some(
       (item) =>
         item.rules_tech_id !== ignoreId &&
-        item.parameters_tech_id === rule.parameters_tech_id &&
-        item.journals_tech_id === rule.journals_tech_id &&
-        item.aggregation_levels_tech_id === rule.aggregation_levels_tech_id &&
-        item.aggregation_rules_tech_id === rule.aggregation_rules_tech_id &&
-        item.plan_types_tech_id === rule.plan_types_tech_id &&
         item.functions_tech_id === rule.functions_tech_id &&
         Number(item.value) === rule.value
     )

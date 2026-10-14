@@ -1,4 +1,5 @@
 import type { CatalogItemDto, CatalogsDto, ParameterDto } from './contracts'
+import { getParameterSelectionKey } from '../model/parameterSelectionKey'
 import type {
   CatalogItem,
   ParameterCatalogItem,
@@ -7,9 +8,29 @@ import type {
   ParameterRow
 } from '../model/parameterRules'
 
+type ParameterContextDto = Pick<
+  ParameterDto,
+  | 'parameters_tech_id'
+  | 'plan_types_tech_id'
+  | 'aggregation_rules_tech_id'
+  | 'aggregation_levels_tech_id'
+  | 'shift'
+>
+
+export function getRulesParameterSelectionKey(parameter: ParameterContextDto): string {
+  return getParameterSelectionKey({
+    id: parameter.parameters_tech_id,
+    planType: { id: parameter.plan_types_tech_id },
+    aggregationRule: { id: parameter.aggregation_rules_tech_id },
+    aggregationLevel: { id: parameter.aggregation_levels_tech_id },
+    shift: parameter.shift
+  })
+}
+
 export function toParameterRows(parameters: ParameterDto[]): ParameterRow[] {
   return parameters.map((parameter) => ({
     id: parameter.parameters_tech_id,
+    selectionKey: getRulesParameterSelectionKey(parameter),
     name: parameter.name,
     description: parameter.description,
     rulesCount: parameter.rules.length + (parameter.default_rule ? 1 : 0)
@@ -36,14 +57,23 @@ export function toEditorParameter(
 ): ParameterCatalogItem | undefined {
   if (!parameter) return catalogParameter
 
+  const option = (id: string, item?: CatalogItem): CatalogItem =>
+    item?.id === id ? item : { id, name: id }
+
   return {
-    ...catalogParameter,
     id: parameter.parameters_tech_id,
     name: parameter.name ?? catalogParameter?.name ?? parameter.parameters_tech_id,
     description:
       parameter.description !== undefined
         ? parameter.description
-        : (catalogParameter?.description ?? null)
+        : (catalogParameter?.description ?? null),
+    planType: option(parameter.plan_types_tech_id, catalogParameter?.planType),
+    aggregationRule: option(parameter.aggregation_rules_tech_id, catalogParameter?.aggregationRule),
+    aggregationLevel: option(
+      parameter.aggregation_levels_tech_id,
+      catalogParameter?.aggregationLevel
+    ),
+    shift: parameter.shift ?? undefined
   }
 }
 
@@ -67,6 +97,7 @@ export function toParameterConfiguration(
 ): ParameterConfiguration {
   return {
     parameterId: parameter.parameters_tech_id,
+    selectionKey: getRulesParameterSelectionKey(parameter),
     defaultRuleId: parameter.default_rule?.id,
     defaultValue: parameter.default_rule?.value ?? null,
     rules: parameter.rules.map((rule) => {
@@ -78,12 +109,12 @@ export function toParameterConfiguration(
         id: rule.rules_tech_id,
         name: rule.name,
         description: rule.description,
-        aggregationLevelId: rule.aggregation_levels_tech_id,
-        aggregationRuleId: rule.aggregation_rules_tech_id,
-        planTypeId: rule.plan_types_tech_id,
+        aggregationLevelId: parameter.aggregation_levels_tech_id,
+        aggregationRuleId: parameter.aggregation_rules_tech_id,
+        planTypeId: parameter.plan_types_tech_id,
         functionId: rule.functions_tech_id ?? undefined,
         scaleId: rule.scales_tech_id,
-        value: typeof rule.value === 'string' && !rule.value.trim() ? NaN : Number(rule.value),
+        value: rule.value,
         uiRules: catalogs.ui_rules.filter(related).map((item) => ({
           id: item.ui_rules_tech_id,
           ruleId: item.rules_tech_id,

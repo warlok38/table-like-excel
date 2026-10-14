@@ -38,8 +38,9 @@ export function ParameterRulesWidget() {
       )}
       {view.type === 'editor' && (
         <ParameterEditorModal
-          key={view.selectionKey ?? view.parameterId}
+          key={view.selectionKey}
           parameterId={view.parameterId}
+          selectionKey={view.selectionKey}
           journalId={mockContext.journalId}
           author={mockContext.author}
           onBack={view.source === 'selection' ? controller.openCreate : undefined}
@@ -50,7 +51,7 @@ export function ParameterRulesWidget() {
           isInteractionDisabled={controller.isInteractionDisabled}
 
           onClose={controller.closeEditor}
-          reload={() => controller.reloadConfiguration(view.parameterId)}
+          reload={() => controller.reloadConfiguration(view.selectionKey, view.parameterId)}
           onSaved={controller.saved}
         />
       )}

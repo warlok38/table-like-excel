@@ -16,6 +16,7 @@ import { useRulesSaveSession, type SaveResolution } from './useRulesSaveSession'
 import { restoreRemovedRules } from './restoreRemovedRules'
 interface Options {
   parameterId: string
+  selectionKey: string
   parameter?: ParameterCatalogItem
   journalId: string
   author: string
@@ -32,6 +33,7 @@ export type ParameterEditorValidationTarget =
   | { type: 'rule'; uiKey: string }
 export function useParameterEditorController({
   parameterId,
+  selectionKey,
   parameter,
   journalId,
   author,
@@ -42,10 +44,14 @@ export function useParameterEditorController({
   onSaved
 }: Options) {
   const [draft, setDraft] = useState<EditorDraft>(() =>
-    configuration ? makeEditorDraft(configuration) : { parameterId, defaultValue: null, rules: [] }
+    configuration
+      ? makeEditorDraft(configuration)
+      : { parameterId, selectionKey, defaultValue: null, rules: [] }
   )
   const [initialDraft, setInitialDraft] = useState<EditorDraft>(() =>
-    configuration ? makeEditorDraft(configuration) : { parameterId, defaultValue: null, rules: [] }
+    configuration
+      ? makeEditorDraft(configuration)
+      : { parameterId, selectionKey, defaultValue: null, rules: [] }
   )
   const [errors, setErrors] = useState<DraftErrors>({ byRule: {} })
   const nextKey = useRef(0)
@@ -210,6 +216,7 @@ export function useParameterEditorController({
     if (disabled) return
     const desired = {
       parameterId,
+      selectionKey,
       defaultRuleId: initialDraft.defaultRuleId,
       defaultValue: null,
       rules: []

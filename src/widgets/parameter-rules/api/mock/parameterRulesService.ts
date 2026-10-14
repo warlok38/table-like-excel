@@ -4,12 +4,15 @@ import type {
   DeleteRulesBody,
   UiInput,
   NotifyInput,
-  RuleDto
+  RuleDto,
+  ParameterDto
 } from '../contracts'
 import { catalogsMock, parametersMock, mockContext } from './parameterRulesData'
 import { reservedIds } from './reservedIds'
 import { rejectMock, validateRule } from './mockValidation'
 import { beginMockRequest, finishMockRequest } from './mockFaults'
+import { getRulesParameterSelectionKey } from '../parameterRulesAdapter'
+import { getMockParameterContext } from './parameterRulesContext'
 
 let state = {
   catalogs: structuredClone(catalogsMock),
@@ -25,18 +28,18 @@ function takeId(draft: State) {
   if (!id) rejectMock('Исчерпан статический резерв ID мока', [], 409)
   return id
 }
-function parent(draft: State, id: string): RuleDto {
-  const rule = draft.parameters
-    .flatMap((item) => item.rules)
-    .find((item) => item.rules_tech_id === id)
-  if (!rule) rejectMock('Правило не найдено', [], 404)
-  return rule
+function parent(draft: State, id: string): { parameter: ParameterDto; rule: RuleDto } {
+  for (const parameter of draft.parameters) {
+    const rule = parameter.rules.find((item) => item.rules_tech_id === id)
+    if (rule) return { parameter, rule }
+  }
+  return rejectMock('Правило не найдено', [], 404)
 }
 function addUi(draft: State, ruleId: string, input: UiInput, loc: (string | number)[]) {
-  const rule = parent(draft, ruleId)
+  const { parameter } = parent(draft, ruleId)
   if (
-    input.journals_tech_id !== rule.journals_tech_id ||
-    input.parameters_tech_id !== rule.parameters_tech_id
+    input.journals_tech_id !== parameter.journals_tech_id ||
+    input.parameters_tech_id !== parameter.parameters_tech_id
   )
     rejectMock('Неверная связь оформления', loc)
   if (!input.value.trim()) rejectMock('Введите значение свойства', [...loc, 'value'])
@@ -56,10 +59,10 @@ function addUi(draft: State, ruleId: string, input: UiInput, loc: (string | numb
   })
 }
 function addNotify(draft: State, ruleId: string, input: NotifyInput, loc: (string | number)[]) {
-  const rule = parent(draft, ruleId)
+  const { parameter } = parent(draft, ruleId)
   if (
-    input.journals_tech_id !== rule.journals_tech_id ||
-    input.parameters_tech_id !== rule.parameters_tech_id
+    input.journals_tech_id !== parameter.journals_tech_id ||
+    input.parameters_tech_id !== parameter.parameters_tech_id
   )
     rejectMock('Неверная связь уведомления', loc)
   if (!input.message_template.trim())
@@ -84,10 +87,7 @@ export const parameterRulesMockService = {
     finishMockRequest(fault)
     return structuredClone(
       state.parameters
-        .map((item) => ({
-          ...item,
-          rules: item.rules.filter((rule) => rule.journals_tech_id === journalId)
-        }))
+        .filter((item) => item.journals_tech_id === journalId)
         .filter((item) => item.rules.length || item.default_rule !== null)
     )
   },
@@ -100,37 +100,22 @@ export const parameterRulesMockService = {
     body.parameter_rules.forEach((input, index) => {
       const loc = ['parameter_rules', index]
       if (input.journals_tech_id !== journalId) rejectMock('Неверный журнал', loc)
+      const context = getMockParameterContext(input, draft.catalogs, loc)
+      const selectionKey = getRulesParameterSelectionKey(context)
       if ('default_value' in input) {
         if (typeof input.name !== 'string' || !input.name.trim())
           rejectMock('Введите название правила', [...loc, 'name'])
-        const catalog = draft.catalogs.parameters.find(
-          (item) => item.tech_id === input.parameters_tech_id
-        )
-        if (!catalog) rejectMock('Неизвестный параметр', [...loc, 'parameters_tech_id'])
-        const fields = [
-          ['aggregation_levels_tech_id', catalog.aggregation_level],
-          ['aggregation_rules_tech_id', catalog.aggregation_rule],
-          ['plan_types_tech_id', catalog.plan_type]
-        ] as const
-        fields.forEach(([key, item]) => {
-          if (!item?.tech_id || item.tech_id !== input[key])
-            rejectMock('Агрегации правила не соответствуют параметру', [...loc, key])
-        })
         if (!Number.isFinite(input.default_value))
           rejectMock('Укажите число', [...loc, 'default_value'])
-      } else validateRule(input, draft.catalogs, draft.parameters, loc)
+      } else validateRule(input, draft.catalogs, draft.parameters, loc, selectionKey)
       let parameter = draft.parameters.find(
-        (item) => item.parameters_tech_id === input.parameters_tech_id
+        (item) =>
+          item.journals_tech_id === journalId &&
+          getRulesParameterSelectionKey(item) === selectionKey
       )
       if (!parameter) {
-        const catalog = draft.catalogs.parameters.find(
-          (item) => item.tech_id === input.parameters_tech_id
-        )
-        if (!catalog) rejectMock('Неизвестный параметр', [...loc, 'parameters_tech_id'])
         parameter = {
-          parameters_tech_id: catalog.tech_id,
-          name: catalog.name,
-          description: catalog.description,
+          ...context,
           default_rule: null,
           rules: []
         }
@@ -142,11 +127,16 @@ export const parameterRulesMockService = {
         parameter.default_rule = { id: takeId(draft), value: input.default_value }
         return
       }
-      const { ui_rules, notify_rules, ...ruleInput } = input
+      const { ui_rules, notify_rules } = input
       const id = takeId(draft)
       parameter.rules.push({
-        ...ruleInput,
-        value: String(input.value),
+        name: input.name,
+        description: input.description,
+        created_by: input.created_by,
+        functions_tech_id: input.functions_tech_id,
+        scales_tech_id: input.scales_tech_id ?? null,
+        value: input.value,
+        is_active: true,
         rules_tech_id: id,
         version: 1,
         prev_rules_tech_id: null
@@ -178,17 +168,18 @@ export const parameterRulesMockService = {
         defaultRule.value = input.value
         return
       }
-      const rule = parent(draft, input.rules_tech_id)
+      const { parameter, rule } = parent(draft, input.rules_tech_id)
       if (input.name === undefined || input.description === undefined)
         rejectMock('Укажите название и описание правила', ['parameter_rules', index])
       validateRule(
-        { ...rule, ...input },
+        { ...parameter, ...rule, ...input },
         draft.catalogs,
         draft.parameters,
         ['parameter_rules', index],
+        getRulesParameterSelectionKey(parameter),
         rule.rules_tech_id
       )
-      Object.assign(rule, input, { value: String(input.value) })
+      Object.assign(rule, input)
     })
     body.ui_rules.forEach((input, index) => {
       const item = draft.catalogs.ui_rules.find(

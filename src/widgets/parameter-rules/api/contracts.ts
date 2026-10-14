@@ -53,15 +53,25 @@ export interface RuleInput {
   value: number
   scales_tech_id?: string | null
 }
-export interface RuleDto extends Omit<RuleInput, 'value' | 'description'> {
+export interface RuleDto {
   rules_tech_id: string
-  value: string | number
+  created_by: string
+  name: string
   description: string | null
+  functions_tech_id: string
+  value: number
+  scales_tech_id: string | null
+  is_active: boolean
   prev_rules_tech_id: string | null
   version: number
 }
 export interface ParameterDto {
   parameters_tech_id: string
+  journals_tech_id: string
+  aggregation_levels_tech_id: string
+  aggregation_rules_tech_id: string
+  plan_types_tech_id: string
+  shift?: { id: string; name: string; description?: string | null } | null
   name: string
   description: string | null
   default_rule: { id: string; value: number } | null

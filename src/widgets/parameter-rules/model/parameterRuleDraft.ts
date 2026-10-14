@@ -9,6 +9,7 @@ import {
   type NotificationResult
 } from './parameterRules'
 import { findDuplicateRuleIndexes } from './ruleUniqueness'
+import { getParameterSelectionKey } from './parameterSelectionKey'
 export interface DraftRule extends Omit<
   RuleBase,
   'aggregationLevelId' | 'aggregationRuleId' | 'planTypeId' | 'value'
@@ -23,6 +24,7 @@ export interface DraftRule extends Omit<
 }
 export interface EditorDraft {
   parameterId?: string
+  selectionKey: string
   defaultRuleId?: string
   defaultValue: number | null
   rules: DraftRule[]
@@ -87,6 +89,7 @@ export const createEmptyRule = (uiKey: string, parameter?: ParameterCatalogItem)
 })
 export const makeEditorDraft = (configuration?: ParameterConfiguration): EditorDraft => ({
   parameterId: configuration?.parameterId,
+  selectionKey: configuration?.selectionKey ?? '',
   defaultRuleId: configuration?.defaultRuleId,
   defaultValue: configuration?.defaultValue ?? null,
   rules:
@@ -129,12 +132,17 @@ export const validateEditorDraft = (
   if (draft.defaultValue !== null && !Number.isFinite(draft.defaultValue))
     errors.defaultValue = 'Укажите число'
   if (
+    draft.rules.some((rule) => !rule.id) &&
+    (!parameter || getParameterSelectionKey(parameter) !== draft.selectionKey)
+  )
+    errors.parameter = 'Не найден выбранный параметр. Обновите данные.'
+  if (
     !initial?.defaultRuleId &&
     draft.defaultValue !== null &&
     Number.isFinite(draft.defaultValue) &&
     draft.defaultValue !== (initial?.defaultValue ?? null)
   ) {
-    if (!parameter || parameter.id !== draft.parameterId)
+    if (!parameter || getParameterSelectionKey(parameter) !== draft.selectionKey)
       errors.defaultValue = 'Не найден выбранный параметр. Обновите данные.'
     else if (
       !parameter.aggregationLevel?.id ||

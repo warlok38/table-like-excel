@@ -15,6 +15,7 @@ interface Props {
   ruleCatalogs: RuleCatalogs
   parameter?: ParameterCatalogItem
   parameterId: string
+  selectionKey: string
   journalId: string
   author: string
   onBack?: () => void
@@ -30,6 +31,7 @@ export function ParameterEditorModal({
   ruleCatalogs,
   parameter,
   parameterId,
+  selectionKey,
   journalId,
   author,
   onBack,
@@ -43,6 +45,7 @@ export function ParameterEditorModal({
   const { modal } = App.useApp()
   const controller = useParameterEditorController({
     parameterId,
+    selectionKey,
     parameter,
     journalId,
     author,

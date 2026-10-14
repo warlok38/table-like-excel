@@ -16,7 +16,7 @@ type ParametersTableProps = {
   rows: ParameterRow[]
   isLoading: boolean
   isInteractionDisabled: boolean
-  onEdit(parameterId: string): void
+  onEdit(selectionKey: string): void
 }
 
 export function ParametersTable({
@@ -54,7 +54,7 @@ export function ParametersTable({
           <Button
             disabled={isInteractionDisabled}
             icon={<EditOutlined />}
-            onClick={() => onEdit(row.id)}
+            onClick={() => onEdit(row.selectionKey)}
           />
         </Tooltip>
       )
@@ -87,7 +87,7 @@ export function ParametersTable({
           )
       }}
       pagination={false}
-      rowKey="id"
+      rowKey="selectionKey"
       scroll={{ x: '46.875rem' }}
       size="small"
     />

@@ -51,7 +51,7 @@ export function ParameterSelectionModal({
         }}
         options={catalog.map((parameter) => {
           const selectionKey = getParameterSelectionKey(parameter)
-          const count = rows.find((item) => item.id === parameter.id)?.rulesCount ?? 0
+          const count = rows.find((item) => item.selectionKey === selectionKey)?.rulesCount ?? 0
           const details = [
             parameter.planType,
             parameter.aggregationRule,

@@ -6,7 +6,8 @@ import {
   toParameterCatalog,
   toParameterRows,
   toParameterConfiguration,
-  toRuleCatalogs
+  toRuleCatalogs,
+  getRulesParameterSelectionKey
 } from '../api/parameterRulesAdapter'
 import type { CatalogsDto, ParameterDto } from '../api/contracts'
 import { emptyRuleCatalogs, type ParameterConfiguration } from './parameterRules'
@@ -18,7 +19,7 @@ type WorkspaceView =
   | {
       type: 'editor'
       parameterId: string
-      selectionKey?: string
+      selectionKey: string
       source: 'selection' | 'table'
       configuration?: ParameterConfiguration
     }
@@ -35,12 +36,8 @@ export function useParameterRulesController(notifier: Notifier, journalId: strin
   const editorParameter = useMemo(() => {
     if (view.type !== 'editor') return undefined
     return toEditorParameter(
-      rules.currentData?.find((item) => item.parameters_tech_id === view.parameterId),
-      catalog.find((item) =>
-        view.selectionKey !== undefined
-          ? getParameterSelectionKey(item) === view.selectionKey
-          : item.id === view.parameterId
-      )
+      rules.currentData?.find((item) => getRulesParameterSelectionKey(item) === view.selectionKey),
+      catalog.find((item) => getParameterSelectionKey(item) === view.selectionKey)
     )
   }, [view, rules.currentData, catalog])
   const ruleCatalogs = useMemo(
@@ -60,29 +57,42 @@ export function useParameterRulesController(notifier: Notifier, journalId: strin
   }, [refetchCatalogs, refetchRules])
   const configurationFor = (
     parameterId: string,
+    selectionKey: string,
     catalogData: CatalogsDto,
     parameterData: ParameterDto[]
   ) => {
-    const parameter = parameterData.find((item) => item.parameters_tech_id === parameterId)
+    const parameter = parameterData.find(
+      (item) => getRulesParameterSelectionKey(item) === selectionKey
+    )
     return parameter
       ? toParameterConfiguration(parameter, catalogData)
-      : { parameterId, defaultValue: null, rules: [] }
+      : { parameterId, selectionKey, defaultValue: null, rules: [] }
   }
-  const reloadConfiguration = async (parameterId: string) => {
+  const reloadConfiguration = async (selectionKey: string, parameterId: string) => {
     const [catalogData, parameterData] = await reload()
-    return configurationFor(parameterId, catalogData, parameterData)
+    return configurationFor(parameterId, selectionKey, catalogData, parameterData)
   }
   const openCreate = () => {
     if (!isInteractionDisabled) setView({ type: 'selection' })
   }
-  const openEdit = (parameterId: string) => {
+  const openEdit = (selectionKey: string) => {
     if (isInteractionDisabled || !catalogs.currentData || !rules.currentData) return
-    if (!rules.currentData.some((item) => item.parameters_tech_id === parameterId)) return
+    const parameter = rules.currentData.find(
+      (item) => getRulesParameterSelectionKey(item) === selectionKey
+    )
+    if (!parameter) return
+    const parameterId = parameter.parameters_tech_id
     setView({
       type: 'editor',
       parameterId,
+      selectionKey,
       source: 'table',
-      configuration: configurationFor(parameterId, catalogs.currentData, rules.currentData)
+      configuration: configurationFor(
+        parameterId,
+        selectionKey,
+        catalogs.currentData,
+        rules.currentData
+      )
     })
   }
   const selectParameter = (selectionKey: string) => {
@@ -92,7 +102,9 @@ export function useParameterRulesController(notifier: Notifier, journalId: strin
     )
     if (!selectedParameter) return
     const parameterId = selectedParameter.id
-    const parameter = rules.currentData.find((item) => item.parameters_tech_id === parameterId)
+    const parameter = rules.currentData.find(
+      (item) => getRulesParameterSelectionKey(item) === selectionKey
+    )
     setView({
       type: 'editor',
       parameterId,

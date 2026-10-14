@@ -7,6 +7,7 @@ import type {
 } from '../api/contracts'
 import type { EditorDraft } from './parameterRuleDraft'
 import type { UiResult, NotificationResult, ParameterCatalogItem } from './parameterRules'
+import { getParameterSelectionKey } from './parameterSelectionKey'
 
 export type SourceMap = Record<
   string,
@@ -28,6 +29,11 @@ export function buildSaveOperations(
     updates: SaveOperation[] = []
   const post: CreateRulesBody = { parameter_rules: [], ui_rules: [], notify_rules: [] }
   const sources: SourceMap = {}
+  if (
+    desired.rules.some((rule) => !rule.id) &&
+    (!parameter || getParameterSelectionKey(parameter) !== desired.selectionKey)
+  )
+    throw new Error('Не найден выбранный параметр. Обновите данные.')
   const context = { parameters_tech_id: desired.parameterId!, journals_tech_id: journalId }
   const ui = (item: UiResult): UiInput => ({
     ...context,
@@ -161,7 +167,7 @@ export function buildSaveOperations(
     } else {
       if (!Number.isFinite(desired.defaultValue)) throw new Error('Укажите число')
       if (!initial.defaultRuleId) {
-        if (!parameter || parameter.id !== desired.parameterId)
+        if (!parameter || getParameterSelectionKey(parameter) !== desired.selectionKey)
           throw new Error('Не найден выбранный параметр. Обновите данные.')
         const aggregationLevelId = parameter.aggregationLevel?.id
         const aggregationRuleId = parameter.aggregationRule?.id

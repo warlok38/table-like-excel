@@ -16,7 +16,7 @@ type RulesWorkspaceProps = {
   canCreate: boolean
   isInteractionDisabled: boolean
   onCreate(): void
-  onEdit(parameterId: string): void
+  onEdit(selectionKey: string): void
   onRetry(): void
 }
 
