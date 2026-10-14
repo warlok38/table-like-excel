@@ -4,6 +4,7 @@ import { Modal, Select } from 'antd'
 import { useRootFontSize } from '@/shared/theme'
 
 import type { ParameterCatalogItem, ParameterRow } from '../../model/parameterRules'
+import { getParameterSelectionKey } from '../../model/parameterSelectionKey'
 import { ParameterDetails } from '../ParameterDetails'
 import styles from './ParameterSelectionModal.module.css'
 
@@ -11,7 +12,7 @@ interface ParameterSelectionModalProps {
   catalog: ParameterCatalogItem[]
   rows: ParameterRow[]
   disabled: boolean
-  onSelect(parameterId: string): void
+  onSelect(selectionKey: string): void
   onClose(): void
 }
 
@@ -49,6 +50,7 @@ export function ParameterSelectionModal({
           )
         }}
         options={catalog.map((parameter) => {
+          const selectionKey = getParameterSelectionKey(parameter)
           const count = rows.find((item) => item.id === parameter.id)?.rulesCount ?? 0
           const details = [
             parameter.planType,
@@ -57,7 +59,8 @@ export function ParameterSelectionModal({
             parameter.aggregationLevel
           ]
           return {
-            value: parameter.id,
+            key: selectionKey,
+            value: selectionKey,
             searchFields: [
               parameter.name,
               parameter.id,

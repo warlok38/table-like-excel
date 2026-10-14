@@ -10,6 +10,7 @@ import {
 } from '../api/parameterRulesAdapter'
 import type { CatalogsDto, ParameterDto } from '../api/contracts'
 import { emptyRuleCatalogs, type ParameterConfiguration } from './parameterRules'
+import { getParameterSelectionKey } from './parameterSelectionKey'
 type Notifier = { success(message: string): unknown; error(message: string): unknown }
 type WorkspaceView =
   | { type: 'closed' }
@@ -17,6 +18,7 @@ type WorkspaceView =
   | {
       type: 'editor'
       parameterId: string
+      selectionKey?: string
       source: 'selection' | 'table'
       configuration?: ParameterConfiguration
     }
@@ -34,7 +36,11 @@ export function useParameterRulesController(notifier: Notifier, journalId: strin
     if (view.type !== 'editor') return undefined
     return toEditorParameter(
       rules.currentData?.find((item) => item.parameters_tech_id === view.parameterId),
-      catalog.find((item) => item.id === view.parameterId)
+      catalog.find((item) =>
+        view.selectionKey !== undefined
+          ? getParameterSelectionKey(item) === view.selectionKey
+          : item.id === view.parameterId
+      )
     )
   }, [view, rules.currentData, catalog])
   const ruleCatalogs = useMemo(
@@ -79,13 +85,18 @@ export function useParameterRulesController(notifier: Notifier, journalId: strin
       configuration: configurationFor(parameterId, catalogs.currentData, rules.currentData)
     })
   }
-  const selectParameter = (parameterId: string) => {
-    if (isInteractionDisabled || !catalog.some((item) => item.id === parameterId)) return
-    if (!catalogs.currentData || !rules.currentData) return
+  const selectParameter = (selectionKey: string) => {
+    if (isInteractionDisabled || !catalogs.currentData || !rules.currentData) return
+    const selectedParameter = catalog.find(
+      (item) => getParameterSelectionKey(item) === selectionKey
+    )
+    if (!selectedParameter) return
+    const parameterId = selectedParameter.id
     const parameter = rules.currentData.find((item) => item.parameters_tech_id === parameterId)
     setView({
       type: 'editor',
       parameterId,
+      selectionKey,
       source: 'selection',
       configuration: parameter
         ? toParameterConfiguration(parameter, catalogs.currentData)

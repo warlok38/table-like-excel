@@ -38,7 +38,7 @@ export function ParameterRulesWidget() {
       )}
       {view.type === 'editor' && (
         <ParameterEditorModal
-          key={view.parameterId}
+          key={view.selectionKey ?? view.parameterId}
           parameterId={view.parameterId}
           journalId={mockContext.journalId}
           author={mockContext.author}
