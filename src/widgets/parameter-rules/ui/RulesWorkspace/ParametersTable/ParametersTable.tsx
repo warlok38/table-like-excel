@@ -68,20 +68,23 @@ export function ParametersTable({
       loading={isLoading}
       onChange={(_, filters) => setHasNameFilter(Boolean(filters.name?.length))}
       locale={{
-        emptyText: (
-          <Empty
-            description={
-              <div>
-                <span>
-                  {rows.length
-                    ? 'По вашему запросу ничего не найдено.'
-                    : 'Добавьте первый параметр, чтобы настроить правила отображения.'}
-                </span>
-              </div>
-            }
-            image={Empty.PRESENTED_IMAGE_SIMPLE}
-          />
-        )
+        emptyText:
+          isLoading && rows.length === 0 ? (
+            'Загружаем данные...'
+          ) : (
+            <Empty
+              description={
+                <div>
+                  <span>
+                    {rows.length
+                      ? 'По вашему запросу ничего не найдено.'
+                      : 'Добавьте первый параметр, чтобы настроить правила отображения.'}
+                  </span>
+                </div>
+              }
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          )
       }}
       pagination={false}
       rowKey="id"
