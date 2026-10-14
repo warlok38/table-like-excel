@@ -2,7 +2,16 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { DeleteOutlined, PlusOutlined, SearchOutlined } from '@ant-design/icons'
-import { Button, Collapse, Form, Input, InputNumber, Tooltip, type CollapseProps } from 'antd'
+import {
+  Alert,
+  Button,
+  Collapse,
+  Form,
+  Input,
+  InputNumber,
+  Tooltip,
+  type CollapseProps
+} from 'antd'
 import cn from 'classnames'
 import { useRootFontSize } from '@/shared/theme'
 
@@ -15,6 +24,7 @@ import type {
   ParameterConfiguration
 } from '../../../model/parameterRules'
 import { RuleFields } from '../RuleFields'
+import { ParameterRulesFeature } from '../ParameterRulesFeature'
 import styles from './ParameterEditorForm.module.css'
 
 interface ParameterEditorFormProps {
@@ -244,62 +254,70 @@ export function ParameterEditorForm({
             />
           </Form.Item>
         </div>
-        <div
-          className={cn(styles.rulesHeader, {
-            [styles.rulesHeaderEmpty]: !controller.hasRules
-          })}
+        <ParameterRulesFeature
+          fallback={<Alert type="info" showIcon title="Управление правилами в разработке" />}
         >
-          {controller.hasRules && (
-            <Input
-              allowClear
-              className={styles.ruleSearch}
-              disabled={isInteractionDisabled}
-              placeholder="Поиск по названию или агрегации…"
-              prefix={<SearchOutlined />}
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              onPressEnter={(event) => event.preventDefault()}
-            />
-          )}
-          <Button
-            ref={addRuleButtonRef}
-            className={cn(styles.addRuleButton, {
-              [styles.addRuleButtonEmpty]: !controller.hasRules
+          <div
+            className={cn(styles.rulesHeader, {
+              [styles.rulesHeaderEmpty]: !controller.hasRules
             })}
-            disabled={isInteractionDisabled}
-            icon={<PlusOutlined />}
-            onClick={addRule}
           >
-            Добавить правило
-          </Button>
-        </div>
-
-        {controller.errors.rules && (
-          <div className={styles.rulesError}>{controller.errors.rules}</div>
-        )}
-        {controller.hasRules && collapseItems.length === 0 && (
-          <div className={styles.searchEmpty}>
-            <span>Правила не найдены</span>
-            <Button disabled={isInteractionDisabled} onClick={() => setSearchQuery('')} type="link">
-              Сбросить поиск
+            {controller.hasRules && (
+              <Input
+                allowClear
+                className={styles.ruleSearch}
+                disabled={isInteractionDisabled}
+                placeholder="Поиск по названию или агрегации…"
+                prefix={<SearchOutlined />}
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                onPressEnter={(event) => event.preventDefault()}
+              />
+            )}
+            <Button
+              ref={addRuleButtonRef}
+              className={cn(styles.addRuleButton, {
+                [styles.addRuleButtonEmpty]: !controller.hasRules
+              })}
+              disabled={isInteractionDisabled}
+              icon={<PlusOutlined />}
+              onClick={addRule}
+            >
+              Добавить правило
             </Button>
           </div>
-        )}
-        {collapseItems.length > 0 && (
-          <Collapse
-            activeKey={activeRuleKeys.filter((key) => visibleRuleKeys.has(key))}
-            className={styles.rulesCollapse}
-            collapsible={isInteractionDisabled ? 'disabled' : 'header'}
-            items={collapseItems}
-            onChange={(keys) => {
-              const nextKeys = Array.isArray(keys) ? keys.map(String) : [String(keys)]
-              setActiveRuleKeys((current) => [
-                ...current.filter((key) => !visibleRuleKeys.has(key)),
-                ...nextKeys
-              ])
-            }}
-          />
-        )}
+
+          {controller.errors.rules && (
+            <div className={styles.rulesError}>{controller.errors.rules}</div>
+          )}
+          {controller.hasRules && collapseItems.length === 0 && (
+            <div className={styles.searchEmpty}>
+              <span>Правила не найдены</span>
+              <Button
+                disabled={isInteractionDisabled}
+                onClick={() => setSearchQuery('')}
+                type="link"
+              >
+                Сбросить поиск
+              </Button>
+            </div>
+          )}
+          {collapseItems.length > 0 && (
+            <Collapse
+              activeKey={activeRuleKeys.filter((key) => visibleRuleKeys.has(key))}
+              className={styles.rulesCollapse}
+              collapsible={isInteractionDisabled ? 'disabled' : 'header'}
+              items={collapseItems}
+              onChange={(keys) => {
+                const nextKeys = Array.isArray(keys) ? keys.map(String) : [String(keys)]
+                setActiveRuleKeys((current) => [
+                  ...current.filter((key) => !visibleRuleKeys.has(key)),
+                  ...nextKeys
+                ])
+              }}
+            />
+          )}
+        </ParameterRulesFeature>
       </Form>
     </div>
   )

@@ -10,6 +10,7 @@ import type {
 import { ParameterEditorForm } from './ParameterEditorForm'
 import { ParameterDetails } from '../ParameterDetails'
 import { PendingDeletionsAlert } from './PendingDeletionsAlert'
+import { ParameterRulesFeature } from './ParameterRulesFeature'
 import styles from './ParameterEditorModal.module.css'
 interface Props {
   ruleCatalogs: RuleCatalogs
@@ -94,16 +95,18 @@ export function ParameterEditorModal({
       footer={
         <div className={styles.modalFooter}>
           <div>
-            {controller.hasSavedRules && (
-              <Button
-                danger
-                disabled={controller.disabled}
-                icon={<DeleteOutlined />}
-                onClick={requestDelete}
-              >
-                Удалить все правила
-              </Button>
-            )}
+            <ParameterRulesFeature>
+              {controller.hasSavedRules && (
+                <Button
+                  danger
+                  disabled={controller.disabled}
+                  icon={<DeleteOutlined />}
+                  onClick={requestDelete}
+                >
+                  Удалить все правила
+                </Button>
+              )}
+            </ParameterRulesFeature>
           </div>
           <Flex gap="0.4167rem">
             {onBack && (
@@ -153,13 +156,15 @@ export function ParameterEditorModal({
           }
         />
       )}
-      {controller.removed.length > 0 && (
-        <PendingDeletionsAlert
-          items={controller.removed}
-          disabled={controller.disabled}
-          onRestoreAll={controller.restoreAllRemoved}
-        />
-      )}
+      <ParameterRulesFeature>
+        {controller.removed.length > 0 && (
+          <PendingDeletionsAlert
+            items={controller.removed}
+            disabled={controller.disabled}
+            onRestoreAll={controller.restoreAllRemoved}
+          />
+        )}
+      </ParameterRulesFeature>
       <ParameterEditorForm
         ruleCatalogs={ruleCatalogs}
         parameter={parameter}
