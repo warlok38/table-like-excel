@@ -180,7 +180,9 @@ export function ParameterEditorForm({
           <span className={styles.ruleHeadingText}>
             <span className={styles.ruleTitleRow}>
               <strong>{headingRule.name.trim() || 'Новое правило'}</strong>
-              {ruleChanged && <span className={styles.ruleChangeIndicator}>Изменено</span>}
+              {ruleChanged && (
+                <span className={styles.ruleChangeIndicator}>{rule.id ? 'Изменено' : 'Новое'}</span>
+              )}
             </span>
             <span>{getDraftRuleSummary(headingRule, ruleCatalogs)}</span>
           </span>

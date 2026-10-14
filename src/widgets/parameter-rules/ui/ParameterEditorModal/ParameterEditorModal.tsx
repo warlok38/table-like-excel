@@ -71,10 +71,10 @@ export function ParameterEditorModal({
   const requestDelete = () => {
     if (controller.disabled) return
     modal.confirm({
-      title: 'Удалить все условия параметра «' + (parameter?.name ?? parameterId) + '»?',
+      title: 'Удалить все правила параметра «' + (parameter?.name ?? parameterId) + '»?',
       content:
-        'Связанные оформление и уведомления тоже будут удалены. Значение по умолчанию сохранится.',
-      okText: 'Удалить все условия',
+        'Все правила, значение по умолчанию, связанные оформление и уведомления будут удалены.',
+      okText: 'Удалить все правила',
       cancelText: 'Отмена',
       width: '21.6667rem',
       okButtonProps: { danger: true },
@@ -91,14 +91,14 @@ export function ParameterEditorModal({
       footer={
         <div className={styles.modalFooter}>
           <div>
-            {controller.initialRulesByKey.size > 0 && (
+            {controller.hasSavedRules && (
               <Button
                 danger
                 disabled={controller.disabled}
                 icon={<DeleteOutlined />}
                 onClick={requestDelete}
               >
-                Удалить все условия
+                Удалить все правила
               </Button>
             )}
           </div>

@@ -211,7 +211,7 @@ export function useParameterEditorController({
     const desired = {
       parameterId,
       defaultRuleId: initialDraft.defaultRuleId,
-      defaultValue: initialDraft.defaultValue,
+      defaultValue: null,
       rules: []
     }
     setDraft(desired)
@@ -221,6 +221,7 @@ export function useParameterEditorController({
     draft,
     errors,
     hasRules: draft.rules.length > 0,
+    hasSavedRules: initialDraft.rules.length > 0 || Boolean(initialDraft.defaultRuleId),
     initialRulesByKey,
     isDirty,
     updateRule,

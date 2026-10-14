@@ -59,6 +59,11 @@ editor, closes table portals, sends one changeset and blocks table mutations whi
 pending. Scroll and normal page focus remain available. `Отмена` is local and returns the visible
 data to the last confirmed base without calling `onSaveChanges`.
 
+`Сохранить` is enabled only when values, backgrounds or notes differ from the last confirmed base.
+An open value editor is included using the same normalization as commit, replacing any pending
+value for that cell. Returning its draft to the confirmed value disables Save when no other changes
+remain, even before closing the editor. `Отмена` remains available to close an open editor.
+
 The save button displays `Сохранить`, `Сохраняем`, `Успешно` or `Ошибка`. Success and failure remain
 visible for three seconds and then return to `Сохранить`. On failure, pending changes and changed-cell
 markers remain available for retry. On success, the returned snapshot becomes the new base and pending
