@@ -114,7 +114,7 @@ export function toParameterConfiguration(
         planTypeId: parameter.plan_types_tech_id,
         functionId: rule.functions_tech_id ?? undefined,
         scaleId: rule.scales_tech_id,
-        value: rule.value,
+        value: typeof rule.value === 'string' && !rule.value.trim() ? NaN : Number(rule.value),
         uiRules: catalogs.ui_rules.filter(related).map((item) => ({
           id: item.ui_rules_tech_id,
           ruleId: item.rules_tech_id,

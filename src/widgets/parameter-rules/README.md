@@ -23,7 +23,7 @@
 ## Контракты и сохранение
 
 - Типы транспорта: api/contracts.ts. Преобразование GET: api/parameterRulesAdapter.ts.
-- GET rules-by-param группирует правила по контексту: `parameters_tech_id`, `journals_tech_id`, `aggregation_levels_tech_id`, `aggregation_rules_tech_id`, `plan_types_tech_id` находятся на верхнем уровне. Вложенные `rules` содержат только поля самого правила; `value` — число.
+- GET rules-by-param группирует правила по контексту: `parameters_tech_id`, `journals_tech_id`, `aggregation_levels_tech_id`, `aggregation_rules_tech_id`, `plan_types_tech_id` находятся на верхнем уровне. Вложенные `rules` содержат только поля самого правила; `value` — строка или число. Адаптер преобразует его в число для редактора; пустая строка даёт `NaN`. `scales_tech_id` необязателен и допускает `null`.
 - Ключ конфигурации создаёт существующий `getParameterSelectionKey`: `[parameterId, planTypeId, aggregationRuleId, aggregationLevelId, shift?.id ?? null]`. Журнал в ключ не входит; изоляция по журналу остаётся на уровне API. Необязательная смена передаётся вложенным объектом `shift` с `id`; отдельного `shift_id` нет. Отсутствие смены и `null` равнозначны.
 - Таблица, счётчики выбора, редактор и загрузка после сохранения используют `selectionKey`. `id` строки и `parameterId` остаются исходным UUID параметра, который отправляется в API.
 - POST сохраняет прежний контракт без смены. В моках смена восстанавливается из записи справочника, совпавшей по UUID параметра, типу плана и агрегациям. Если такие записи различаются только сменой, POST отклоняется как неоднозначный, чтобы не сохранить данные в соседнюю конфигурацию. PUT/DELETE адресуют конкретные правила по их ID.

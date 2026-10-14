@@ -59,9 +59,8 @@ export interface RuleDto {
   name: string
   description: string | null
   functions_tech_id: string
-  value: number
-  scales_tech_id: string | null
-  is_active: boolean
+  value: string | number
+  scales_tech_id?: string | null
   prev_rules_tech_id: string | null
   version: number
 }

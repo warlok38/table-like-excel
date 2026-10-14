@@ -134,9 +134,8 @@ export const parameterRulesMockService = {
         description: input.description,
         created_by: input.created_by,
         functions_tech_id: input.functions_tech_id,
-        scales_tech_id: input.scales_tech_id ?? null,
-        value: input.value,
-        is_active: true,
+        ...(input.scales_tech_id === undefined ? {} : { scales_tech_id: input.scales_tech_id }),
+        value: String(input.value),
         rules_tech_id: id,
         version: 1,
         prev_rules_tech_id: null
@@ -179,7 +178,7 @@ export const parameterRulesMockService = {
         getRulesParameterSelectionKey(parameter),
         rule.rules_tech_id
       )
-      Object.assign(rule, input)
+      Object.assign(rule, input, { value: String(input.value) })
     })
     body.ui_rules.forEach((input, index) => {
       const item = draft.catalogs.ui_rules.find(
