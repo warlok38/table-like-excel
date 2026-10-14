@@ -51,7 +51,7 @@
   display: grid;
   grid-template-columns: minmax(8.3333rem, 0.4fr) minmax(0, 1fr) 1.6667rem;
   align-items: center;
-  gap: 0.625rem;
+  column-gap: 0.625rem;
 }
 
 .resultPropertyControl,
@@ -73,7 +73,7 @@
 }
 
 .resultPropertyError {
-  padding-left: calc((100% - 2.9167rem) / 3.5);
+  grid-column: 2;
   color: #ff4d4f;
   font-size: 0.7292rem;
 }

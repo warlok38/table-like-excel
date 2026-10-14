@@ -1,10 +1,12 @@
 'use client'
 
-import { EditOutlined } from '@ant-design/icons'
+import { useState } from 'react'
+import { EditOutlined, SearchOutlined } from '@ant-design/icons'
 import { Button, Empty, Table, Tooltip } from 'antd'
 import type { ColumnsType } from 'antd/es/table'
 
 import type { ParameterRow } from '../../../model/parameterRules'
+import { NameColumnFilter } from './NameColumnFilter'
 
 function formatRulesLabel(count: number): string {
   return 'Правила: ' + count
@@ -23,9 +25,18 @@ export function ParametersTable({
   isInteractionDisabled,
   onEdit
 }: ParametersTableProps) {
+  const [hasNameFilter, setHasNameFilter] = useState(false)
   const columns: ColumnsType<ParameterRow> = [
     { title: 'ID', dataIndex: 'id', width: '8.3333rem', ellipsis: true },
-    { title: 'Название', dataIndex: 'name', width: '11.4583rem' },
+    {
+      title: 'Название',
+      dataIndex: 'name',
+      width: '11.4583rem',
+      filterDropdown: (props) => <NameColumnFilter {...props} hasAppliedFilter={hasNameFilter} />,
+      filterIcon: <SearchOutlined />,
+      onFilter: (value, row) =>
+        row.name.toLocaleLowerCase().includes(String(value).trim().toLocaleLowerCase())
+    },
     { title: 'Описание', dataIndex: 'description' },
     {
       title: 'Правила',
@@ -55,12 +66,17 @@ export function ParametersTable({
       columns={columns}
       dataSource={rows}
       loading={isLoading}
+      onChange={(_, filters) => setHasNameFilter(Boolean(filters.name?.length))}
       locale={{
         emptyText: (
           <Empty
             description={
               <div>
-                <span>Добавьте первый параметр, чтобы настроить правила отображения.</span>
+                <span>
+                  {rows.length
+                    ? 'По вашему запросу ничего не найдено.'
+                    : 'Добавьте первый параметр, чтобы настроить правила отображения.'}
+                </span>
               </div>
             }
             image={Empty.PRESENTED_IMAGE_SIMPLE}

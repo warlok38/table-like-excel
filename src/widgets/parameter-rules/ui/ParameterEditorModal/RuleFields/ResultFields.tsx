@@ -152,26 +152,24 @@ function ResultRow({
   onRemove
 }: ResultRowProps) {
   return (
-    <div>
-      <div className={styles.resultProperty}>
-        <span>{label}</span>
-        <Input
-          className={styles.resultPropertyControl}
-          status={error ? 'error' : undefined}
-          disabled={disabled}
-          placeholder={placeholder}
-          value={value}
-          onChange={(event) => onChange(event.target.value)}
-        />
-        <Button
-          className={styles.removeResultPropertyButton}
-          title={removeTitle}
-          type="text"
-          disabled={disabled}
-          icon={<CloseOutlined />}
-          onClick={onRemove}
-        />
-      </div>
+    <div className={styles.resultProperty}>
+      <span>{label}</span>
+      <Input
+        className={styles.resultPropertyControl}
+        status={error ? 'error' : undefined}
+        disabled={disabled}
+        placeholder={placeholder}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      />
+      <Button
+        className={styles.removeResultPropertyButton}
+        title={removeTitle}
+        type="text"
+        disabled={disabled}
+        icon={<CloseOutlined />}
+        onClick={onRemove}
+      />
       {error && <div className={styles.resultPropertyError}>{error}</div>}
     </div>
   )
