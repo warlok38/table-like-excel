@@ -2,10 +2,7 @@ import type { CatalogsDto, ParameterDto, RuleInput, RulesApiError } from '../con
 import { getRulesParameterSelectionKey } from '../parameterRulesAdapter'
 export function rejectMock(message: string, loc: (string | number)[] = [], status = 422): never {
   throw {
-    message,
-    msg: message,
-    type: 'validation_error',
-    detail: [{ loc }],
+    detail: [{ loc, msg: message, type: 'validation_error' }],
     status
   } satisfies RulesApiError
 }

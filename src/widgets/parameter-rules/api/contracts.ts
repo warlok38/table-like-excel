@@ -147,10 +147,10 @@ export interface DeleteRulesBody {
   notify_rules: string[]
 }
 export interface RulesApiError {
-  message: string
+  message?: string
   msg?: string
   type?: string
-  detail?: string | { loc: (string | number)[] }[]
+  detail?: string | { loc: (string | number)[]; msg: string; type: string }[]
   status?: number
   uncertain?: boolean
 }

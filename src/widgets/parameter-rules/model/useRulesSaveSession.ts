@@ -8,7 +8,8 @@ import {
 import type { ParameterCatalogItem, ParameterConfiguration } from './parameterRules'
 import type { DraftErrors, EditorDraft } from './parameterRuleDraft'
 import { buildSaveOperations } from './saveOperations'
-import { mapSaveError, toRulesError } from './saveErrors'
+import { mapSaveError } from './saveErrors'
+import { toRulesError } from '../api/toRulesError'
 
 interface PendingSave {
   desired: EditorDraft
@@ -42,7 +43,8 @@ export function useRulesSaveSession(
       setUncertain(result.uncertainPost)
       setStatus(
         result.uncertainPost
-          ? 'Результат создания неизвестен. Данные обновлены; повторный POST заблокирован. Закройте форму и проверьте сохранённые правила перед новым созданием.'
+          ? result.errorMessage +
+              ' Результат создания неизвестен. Данные обновлены; повторный POST заблокирован. Закройте форму и проверьте сохранённые правила перед новым созданием.'
           : result.errorMessage
       )
       pending.current = undefined

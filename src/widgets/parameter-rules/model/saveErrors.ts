@@ -1,30 +1,10 @@
 import type { RulesApiError } from '../api/contracts'
 import type { DraftErrors } from './parameterRuleDraft'
 import type { SaveOperation } from './saveOperations'
-export function toRulesError(error: unknown): RulesApiError {
-  if (error && typeof error === 'object' && 'message' in error) {
-    const value = error as RulesApiError
-    const msg = typeof value.detail === 'string' ? value.detail : value.msg
-    const knownRejection =
-      typeof value.status === 'number' &&
-      value.status >= 400 &&
-      value.status < 500 &&
-      value.status !== 408
-    return {
-      ...value,
-      msg,
-      message: msg ?? String(value.message),
-      uncertain: value.uncertain ?? !knownRejection
-    }
-  }
-  return {
-    message: 'Не удалось сохранить изменения. Результат запроса неизвестен.',
-    uncertain: true
-  }
-}
 export function mapSaveError(error: RulesApiError, operation: SaveOperation): DraftErrors {
   const errors: DraftErrors = { byRule: {} }
   for (const detail of Array.isArray(error.detail) ? error.detail : []) {
+    const message = detail.msg
     const loc = detail.loc.filter((part) => part !== 'body').join('.')
     const key = Object.keys(operation.sources)
       .sort((a, b) => b.length - a.length)
@@ -32,7 +12,7 @@ export function mapSaveError(error: RulesApiError, operation: SaveOperation): Dr
     if (!key) continue
     const source = operation.sources[key]
     if ('target' in source) {
-      errors.defaultValue = error.msg ?? error.message
+      errors.defaultValue = message
       continue
     }
     const suffix = loc.slice(key.length).replace(/^\./, '')
@@ -40,8 +20,8 @@ export function mapSaveError(error: RulesApiError, operation: SaveOperation): Dr
     const current = errors.byRule[source.uiKey] ?? {}
     errors.byRule[source.uiKey] = {
       ...current,
-      server: error.msg ?? error.message,
-      fields: { ...current.fields, [field]: error.msg ?? error.message }
+      server: [current.server, message].filter(Boolean).join(' '),
+      fields: { ...current.fields, [field]: message }
     }
   }
   return errors

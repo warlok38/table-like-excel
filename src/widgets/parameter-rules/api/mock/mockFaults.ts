@@ -4,6 +4,7 @@ type Fault = {
   call?: number
   mode?: 'reject' | 'unknown'
   message?: string
+  detail?: RulesApiError['detail']
   loc?: (string | number)[]
 }
 const calls: Record<MockOperation, number> = {
@@ -20,6 +21,7 @@ const scenarios: Record<string, Partial<Record<MockOperation, Fault>>> = {
   'partial-put': { put: { call: 2, loc: ['ui_rules', 0, 'value'] } },
   'partial-delete': { delete: { call: 2 } },
   'post-rejected': { post: { call: 1, loc: ['parameter_rules', 0, 'name'] } },
+  'post-detail-string': { post: { call: 1, detail: 'Ой! тут ошибка!' } },
   'post-unknown': { post: { call: 1, mode: 'unknown' } },
   'refresh-failed': { catalogs: { call: 2 }, rules: { call: 2 } },
   'catalogs-failed': { catalogs: { call: 1 } },
@@ -46,11 +48,8 @@ export async function beginMockRequest(operation: MockOperation): Promise<Fault 
   if (fault.mode === 'unknown') return fault
   const message = fault.message ?? 'Тестовая ошибка операции ' + operation
   throw {
-    message,
-    msg: message,
     status: 422,
-    type: 'validation_error',
-    detail: [{ loc: fault.loc ?? [] }]
+    detail: fault.detail ?? [{ loc: fault.loc ?? [], msg: message, type: 'validation_error' }]
   } satisfies RulesApiError
 }
 export function finishMockRequest(fault?: Fault) {

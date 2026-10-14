@@ -4,10 +4,10 @@ import type {
   ParameterDto,
   CreateRulesBody,
   UpdateRulesBody,
-  DeleteRulesBody,
-  RulesApiError
+  DeleteRulesBody
 } from './contracts'
 import { parameterRulesMockService as service } from './mock/parameterRulesService'
+import { toRulesError } from './toRulesError'
 export const parameterRulesApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
     getRuleCatalogs: builder.query<CatalogsDto, string>({
@@ -31,13 +31,11 @@ export const parameterRulesApi = baseApi.injectEndpoints({
 })
 async function runMockRequest<T>(
   request: () => Promise<T>
-): Promise<{ data: T } | { error: RulesApiError }> {
+): Promise<{ data: T } | { error: ReturnType<typeof toRulesError> }> {
   try {
     return { data: await request() }
   } catch (error) {
-    if (error && typeof error === 'object' && 'message' in error)
-      return { error: error as RulesApiError }
-    return { error: { message: 'Неизвестная ошибка API', uncertain: true } }
+    return { error: toRulesError(error, 'Неизвестная ошибка API') }
   }
 }
 export const {
