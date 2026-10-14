@@ -4,6 +4,7 @@ import type { SaveOperation } from './saveOperations'
 export function toRulesError(error: unknown): RulesApiError {
   if (error && typeof error === 'object' && 'message' in error) {
     const value = error as RulesApiError
+    const msg = typeof value.detail === 'string' ? value.detail : value.msg
     const knownRejection =
       typeof value.status === 'number' &&
       value.status >= 400 &&
@@ -11,7 +12,8 @@ export function toRulesError(error: unknown): RulesApiError {
       value.status !== 408
     return {
       ...value,
-      message: String(value.message),
+      msg,
+      message: msg ?? String(value.message),
       uncertain: value.uncertain ?? !knownRejection
     }
   }
@@ -22,7 +24,7 @@ export function toRulesError(error: unknown): RulesApiError {
 }
 export function mapSaveError(error: RulesApiError, operation: SaveOperation): DraftErrors {
   const errors: DraftErrors = { byRule: {} }
-  for (const detail of error.detail ?? []) {
+  for (const detail of Array.isArray(error.detail) ? error.detail : []) {
     const loc = detail.loc.filter((part) => part !== 'body').join('.')
     const key = Object.keys(operation.sources)
       .sort((a, b) => b.length - a.length)

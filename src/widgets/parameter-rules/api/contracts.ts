@@ -151,7 +151,7 @@ export interface RulesApiError {
   message: string
   msg?: string
   type?: string
-  detail?: { loc: (string | number)[] }[]
+  detail?: string | { loc: (string | number)[] }[]
   status?: number
   uncertain?: boolean
 }
